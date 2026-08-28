@@ -1,6 +1,6 @@
 @echo off
 echo ====================================
-echo  Auto Push to GitHub & Vercel Deploy
+echo  Auto Push to GitHub ^& Vercel Deploy
 echo ====================================
 
 set /p msg="Masukkan pesan commit (kosongkan untuk default 'update'): "
