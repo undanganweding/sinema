@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <script>
+      (function() {
+        try {
+          var target = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : self);
+          if (target && target.fetch) {
+            var nativeFetch = target.fetch.bind(target);
+            var currentFetch = nativeFetch;
+            var desc = Object.getOwnPropertyDescriptor(target, 'fetch');
+            if (!desc || (!desc.set && desc.configurable)) {
+              Object.defineProperty(target, 'fetch', {
+                get: function() {
+                  return currentFetch;
+                },
+                set: function(fn) {
+                  currentFetch = typeof fn === 'function' ? fn.bind(target) : fn;
+                },
+                configurable: true,
+                enumerable: true
+              });
+            }
+          }
+        } catch (e) {
+          // ignore if environment prevents re-defining
+        }
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Studio Produksi Sinematik AI</title>
+    <meta name="description" content="Alat Perencanaan Produksi Film AI — Orkestrator Naskah ke Cetak Biru Sinematik." />
+    <meta property="og:title" content="Studio Produksi Sinematik AI" />
+    <meta property="og:description" content="Alat Perencanaan Produksi Film AI — Orkestrator Naskah ke Cetak Biru Sinematik." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
