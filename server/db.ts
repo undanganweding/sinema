@@ -52,28 +52,40 @@ interface FirestoreState {
 
 const DB_FILE = path.join(DATA_DIR, 'firestore_store.json');
 
+// In-memory synced state & mtime tracking for fast caching
+let lastMtimeMs: number = 0;
+let memoryState: FirestoreState = {
+  projects: {},
+  project_foundation: {},
+  characters: {},
+  locations: {},
+  objects: {},
+  scenes: {},
+  shots: {},
+  video_prompts: {},
+  logs: {},
+  telemetry: {},
+  story_architectures: {},
+  continuity_states: {},
+  continuity_snapshots: {},
+};
+
 function loadState(): FirestoreState {
   if (!fs.existsSync(DB_FILE)) {
-    return {
-      projects: {},
-      project_foundation: {},
-      characters: {},
-      locations: {},
-      objects: {},
-      scenes: {},
-      shots: {},
-      video_prompts: {},
-      logs: {},
-      telemetry: {},
-      story_architectures: {},
-      continuity_states: {},
-      continuity_snapshots: {},
-    };
+    lastMtimeMs = 0;
+    return memoryState;
   }
   try {
+    // Optimization: skip disk re-read & JSON parsing if file mtime hasn't changed since last read
+    const stat = fs.statSync(DB_FILE);
+    if (stat.mtimeMs === lastMtimeMs) {
+      return memoryState;
+    }
+
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
     const parsed = JSON.parse(raw);
-    return {
+    lastMtimeMs = stat.mtimeMs;
+    memoryState = {
       projects: parsed.projects || {},
       project_foundation: parsed.project_foundation || {},
       characters: parsed.characters || {},
@@ -88,36 +100,26 @@ function loadState(): FirestoreState {
       continuity_states: parsed.continuity_states || {},
       continuity_snapshots: parsed.continuity_snapshots || {},
     };
+    return memoryState;
   } catch (err) {
     console.error('Error reading Firestore store file:', err);
-    return {
-      projects: {},
-      project_foundation: {},
-      characters: {},
-      locations: {},
-      objects: {},
-      scenes: {},
-      shots: {},
-      video_prompts: {},
-      logs: {},
-      telemetry: {},
-      story_architectures: {},
-      continuity_states: {},
-      continuity_snapshots: {},
-    };
+    return memoryState;
   }
 }
 
 function saveState(state: FirestoreState): void {
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(state, null, 2), 'utf-8');
+    const stat = fs.statSync(DB_FILE);
+    lastMtimeMs = stat.mtimeMs;
+    memoryState = state;
   } catch (err) {
     console.error('Error writing Firestore store file:', err);
   }
 }
 
-// In-memory synced state
-let memoryState: FirestoreState = loadState();
+// Initial hydration
+memoryState = loadState();
 
 // Transient in-memory storage for active API keys to keep them out of saved JSON files
 const ephemeralApiKeys = new Map<string, string>();
