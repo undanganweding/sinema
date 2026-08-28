@@ -13,6 +13,12 @@ import {
   ApprovedCostumeTransition,
   Scene,
   Shot,
+  ContextPackage,
+  ContinuityIssue,
+  ContinuityState,
+  CharacterState,
+  SceneContinuityState,
+  ContinuityTransitionType,
 } from '../src/types';
 
 /**
@@ -500,4 +506,187 @@ export function applyContinuityCorrectionToPrompt(
     correctedText: text,
     fixesApplied,
   };
+}
+
+function phase6Normalize(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function phase6Text(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return '';
+  if (Array.isArray(value)) return value.map(phase6Text).join(' ');
+  if (typeof value === 'object') return Object.entries(value).map(([key, item]) => `${key} ${phase6Text(item)}`).join(' ');
+  return String(value);
+}
+
+function phase6CanonicalIdentity(name: string, context?: ContextPackage | null): string {
+  const normalized = phase6Normalize(name);
+  const entity = phase6EntityForName(name, context);
+  return entity ? `entity:${entity.entityId}` : `unknown:${normalized}`;
+}
+
+function phase6EntityForName(name: string, context?: ContextPackage | null) {
+  const normalized = phase6Normalize(name);
+  return context?.entities.find((candidate) => [candidate.name, ...(candidate.aliases || [])].some((alias) => phase6Normalize(alias) === normalized));
+}
+
+function phase6Transition(previous?: SceneContinuityState, _location?: string): ContinuityTransitionType {
+  return previous ? 'CONTINUOUS' : 'CONTINUOUS';
+}
+
+export function createContinuityState(
+  context?: ContextPackage | null,
+  characters: CharacterBible[] = [],
+  locations: LocationBible[] = [],
+  objects: ObjectBible[] = []
+): ContinuityState {
+  const characterStates: CharacterState[] = characters.map((character) => ({
+    canonicalIdentity: phase6CanonicalIdentity(character.name, context),
+    displayName: character.name,
+    aliases: phase6EntityForName(character.name, context)?.aliases || [],
+    status: phase6EntityForName(character.name, context)?.status,
+    birthYear: phase6EntityForName(character.name, context)?.birthYear,
+    deathYear: phase6EntityForName(character.name, context)?.deathYear,
+    age: character.age,
+    attributes: [character.physical_appearance, character.personality].filter(Boolean),
+    clothing: [...(character.clothing || [])],
+    accessories: [...(character.accessories || [])],
+    relationships: [],
+    possessions: [],
+    provenance: phase6EntityForName(character.name, context)?.sourceIds || [],
+    confidence: phase6EntityForName(character.name, context)?.status ? 'HIGH' : 'UNKNOWN',
+  }));
+  const locationState = Object.fromEntries(locations.map((location) => [phase6Normalize(location.name), {
+    canonicalLocation: location.name,
+    aliases: [],
+    provenance: [],
+    confidence: 'UNKNOWN' as const,
+  }]));
+  const objectState = Object.fromEntries(objects.map((object) => [phase6Normalize(object.name), {
+    canonicalObject: object.name,
+    appearance: [object.description].filter(Boolean),
+    provenance: [],
+  }]));
+  return {
+    version: '1.0',
+    characters: characterStates,
+    characterIdentities: Object.fromEntries(characterStates.map((character) => [phase6Normalize(character.displayName), character.canonicalIdentity])),
+    locations: locationState,
+    activeEvents: [],
+    relationships: [],
+    objects: objectState,
+    scenes: [],
+    visualState: {},
+    continuityConstraints: context?.constraints ? [...context.constraints] : [],
+    temporalOrder: Object.fromEntries((context?.events || []).map((event) => [phase6Normalize(event.label), event.startYear ?? event.endYear]).filter((entry): entry is [string, number] => entry[1] !== undefined)),
+    unresolvedIssues: [],
+  };
+}
+
+export function updateContinuityState(
+  state: ContinuityState,
+  scene: { id?: string; scene_number?: number; location_name?: string; character_names?: string[]; event?: string; era?: string },
+  output: unknown,
+  transitionType?: ContinuityTransitionType
+): { state: ContinuityState; issues: ContinuityIssue[] } {
+  const next: ContinuityState = JSON.parse(JSON.stringify(state)) as ContinuityState;
+  const sceneId = scene.id || `scene_${scene.scene_number || next.scenes.length + 1}`;
+  const previous = next.scenes[next.scenes.length - 1];
+  const text = phase6Text({ scene, output });
+  const outputRecords = (() => {
+    const collect = (value: unknown): Record<string, unknown>[] => {
+      if (!value || typeof value !== 'object') return [];
+      if (Array.isArray(value)) return value.flatMap(collect);
+      const record = value as Record<string, unknown>;
+      return [record, ...Object.values(record).flatMap(collect)];
+    };
+    return collect(output);
+  })();
+  const issues: ContinuityIssue[] = [];
+  for (const record of outputRecords) {
+    const name = typeof record.name === 'string' ? record.name : undefined;
+    if (name && !next.characters.some((character) => phase6Normalize(character.displayName) === phase6Normalize(name))) {
+      next.characters.push({ canonicalIdentity: `unknown:${phase6Normalize(name)}`, displayName: name, aliases: [], attributes: [], clothing: [], accessories: [], relationships: [], possessions: [], provenance: [], confidence: 'UNKNOWN' });
+      next.characterIdentities[phase6Normalize(name)] = `unknown:${phase6Normalize(name)}`;
+    }
+  }
+  const currentLocation = scene.location_name;
+  const resolvedTransition = transitionType || phase6Transition(previous, currentLocation);
+  const activeCharacters = (scene.character_names || []).map((name) => next.characters.find((character) => phase6Normalize(character.displayName) === phase6Normalize(name) || character.aliases.some((alias) => phase6Normalize(alias) === phase6Normalize(name)))?.canonicalIdentity || `unknown:${phase6Normalize(name)}`);
+  const eventName = scene.event;
+
+  if (previous && currentLocation && previous.location && phase6Normalize(previous.location) !== phase6Normalize(currentLocation) && resolvedTransition === 'CONTINUOUS') {
+    issues.push({ code: 'LOCATION_CHANGE_WITHOUT_TRANSITION', severity: 'BLOCKING', message: `Location changes from ${previous.location} to ${currentLocation} without an explicit transition.`, sceneId });
+  }
+
+  const currentScene: SceneContinuityState = {
+    sceneId,
+    previousSceneId: previous?.sceneId,
+    activeCharacters,
+    location: currentLocation,
+    event: eventName,
+    objects: [],
+    temporalState: scene.era,
+    visualState: {},
+    transitionType: resolvedTransition,
+    continuityConstraints: [...next.continuityConstraints],
+  };
+
+  const currentEvent = eventName && Object.keys(next.temporalOrder || {}).find((event) => phase6Normalize(eventName).includes(event));
+  const previousEvent = previous?.event && Object.keys(next.temporalOrder || {}).find((event) => phase6Normalize(previous.event || '').includes(event));
+  if (currentEvent && previousEvent && (next.temporalOrder || {})[currentEvent] < (next.temporalOrder || {})[previousEvent]) {
+    issues.push({ code: 'TEMPORAL_ORDER_CONFLICT', severity: 'BLOCKING', message: `Event ${eventName} occurs before the accepted previous event.`, sceneId });
+  }
+
+  for (const character of next.characters) {
+    const present = (scene.character_names || []).some((name) => phase6Normalize(name) === phase6Normalize(character.displayName) || character.aliases.some((alias) => phase6Normalize(name) === phase6Normalize(alias)));
+    if (!present) continue;
+    const entityText = text;
+    const contextYear = Array.from(entityText.matchAll(/\b(1[0-9]{3}|20[0-9]{2})\b/g)).map((match) => Number(match[1]))[0];
+    if (character.status === 'DECEASED' && character.deathYear !== undefined && contextYear !== undefined && contextYear > character.deathYear && /participat|living|alive|hadir|ikut/.test(entityText)) {
+      issues.push({ code: 'DECEASED_CHARACTER_ACTIVE', severity: 'BLOCKING', message: `${character.displayName} is used as a living participant in ${sceneId}.`, sceneId, sourceIds: character.provenance });
+    }
+    const clothing = (text.match(/(?:white|black|red|blue|green|putih|hitam|merah|biru|hijau)(?:\s+\w+){0,2}\s+(?:robe|jubah|dress|suit|baju)/gi) || []).map((item) => item.toLowerCase());
+    const previousScene = previous && next.scenes.find((item) => item.sceneId === previous.sceneId);
+    const previousClothing = previousScene?.visualState[character.canonicalIdentity] || [];
+    if (clothing.length > 0 && previousClothing.length > 0 && clothing.some((item) => !previousClothing.includes(item))) {
+      issues.push({ code: 'CLOTHING_DRIFT', severity: 'WARNING', message: `${character.displayName} clothing changes without an explicit continuity lock.`, sceneId });
+    }
+    if (clothing.length > 0) {
+      currentScene.visualState[character.canonicalIdentity] = clothing;
+      next.visualState[character.canonicalIdentity] = clothing;
+    }
+    character.currentLocation = currentLocation;
+    character.activeEvent = eventName;
+  }
+
+  for (const object of Object.values(next.objects)) {
+    const possessionRecord = outputRecords.find((record) => {
+      const recordObject = String(record.objectName || record.object || record.name || '');
+      return phase6Normalize(recordObject) === phase6Normalize(object.canonicalObject) && typeof record.owner === 'string';
+    });
+    if (!text.includes(phase6Normalize(object.canonicalObject)) && !possessionRecord) continue;
+    const ownerMatch = text.match(/(?:held by|owned by|dibawa|dipegang)\s+([a-z]+\s+[a-z]+)/i);
+    const owner = typeof possessionRecord?.owner === 'string' ? possessionRecord.owner.trim() : ownerMatch?.[1]?.trim();
+    if (owner) {
+      if (object.owner && phase6Normalize(object.owner) !== phase6Normalize(owner)) {
+        issues.push({ code: 'OBJECT_POSSESSION_CONFLICT', severity: 'BLOCKING', message: `${object.canonicalObject} changes possession from ${object.owner} to ${owner} without transition.`, sceneId });
+      }
+      object.owner = owner;
+      currentScene.objects.push(object.canonicalObject);
+    }
+  }
+
+  const existingIndex = next.scenes.findIndex((item) => item.sceneId === sceneId);
+  if (existingIndex >= 0) next.scenes[existingIndex] = currentScene;
+  else next.scenes.push(currentScene);
+  next.activeEvents = eventName ? Array.from(new Set([...next.activeEvents, eventName])) : next.activeEvents;
+  next.unresolvedIssues = [...next.unresolvedIssues.filter((item) => item.sceneId !== sceneId), ...issues];
+  return { state: next, issues };
+}
+
+export function buildContinuityPromptContext(state: ContinuityState | null | undefined): string {
+  if (!state) return 'No continuity state available.';
+  return JSON.stringify({ version: state.version, characters: state.characters, locations: state.locations, objects: state.objects, scenes: state.scenes, visualState: state.visualState, constraints: state.continuityConstraints, unresolvedIssues: state.unresolvedIssues }, null, 2);
 }

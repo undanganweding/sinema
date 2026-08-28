@@ -9,6 +9,13 @@
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "test:fase5": "tsx e2e_fase5.ts",
+    "test:grounding": "tsx server/grounding_phase2_tests.ts",
+    "test:research-contracts": "tsx server/research_contract_tests.ts",
+    "test:research-retrieval": "tsx server/research_retrieval_tests.ts",
+    "test:phase3c": "tsx server/phase3c_tests.ts",
+    "test:phase3c-integration": "tsx server/phase3c_integration_tests.ts",
+    "test:phase3d": "tsx server/phase3d_tests.ts",
+    "test:phase3e": "tsx server/phase3e_tests.ts",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "push": "git add . && git commit -m \"update\" && git push origin main"

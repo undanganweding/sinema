@@ -6,6 +6,8 @@ import {
   LocationBible,
   ObjectBible,
   PromptTarget,
+  ContextPackage,
+  ContinuityState,
 } from '../src/types';
 
 export type { PromptTarget };
@@ -121,6 +123,7 @@ export interface MasterSceneData {
     quality: string[];
     output: string[];
   };
+  grounding_context?: string;
 }
 
 /**
@@ -136,7 +139,9 @@ export function serializeMasterSceneData(
   target: VideoModelTarget = 'veo',
   detailLevel: PromptDetailLevel = 'cinematic',
   projectTitle: string = 'Cinematic Production',
-  resolvedDuration?: number
+  resolvedDuration?: number,
+  contextPackage?: ContextPackage | null,
+  continuityState?: ContinuityState | null
 ): MasterSceneData {
   const era = foundation?.era || scene.era || 'Historical Ancient Era';
   const visualTone = foundation?.visual_tone || 'Cinematic Panavision anamorphic, 35mm film grain';
@@ -288,7 +293,7 @@ export function serializeMasterSceneData(
     scene_number: scene.scene_number,
     scene_title: scene.title,
     scene_purpose: scene.story_purpose || 'Advance dramatic narrative',
-    story_context: scene.dramatic_purpose || scene.event,
+    story_context: `${scene.dramatic_purpose || scene.event}${contextPackage ? `\nGROUNDING CONSTRAINTS: ${contextPackage.constraints.join('; ')}` : ''}${continuityState ? `\nCONTINUITY STATE: ${JSON.stringify({ characters: continuityState.characters, scene: continuityState.scenes[continuityState.scenes.length - 1], visualState: continuityState.visualState, unresolvedIssues: continuityState.unresolvedIssues })}` : ''}`,
     duration_sec: duration,
     aspect_ratio: '16:9',
     model_target: target,

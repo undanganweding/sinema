@@ -13,6 +13,8 @@ import {
   LocationBible,
   ObjectBible,
   MasterImagePrompt,
+  ContextPackage,
+  ContinuityState,
   ReasoningConfig,
 } from '../../src/types';
 
@@ -25,6 +27,8 @@ export interface Stage7MasterFrameInput {
   language: 'id' | 'en';
   model?: string;
   reasoningConfig?: ReasoningConfig;
+  contextPackage?: ContextPackage | null;
+  continuityState?: ContinuityState | null;
   /**
    * PATCH 5.5-R1 (Fase 4): optional caller-requested duration for the still
    * contract. Validated by resolveOutputDurationStrict() against the banana
@@ -49,7 +53,7 @@ export interface Stage7Result {
 export async function runStage7MasterFrameAndImagePrompt(
   input: Stage7MasterFrameInput
 ): Promise<Stage7Result> {
-  const { scene, foundation, characters, locations, objects, requestedDuration } = input;
+  const { scene, foundation, characters, locations, objects, requestedDuration, contextPackage, continuityState } = input;
 
   // ------------------------------------------------------------------
   // PATCH 5.5-R1 (Fase 4): the still targets own their duration.
@@ -78,7 +82,9 @@ export async function runStage7MasterFrameAndImagePrompt(
     'banana',
     'cinematic',
     'Cinematic Production',
-    resolvedDuration
+    resolvedDuration,
+    contextPackage,
+    continuityState
   );
 
   const masterFrameText = adaptBananaMasterFrame(masterData);

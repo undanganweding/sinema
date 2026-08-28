@@ -25,6 +25,8 @@ import {
   VideoPrompt,
   VideoPromptTimeline,
   PromptTarget,
+  ContextPackage,
+  ContinuityState,
   ReasoningConfig,
 } from '../../src/types';
 
@@ -107,6 +109,8 @@ export interface Stage8VideoPromptInput {
    * coerced (e.g. seedance_10 + 30 -> PROMPT_DURATION_CONTRACT_FAILED).
    */
   requestedDuration?: number;
+  contextPackage?: ContextPackage | null;
+  continuityState?: ContinuityState | null;
   /**
    * @deprecated PATCH 5.5-R1: superseded by `target`.
    * Still accepts the legacy platform names ('veo' | 'gemini_omni' | 'seedance')
@@ -380,6 +384,8 @@ function buildMasterDataForTarget(
     foundation: ProjectFoundation | null;
     characters: CharacterBible[];
     locations: LocationBible[];
+    contextPackage?: ContextPackage | null;
+    continuityState?: ContinuityState | null;
   },
   resolvedDuration: number
 ): MasterSceneData {
@@ -393,7 +399,9 @@ function buildMasterDataForTarget(
     PROMPT_TARGET_SERIALIZATION[target],
     'cinematic',
     'Cinematic Production',
-    resolvedDuration
+    resolvedDuration,
+    args.contextPackage,
+    args.continuityState
   );
 
   // Defensive: the adapters read data.duration_sec to emit the DURATION literal.
@@ -431,6 +439,8 @@ export async function runStage8VideoPrompt(
     targets,
     requestedDuration,
     specificPlatform,
+    contextPackage,
+    continuityState,
   } = input;
 
   // ------------------------------------------------------------------
@@ -448,7 +458,7 @@ export async function runStage8VideoPrompt(
   const results: Omit<VideoPrompt, 'id' | 'created_at' | 'updated_at'>[] = [];
   const stills: Stage8StillPrompt[] = [];
 
-  const serializerArgs = { scene, shot, foundation, characters, locations };
+  const serializerArgs = { scene, shot, foundation, characters, locations, contextPackage, continuityState };
 
   for (const promptTarget of targetsToGenerate) {
     // STEP 1 — target -> strict resolver. The resolver throws

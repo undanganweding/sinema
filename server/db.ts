@@ -196,6 +196,20 @@ export const db = {
     return attachEphemeralApiKey(memoryState.projects[project.id])!;
   },
 
+  updateProject(projectId: string, updater: (project: Project) => Project): Project | null {
+    memoryState = loadState();
+    const current = memoryState.projects[projectId];
+    if (!current) return null;
+    const next = updater({ ...current });
+    const cleanProject = sanitizeProjectForStorage(next);
+    memoryState.projects[projectId] = {
+      ...cleanProject,
+      updated_at: new Date().toISOString(),
+    };
+    saveState(memoryState);
+    return attachEphemeralApiKey(memoryState.projects[projectId])!;
+  },
+
   getProject(id: string): Project | null {
     memoryState = loadState();
     const raw = memoryState.projects[id] || null;
@@ -687,8 +701,8 @@ export const db = {
     }
     const entry: StageExecutionTelemetry = {
       id: item.id || `telem_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-      project_id: projectId,
       ...item,
+      project_id: projectId,
     };
     memoryState.telemetry[projectId].push(entry);
     saveState(memoryState);
@@ -768,7 +782,10 @@ export const db = {
     if (char) {
       if (!char.approved_transitions) char.approved_transitions = [];
       char.approved_transitions.push(transition);
-      char.current_state.costume_version = transition.to_costume_version;
+      const nextCostumeVersion = Number(transition.to_costume_version);
+      if (!Number.isNaN(nextCostumeVersion)) {
+        char.current_state.costume_version = nextCostumeVersion;
+      }
       this.saveCharacterContinuityStates(projectId, states);
     }
     return states;

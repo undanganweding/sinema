@@ -1,6 +1,6 @@
 import { executeLLMRequest, safeParseJSON } from '../llm_provider';
 import { Type } from '../gemini';
-import { CharacterBible, LocationBible, NarrativeBeats, ProjectFoundation, ReasoningConfig } from '../../src/types';
+import { CharacterBible, ContextPackage, LocationBible, NarrativeBeats, ProjectFoundation, ReasoningConfig } from '../../src/types';
 import { buildNarrativeVoiceInstruction } from '../narrative_tone';
 
 export interface Stage4NarrativeStructureInput {
@@ -8,6 +8,7 @@ export interface Stage4NarrativeStructureInput {
   foundation: Omit<ProjectFoundation, 'id' | 'project_id' | 'updated_at'>;
   characters: CharacterBible[];
   locations: LocationBible[];
+  contextPackage?: ContextPackage | null;
   language: 'id' | 'en';
   model?: string;
   reasoningConfig?: ReasoningConfig;
@@ -29,7 +30,8 @@ Your task: Synthesize the full script alongside all identified foundation contex
 Formulate a Global 5-Beat Narrative Structure Map (Beginning, Development, Climax, Consequence, Ending).
 IMPORTANT: This represents the macro-level cinematic story architecture required prior to scene breakdowns. Detail the emotional weight and key dramatic beats for each phase with high precision.`;
 
-  const systemInstruction = `${baseInstruction}\n\n${narrativeDoctrine}`;
+  const groundingContext = input.contextPackage ? JSON.stringify(input.contextPackage, null, 2) : 'No grounding context available.';
+  const systemInstruction = `${baseInstruction}\n\n${narrativeDoctrine}\n\nGROUNDING CONTEXT:\n${groundingContext}`;
 
   const charSummary = input.characters
     .map((c) => `${c.name} (${c.gender}, ${c.age}): ${c.personality}`)

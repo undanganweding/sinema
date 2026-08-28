@@ -1,6 +1,6 @@
 import { executeLLMRequest, safeParseJSON } from '../llm_provider';
 import { Type } from '../gemini';
-import { Scene, CharacterBible, LocationBible, ObjectBible, Shot, ReasoningConfig } from '../../src/types';
+import { ContextPackage, Scene, CharacterBible, LocationBible, ObjectBible, Shot, ReasoningConfig } from '../../src/types';
 import {
   buildNarrativeVoiceInstruction,
   buildSceneToneInstruction,
@@ -12,6 +12,7 @@ export interface Stage6ShotBreakdownInput {
   characters: CharacterBible[];
   locations: LocationBible[];
   objects: ObjectBible[];
+  contextPackage?: ContextPackage | null;
   language: 'id' | 'en';
   model?: string;
   reasoningConfig?: ReasoningConfig;
@@ -190,7 +191,7 @@ export function validateShotBreakdown(
 export async function runStage6ShotBreakdownAttempt(
   input: Stage6ShotBreakdownInput
 ): Promise<DetectedShot[]> {
-  const { scene, characters, locations, objects, language, feedbackPrompt } = input;
+  const { scene, characters, locations, objects, language, feedbackPrompt, contextPackage } = input;
   const isIndo = language === 'id';
 
   const maxAllowedShots = getMaxShotsForDuration(scene.duration_sec);
@@ -250,7 +251,8 @@ NON-NEGOTIABLE HARD RULES:
 9. "emotion": Emotional beat.
 10. "audio_note": Specific ambient and foley sound effects.`;
 
-  const systemInstruction = `${baseInstruction}\n\n${narrativeDoctrine}\n\n${sceneToneInstruction}`;
+  const groundingContext = contextPackage ? JSON.stringify(contextPackage, null, 2) : 'No grounding context available.';
+  const systemInstruction = `${baseInstruction}\n\n${narrativeDoctrine}\n\n${sceneToneInstruction}\n\nGROUNDING CONTEXT:\n${groundingContext}`;
 
   const userPrompt = `
 === DETAIL SCENE INDUK ===

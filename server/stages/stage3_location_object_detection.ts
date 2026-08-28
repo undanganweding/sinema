@@ -1,10 +1,11 @@
 import { executeLLMRequest, safeParseJSON } from '../llm_provider';
 import { Type } from '../gemini';
-import { LocationBible, ObjectBible, ProjectFoundation, ReasoningConfig } from '../../src/types';
+import { ContextPackage, LocationBible, ObjectBible, ProjectFoundation, ReasoningConfig } from '../../src/types';
 
 export interface Stage3LocationObjectInput {
   rawScript: string;
   foundation: Omit<ProjectFoundation, 'id' | 'project_id' | 'updated_at'>;
+  contextPackage?: ContextPackage | null;
   language: 'id' | 'en';
   model?: string;
   reasoningConfig?: ReasoningConfig;
@@ -30,6 +31,7 @@ export async function runStage3LocationObjectDetection(
 ): Promise<Stage3Output> {
   const isIndo = input.language === 'id';
 
+  const groundingContext = input.contextPackage ? JSON.stringify(input.contextPackage, null, 2) : 'No grounding context available.';
   const systemInstruction = isIndo
     ? `Anda adalah Production Designer & Location Scout sinematik legendaris.
 Tugas Anda: Deteksi dan formulasikan spesifikasi produksi mendalam untuk SEMUA LOKASI (Location Bible) dan OBJEK/PROPERTI KUNCI (Object Bible) yang penting untuk kontinuitas film dari naskah.
@@ -37,6 +39,7 @@ Berikan deskripsi visual arsitektur, iklim, pencahayaan, palet warna, material, 
     : `You are a legendary Cinematic Production Designer & Master Location Scout.
 Your task: Detect and establish in-depth production specifications for ALL key Locations (Location Bible) and significant Props/Objects (Object Bible) essential for filmmaking continuity.
 Provide rich architectural aesthetics, lighting setups, color palettes, materials, and strict continuity tracking notes.`;
+  const groundedSystemInstruction = `${systemInstruction}\n\nGROUNDING CONTEXT:\n${groundingContext}`;
 
   const prompt = `Analisis naskah dan Story Understanding berikut untuk membangun Location & Object Bible:
 
@@ -110,7 +113,7 @@ ${input.rawScript}
     reasoningConfig: input.reasoningConfig,
     model: input.model,
     prompt,
-    systemInstruction,
+    systemInstruction: groundedSystemInstruction,
     temperature: 0.3,
     responseSchema,
   });

@@ -1,6 +1,6 @@
 import { executeLLMRequest, safeParseJSON } from '../llm_provider';
 import { Type } from '../gemini';
-import { NarrativeBeats, ReasoningConfig, Scene } from '../../src/types';
+import { ContextPackage, NarrativeBeats, ReasoningConfig, Scene } from '../../src/types';
 import { buildNarrativeVoiceInstruction, recommendSceneTone } from '../narrative_tone';
 
 export interface Stage5SceneBreakdownInput {
@@ -9,6 +9,7 @@ export interface Stage5SceneBreakdownInput {
   maxSceneDurationSec: number; // Effective ceiling (e.g. 30 if null/Auto)
   fixedSceneDurationSec?: number | null; // Fixed duration per scene if specified by user
   allowFinalSceneOverride?: boolean;
+  contextPackage?: ContextPackage | null;
   language: 'id' | 'en';
   model?: string;
   reasoningConfig?: ReasoningConfig;
@@ -180,6 +181,7 @@ export async function runStage5SceneBreakdownAttempt(
     : undefined;
 
   const narrativeDoctrine = buildNarrativeVoiceInstruction(null, input.language);
+  const groundingContext = input.contextPackage ? JSON.stringify(input.contextPackage, null, 2) : 'No grounding context available.';
   const baseInstruction = isIndo
     ? isFixed
       ? `Anda adalah Master 1st Assistant Director (1st AD) & Cinematic Timeline Allocator kelas dunia.
@@ -219,7 +221,7 @@ STRICT DURATION RULES:
 4. TOTAL SUM: The sum of duration_sec across all scenes MUST EXACTLY EQUAL ${input.totalDurationTargetSec} SECONDS (0s tolerance).
 5. scene_number must be sequential 1, 2, 3...`;
 
-  const systemInstruction = `${baseInstruction}\n\n${narrativeDoctrine}`;
+  const systemInstruction = `${baseInstruction}\n\n${narrativeDoctrine}\n\nGROUNDING CONTEXT:\n${groundingContext}`;
 
   let prompt = isFixed
     ? `Pecah narasi berikut menjadi tepat ${expectedSceneCount} Scene dengan durasi tetap ${input.fixedSceneDurationSec} detik per scene (Total: ${input.totalDurationTargetSec} detik):

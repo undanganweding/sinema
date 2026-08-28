@@ -29,6 +29,20 @@ import {
   CINEMATIC_GRAMMAR_GUIDELINES,
 } from './story_architecture';
 import { buildFullScenePrompt } from './full_scene_prompt';
+import { ensureGroundingForProject, GROUNDING_VERSION, buildGroundingContextPackage, validateGroundingContext } from './grounding_engine';
+import { executeResearchPackage, ResearchEngine } from './research_engine';
+import { resolveResearchPackage } from './claim_resolution_engine';
+import { extractClaimsFromEvidence } from './claim_extraction_engine';
+import { assertStageConsistency, createGroundingState, evaluateStageOutput } from './consistency_engine';
+import { createContinuityState, updateContinuityState } from './continuity_engine';
+import {
+  assertSceneAssetCoverage,
+  createSceneAssetCoverageReport,
+  validateMasterFrameCoverage,
+  validatePromptCoverage,
+  validateVideoPromptCoverage,
+} from './scene_asset_integrity_engine';
+import { assertFinalizationGate, evaluateFinalizationGate } from './finalization_gate';
 import {
   Project,
   ProjectFoundation,
@@ -57,6 +71,34 @@ export interface FoundationVerificationResult {
   missing: string[];
   foundation: ProjectFoundation | null;
   scenesCount: number;
+}
+
+export interface ProjectInitializationDependencies {
+  researchEngine?: ResearchEngine;
+  stage1Runner?: typeof runStage1StoryUnderstanding;
+}
+
+function enforceStageConsistency(projectId: string, stage: string, output: unknown, state: ReturnType<typeof createGroundingState> | null): void {
+  if (!state) return;
+  const report = evaluateStageOutput(stage, output, state);
+  const project = db.getProject(projectId);
+  if (project) {
+    db.saveProject({
+      ...project,
+      consistencyReports: [...(project.consistencyReports || []), report],
+    });
+  }
+  assertStageConsistency(report);
+}
+
+function advanceContinuity(projectId: string, stage: string, scene: { id?: string; scene_number?: number; location_name?: string; character_names?: string[]; event?: string; era?: string }, output: unknown, state: ReturnType<typeof createContinuityState> | null): ReturnType<typeof createContinuityState> | null {
+  if (!state) return null;
+  const result = updateContinuityState(state, scene, output);
+  const project = db.getProject(projectId);
+  if (project) db.saveProject({ ...project, continuityState: result.state });
+  const blocking = result.issues.find((issue) => issue.severity === 'BLOCKING');
+  if (blocking) throw new Error(`CONTINUITY_BLOCKED ${stage}: ${blocking.message}`);
+  return result.state;
 }
 
 /**
@@ -106,7 +148,6 @@ export function verifyProjectFoundation(projectId: string): FoundationVerificati
     scenesCount: scenes ? scenes.length : 0,
   };
 }
-
 /**
  * Helper to record telemetry event
  */
@@ -144,7 +185,8 @@ export async function runProjectInitialization(
     stageName: string,
     message: string,
     level?: 'info' | 'success' | 'warn' | 'error'
-  ) => void
+  ) => void,
+  dependencies: ProjectInitializationDependencies = {}
 ): Promise<{ success: boolean; error?: string }> {
   const project = db.getProject(projectId);
   if (!project) {
@@ -176,8 +218,32 @@ export async function runProjectInitialization(
   };
 
   try {
+    let groundedProject = ensureGroundingForProject(project);
+    if (groundedProject.researchPackage &&
+      (groundedProject.researchPackage.researchRequirement === 'RESEARCH_REQUIRED' ||
+        groundedProject.researchPackage.researchRequirement === 'RESEARCH_RECOMMENDED')) {
+      log(0, 'Research Engine', 'Menjalankan query riset yang masih berstatus PLANNED sebelum Stage 1...', 'info', 'S1');
+      const executedResearch = await executeResearchPackage(
+        groundedProject.researchPackage,
+        dependencies.researchEngine || new ResearchEngine()
+      );
+      const extractedResearch = extractClaimsFromEvidence(executedResearch).researchPackage;
+      groundedProject = { ...groundedProject, researchPackage: extractedResearch };
+      if (extractedResearch.claims.length > 0) {
+        const resolved = resolveResearchPackage(extractedResearch);
+        groundedProject = {
+          ...groundedProject,
+          researchPackage: resolved.researchPackage,
+          contextPackage: resolved.contextPackage,
+          sourceRegistry: resolved.researchPackage.sources,
+        };
+        log(0, 'Research Engine', `Research resolved: ${resolved.acceptedKnowledge.acceptedClaims.length} accepted claims, ${resolved.researchPackage.conflicts.length} conflicts preserved.`, 'success', 'S1');
+      } else {
+        log(0, 'Research Engine', 'Retrieval completed without ClaimRecords; evidence remains available but automatic claim extraction is not enabled.', 'warn', 'S1');
+      }
+    }
     db.saveProject({
-      ...project,
+      ...groundedProject,
       status: 'processing',
       foundation_status: 'initializing',
       current_stage: 1,
@@ -185,6 +251,32 @@ export async function runProjectInitialization(
     });
 
     const activeModel = project.reasoning_config?.display_name || project.ai_model || 'gemini-3.7-flash';
+
+    if (groundedProject.contextPackage) {
+      const groundingValidation = validateGroundingContext(groundedProject.contextPackage);
+      db.saveProject({
+        ...groundedProject,
+        groundingVersion: GROUNDING_VERSION,
+        contextPackage: groundedProject.contextPackage,
+        sourceRegistry: groundedProject.contextPackage.sources,
+        validationResult: groundingValidation,
+        groundingStatus: groundedProject.contextPackage.groundingStatus,
+      });
+      if (groundingValidation.errors.length > 0) {
+        log(0, 'Grounding Validator', `Grounding critical issues detected before Stage 1: ${groundingValidation.errors.join('; ')}`, 'warn', 'S1');
+      }
+    }
+
+    const consistencyState = groundedProject.contextPackage
+      ? createGroundingState(
+          groundedProject.contextPackage,
+          (groundedProject.researchPackage?.conflicts || []).filter((conflict) => conflict.status === 'UNRESOLVED')
+        )
+      : null;
+    let continuityState = groundedProject.contextPackage
+      ? createContinuityState(groundedProject.contextPackage)
+      : null;
+    if (continuityState) db.saveProject({ ...groundedProject, continuityState });
 
     // ==========================================
     // STAGE 1: Story Understanding Agent (S1)
@@ -203,12 +295,17 @@ export async function runProjectInitialization(
 
     let stage1Result;
     try {
-      stage1Result = await runStage1StoryUnderstanding({
+      const stage1Runner = dependencies.stage1Runner || runStage1StoryUnderstanding;
+      const stage1Input = {
         rawScript: project.raw_script,
+        contextPackage: groundedProject.contextPackage || null,
         language: project.prompt_language,
         model: project.ai_model,
         reasoningConfig: project.reasoning_config,
-      });
+      };
+      stage1Result = await stage1Runner(stage1Input);
+      enforceStageConsistency(projectId, 'S1', stage1Result, consistencyState);
+      continuityState = advanceContinuity(projectId, 'S1', { id: `project_${projectId}`, scene_number: 1, event: 'Stage 1', character_names: stage1Result.main_characters }, stage1Result, continuityState);
       const s1Duration = Date.now() - s1StartTime;
       recordTelemetry(projectId, {
         stage: 1,
@@ -285,10 +382,13 @@ export async function runProjectInitialization(
       const stage2Result = await runStage2CharacterDetection({
         rawScript: project.raw_script,
         foundation: foundationData,
+        contextPackage: project.contextPackage || null,
         language: project.prompt_language,
         model: project.ai_model,
         reasoningConfig: project.reasoning_config,
       });
+      enforceStageConsistency(projectId, 'S2', stage2Result, consistencyState);
+      continuityState = advanceContinuity(projectId, 'S2', { id: `project_${projectId}`, scene_number: 2, event: 'Stage 2', character_names: stage2Result.map((character) => character.name) }, stage2Result, continuityState);
       savedCharacters = db.saveAndMergeCharacters(projectId, stage2Result);
       const s2Duration = Date.now() - s2StartTime;
       recordTelemetry(projectId, {
@@ -349,10 +449,13 @@ export async function runProjectInitialization(
       const stage3Result = await runStage3LocationObjectDetection({
         rawScript: project.raw_script,
         foundation: foundationData,
+        contextPackage: project.contextPackage || null,
         language: project.prompt_language,
         model: project.ai_model,
         reasoningConfig: project.reasoning_config,
       });
+      enforceStageConsistency(projectId, 'S3', stage3Result, consistencyState);
+      continuityState = advanceContinuity(projectId, 'S3', { id: `project_${projectId}`, scene_number: 3, event: 'Stage 3' }, stage3Result, continuityState);
       savedLocations = db.saveAndMergeLocations(projectId, stage3Result.locations);
       savedObjects = db.saveAndMergeObjects(projectId, stage3Result.objects);
       const s3Duration = Date.now() - s3StartTime;
@@ -422,10 +525,13 @@ export async function runProjectInitialization(
         foundation: foundationData,
         characters: savedCharacters,
         locations: savedLocations,
+        contextPackage: project.contextPackage || null,
         language: project.prompt_language,
         model: project.ai_model,
         reasoningConfig: project.reasoning_config,
       });
+      enforceStageConsistency(projectId, 'S4', narrativeBeats, consistencyState);
+      continuityState = advanceContinuity(projectId, 'S4', { id: `project_${projectId}`, scene_number: 4, event: 'Stage 4' }, narrativeBeats, continuityState);
 
       db.saveProjectFoundation({
         ...foundationData,
@@ -529,11 +635,14 @@ export async function runProjectInitialization(
           maxSceneDurationSec: maxSceneSec,
           fixedSceneDurationSec: fixedSceneSec,
           allowFinalSceneOverride: project.allow_final_scene_override,
+          contextPackage: project.contextPackage || null,
           language: project.prompt_language,
           model: project.ai_model,
           reasoningConfig: project.reasoning_config,
           feedbackPrompt,
         });
+        enforceStageConsistency(projectId, 'S5', scenesAttempt, consistencyState);
+        continuityState = advanceContinuity(projectId, 'S5', { id: `project_${projectId}`, scene_number: 5, event: 'Stage 5' }, scenesAttempt, continuityState);
 
         // Backend Validation
         const validation = validateSceneDurations(
@@ -750,6 +859,13 @@ export async function runPipelineForScene(
     throw new Error(`Project ${projectId} tidak ditemukan.`);
   }
 
+  const sceneConsistencyState = project.contextPackage
+    ? createGroundingState(
+        project.contextPackage,
+        (project.researchPackage?.conflicts || []).filter((conflict) => conflict.status === 'UNRESOLVED')
+      )
+    : null;
+
   // Verification Guard: Check if Foundation (S1-S5) is ready
   const foundationCheck = verifyProjectFoundation(projectId);
   if (!foundationCheck.ready) {
@@ -759,10 +875,26 @@ export async function runPipelineForScene(
     }
   }
 
+  const refreshedProject = db.getProject(projectId) || project;
+  let sceneContinuityState = refreshedProject.continuityState || (refreshedProject.contextPackage ? createContinuityState(refreshedProject.contextPackage) : null);
+
   const foundation = db.getProjectFoundation(projectId);
   const characters = db.getCharacters(projectId);
   const locations = db.getLocations(projectId);
   const objects = db.getObjects(projectId);
+  let assetIntegrityReport = createSceneAssetCoverageReport(
+    scene,
+    characters,
+    locations,
+    objects,
+    project.contextPackage || null,
+    sceneContinuityState
+  );
+  assertSceneAssetCoverage(assetIntegrityReport);
+  db.saveProject({
+    ...project,
+    assetIntegrityReports: [...(project.assetIntegrityReports || []).filter((report) => report.sceneId !== sceneId), assetIntegrityReport],
+  });
 
   const log = (
     stage: number,
@@ -817,11 +949,16 @@ export async function runPipelineForScene(
         characters,
         locations,
         objects,
+        contextPackage: project.contextPackage || null,
         language: project.prompt_language,
         model: project.ai_model,
         reasoningConfig: project.reasoning_config,
         feedbackPrompt,
       });
+      enforceStageConsistency(projectId, `S6:${sceneId}`, shotsAttempt, sceneConsistencyState);
+      sceneContinuityState = advanceContinuity(projectId, `S6:${sceneId}`, scene, shotsAttempt, sceneContinuityState);
+      assetIntegrityReport = validatePromptCoverage(assetIntegrityReport, JSON.stringify({ scene, shots: shotsAttempt }));
+      assertSceneAssetCoverage(assetIntegrityReport);
 
       // Strict Shot Duration Total Validation
       const durationValidation = validateShotDurationTotal(scene, shotsAttempt);
@@ -968,10 +1105,16 @@ export async function runPipelineForScene(
       characters,
       locations,
       objects,
+      contextPackage: project.contextPackage || null,
+      continuityState: sceneContinuityState,
       language: project.prompt_language,
       model: project.ai_model,
       reasoningConfig: project.reasoning_config,
     });
+    enforceStageConsistency(projectId, `S7:${sceneId}`, stage7Result, sceneConsistencyState);
+    sceneContinuityState = advanceContinuity(projectId, `S7:${sceneId}`, scene, stage7Result, sceneContinuityState);
+    assetIntegrityReport = validateMasterFrameCoverage(assetIntegrityReport, JSON.stringify(stage7Result));
+    assertSceneAssetCoverage(assetIntegrityReport);
 
     db.updateScene(sceneId, {
       master_image_prompt_json: stage7Result.promptJson,
@@ -1063,7 +1206,13 @@ export async function runPipelineForScene(
         language: project.prompt_language,
         model: project.ai_model,
         reasoningConfig: project.reasoning_config,
+        contextPackage: project.contextPackage || null,
+        continuityState: sceneContinuityState,
       });
+      enforceStageConsistency(projectId, `S8:${sceneId}:${shot.id}`, stage8Result, sceneConsistencyState);
+      sceneContinuityState = advanceContinuity(projectId, `S8:${sceneId}:${shot.id}`, currentScene, stage8Result, sceneContinuityState);
+      assetIntegrityReport = validateVideoPromptCoverage(assetIntegrityReport, JSON.stringify(stage8Result));
+      assertSceneAssetCoverage(assetIntegrityReport);
 
       if (shot.id) {
         db.saveVideoPrompts(shot.id, sceneId, projectId, stage8Result.prompts);
@@ -1136,6 +1285,21 @@ export async function runPipelineForScene(
       });
       log(8, 'Video Prompt Agent', `Shot #${shot.shot_number} error: ${err?.message || err}`, 'warn', 'S8');
     }
+  }
+
+  enforceStageConsistency(
+    projectId,
+    `FINAL:${sceneId}`,
+    { scene: currentScene, shots: savedShots, videoPrompts: db.getVideoPromptsByScene(sceneId) },
+    sceneConsistencyState
+  );
+  sceneContinuityState = advanceContinuity(projectId, `FINAL:${sceneId}`, currentScene, { scene: currentScene, shots: savedShots }, sceneContinuityState);
+  const finalProject = db.getProject(projectId);
+  if (finalProject) {
+    db.saveProject({
+      ...finalProject,
+      assetIntegrityReports: [...(finalProject.assetIntegrityReports || []).filter((report) => report.sceneId !== sceneId), assetIntegrityReport],
+    });
   }
 
   // ----------------------------------------------------
@@ -1223,6 +1387,13 @@ export async function runPipelineForScene(
     continuity_violations: continuityViolations,
   });
 
+  const finalizationReport = evaluateFinalizationGate(db.getProject(projectId) || project, [
+    { sceneId, status: sceneFinalStatus },
+  ]);
+  const finalProjectState = db.getProject(projectId);
+  if (finalProjectState) db.saveProject({ ...finalProjectState, finalizationReport });
+  assertFinalizationGate(finalizationReport);
+
   if (failedShotsCount > 0 || continuityStatus === 'continuity_failed') {
     log(
       8,
@@ -1241,7 +1412,7 @@ export async function runPipelineForScene(
     );
   }
 
-  return { success: true, shots: savedShots };
+  return { success: sceneFinalStatus === 'ready', shots: savedShots, error: sceneFinalStatus === 'ready' ? undefined : `Scene final status: ${sceneFinalStatus}` };
 }
 
 /**
@@ -1353,7 +1524,7 @@ export async function generateAllScenes(
   // Update project status based on scene results
   const updatedProject = db.getProject(projectId);
   if (updatedProject) {
-    const finalStatus = failedCount === 0 ? 'completed' : 'completed';
+    const finalStatus = failedCount === 0 ? 'completed' : 'failed';
     db.saveProject({
       ...updatedProject,
       status: finalStatus,

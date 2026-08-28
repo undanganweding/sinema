@@ -4,6 +4,530 @@ export type ContinuityStatus = 'PASS' | 'CONFLICT' | 'UNSPECIFIED' | 'FILTERED';
 export type EntityState = 'clean' | 'dirty' | 'stale' | 'superseded' | 'failed';
 export type HistoricalSourceType = 'Quran' | 'Hadith' | 'Sirah' | 'Historical Record' | 'Scholarly Reference';
 
+export type GroundingContentCategory =
+  | 'HISTORICAL'
+  | 'RELIGIOUS'
+  | 'BIOGRAPHICAL'
+  | 'PRODUCT'
+  | 'DOCUMENTARY'
+  | 'FICTION'
+  | 'EDUCATIONAL'
+  | 'CREATIVE'
+  | 'COMMERCIAL'
+  | 'AFFILIATE'
+  | 'TUTORIAL'
+  | 'CURRENT_EVENT'
+  | 'GENERAL_STORY'
+  | 'HYBRID'
+  | 'UNKNOWN';
+
+export type ResearchRequirement =
+  | 'RESEARCH_REQUIRED'
+  | 'RESEARCH_RECOMMENDED'
+  | 'RESEARCH_OPTIONAL'
+  | 'RESEARCH_NOT_REQUIRED';
+
+export type ResearchQuestionType =
+  | 'ENTITY'
+  | 'EVENT'
+  | 'CHRONOLOGY'
+  | 'RELATIONSHIP'
+  | 'LOCATION'
+  | 'OBJECT'
+  | 'PRODUCT'
+  | 'SPECIFICATION'
+  | 'SOFTWARE'
+  | 'SOURCE_VERIFICATION'
+  | 'GENERAL_CONTEXT';
+
+export type ResearchPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+export type ResearchQueryStatus = 'PLANNED' | 'EXECUTED' | 'FAILED' | 'NO_RESULT' | 'PARTIAL';
+export type ResearchRetrievalProviderType = 'WEB' | 'DOCUMENT' | 'USER_SOURCE' | 'PROJECT_SOURCE' | 'API' | 'AI_KNOWLEDGE';
+export type ResearchRetrievalStatus = 'EXECUTED' | 'NO_RESULT' | 'SOURCE_UNAVAILABLE' | 'NETWORK_FAILURE' | 'PARSER_FAILURE' | 'INSUFFICIENT_EVIDENCE' | 'UNVERIFIED';
+export type SearchStatus = 'SEARCH_AVAILABLE' | 'SEARCH_UNAVAILABLE' | 'SEARCH_NO_RESULT' | 'SEARCH_FAILED' | 'SEARCH_BLOCKED' | 'SEARCH_PARTIAL' | 'SEARCH_BUDGET_EXHAUSTED';
+export type SearchResultStatus = 'CANDIDATE' | 'DUPLICATE' | 'FILTERED' | 'UNAVAILABLE';
+export type SearchProviderType = 'WEB' | 'API' | 'PROJECT_SOURCE' | 'USER_SOURCE';
+export type EvidenceType = 'DIRECT_QUOTE' | 'PARAPHRASE' | 'STRUCTURED_DATA' | 'METADATA' | 'USER_PROVIDED' | 'AI_KNOWLEDGE' | 'UNAVAILABLE';
+export type ClaimExtractionMode = 'DIRECT' | 'INFERRED' | 'AMBIGUOUS';
+export type ClaimExtractionStatus = 'SUPPORTED' | 'PARTIALLY_SUPPORTED' | 'AMBIGUOUS' | 'UNSUPPORTED' | 'REJECTED';
+export type ClaimKind = 'CLAIM' | 'FACT' | 'ASSUMPTION' | 'INFERENCE' | 'RECONSTRUCTION' | 'UNKNOWN' | 'DIRECT_FACT' | 'RELATIONSHIP' | 'EVENT' | 'TEMPORAL' | 'LOCATION' | 'ATTRIBUTE' | 'IDENTITY' | 'NEGATION' | 'QUANTITATIVE' | 'CAUSAL';
+export type ClaimStatus = 'SUPPORTED' | 'UNSUPPORTED' | 'UNVERIFIED' | 'CONFLICTED' | 'NOT_ESTABLISHED';
+export type ClaimProvenance = 'SOURCE_BACKED' | 'MULTI_SOURCE_BACKED' | 'USER_PROVIDED' | 'AI_KNOWLEDGE' | 'INFERRED' | 'RECONSTRUCTED' | 'UNKNOWN';
+export type FactConfidence = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNVERIFIED' | 'UNKNOWN';
+export type SourceAuthority = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
+export type SourceVerification = 'VERIFIED' | 'UNVERIFIED' | 'UNAVAILABLE';
+export type ConflictStatus = 'UNRESOLVED' | 'RESOLVED' | 'PREFERRED_CLAIM';
+export type TemporalRelation = 'BEFORE' | 'AFTER' | 'DURING' | 'OVERLAPS' | 'UNKNOWN';
+export type UnresolvedQuestionStatus = 'NO_EVIDENCE' | 'CONFLICTING_EVIDENCE' | 'UNAVAILABLE_SOURCE' | 'INSUFFICIENT_SOURCE';
+export type ResearchQualityStatus = 'STRONG' | 'ADEQUATE' | 'WEAK' | 'INSUFFICIENT';
+
+export type ProvenanceType = 'SOURCE_FACT' | 'SOURCE_CONTEXT' | 'CINEMATIC_RECONSTRUCTION' | 'UNKNOWN';
+export type GroundingSeverity = 'CRITICAL' | 'WARNING' | 'INFO' | 'UNKNOWN';
+export type GroundingConstraintSeverity = 'HARD_CONSTRAINT' | 'SOFT_CONSTRAINT' | 'INFORMATIONAL';
+export type GroundingStatus = 'idle' | 'partial' | 'complete' | 'research_unavailable';
+export type SourceType =
+  | 'QURAN'
+  | 'HADITH'
+  | 'SIRAH'
+  | 'TAFSIR'
+  | 'TARIKH'
+  | 'ATHAR'
+  | 'HISTORICAL_SOURCE'
+  | 'ACADEMIC_SOURCE'
+  | 'OFFICIAL_SOURCE'
+  | 'NEWS'
+  | 'PRODUCT_SOURCE'
+  | 'MANUFACTURER'
+  | 'DOCUMENTATION'
+  | 'HIKAYAT'
+  | 'FOLKLORE'
+  | 'ORAL_TRADITION'
+  | 'MODERN_RETELLING'
+  | 'GENERAL_WEB'
+  | 'UNKNOWN';
+
+export interface SourceRegistryEntry {
+  sourceId: string;
+  sourceType: SourceType;
+  title: string;
+  author?: string;
+  publisher?: string;
+  publicationDate?: string;
+  reference?: string;
+  url?: string;
+  retrievedAt?: string;
+  relevance?: number;
+  usedFor?: string[];
+  sourceNotes?: string;
+  authority?: SourceAuthority;
+  verification?: SourceVerification;
+}
+
+export interface ResearchQuestion {
+  questionId: string;
+  type: ResearchQuestionType;
+  question: string;
+  priority: ResearchPriority;
+  required: boolean;
+  relatedEntityId?: string;
+}
+
+export interface ResearchQuery {
+  queryId: string;
+  questionId: string;
+  query: string;
+  purpose: string;
+  sourceTypes: SourceType[];
+  priority: ResearchPriority;
+  status: ResearchQueryStatus;
+  sourceIds?: string[];
+  evidenceIds?: string[];
+  normalizedQuery?: string;
+  searchExecutionId?: string;
+  searchResultIds?: string[];
+}
+
+export interface SearchResult {
+  searchResultId: string;
+  queryId: string;
+  providerId: string;
+  title: string;
+  url: string;
+  snippet?: string;
+  domain?: string;
+  sourceType?: SourceType;
+  publisher?: string;
+  author?: string;
+  publishedAt?: string;
+  retrievedAt: string;
+  relevance?: number;
+  authority?: SourceAuthority;
+  verification: SourceVerification;
+  status: SearchResultStatus;
+}
+
+export interface SearchExecution {
+  searchExecutionId: string;
+  queryId: string;
+  providerId: string;
+  startedAt: string;
+  completedAt?: string;
+  status: SearchStatus;
+  resultCount: number;
+  errorCode?: string;
+}
+
+export interface SearchBudget {
+  maxQueriesPerResearchRun: number;
+  maxResultsPerQuery: number;
+  maxSourcesPerResearchRun: number;
+}
+
+export interface SearchResultSet {
+  status: SearchStatus;
+  results: SearchResult[];
+  execution: SearchExecution;
+  error?: string;
+}
+
+export interface ResearchSearchProvider {
+  providerId: string;
+  providerType: SearchProviderType;
+  capabilities: string[];
+  search(query: ResearchQuery, strategy: ResearchStrategy, options?: { maxResults?: number }): Promise<SearchResultSet>;
+}
+
+export interface ResearchRetrievalOptions {
+  timeoutMs?: number;
+  maxExcerptLength?: number;
+}
+
+export interface ResearchRetrievalResult {
+  status: ResearchRetrievalStatus;
+  source?: SourceRegistryEntry;
+  evidence?: EvidenceRecord[];
+  error?: string;
+}
+
+export interface ResearchRetrievalProvider {
+  providerId: string;
+  providerType: ResearchRetrievalProviderType;
+  capabilities: string[];
+  retrieve(query: ResearchQuery, options?: ResearchRetrievalOptions): Promise<ResearchRetrievalResult>;
+}
+
+export interface EvidenceSourceLocator {
+  page?: string | number;
+  chapter?: string;
+  section?: string;
+  paragraph?: string | number;
+  timestamp?: string;
+  heading?: string;
+  urlFragment?: string;
+  documentLocation?: string;
+}
+
+export interface EvidenceRecord {
+  evidenceId: string;
+  sourceId: string;
+  queryId?: string;
+  excerpt: string;
+  sourceLocator?: EvidenceSourceLocator;
+  evidenceType: EvidenceType;
+  extractedAt: string;
+  extractionMethod: string;
+  notes?: string;
+}
+
+export interface ClaimRecord {
+  claimId: string;
+  subject: string;
+  predicate: string;
+  object: string;
+  normalizedStatement: string;
+  claimType: ClaimKind;
+  status: ClaimStatus;
+  evidenceIds: string[];
+  sourceIds: string[];
+  confidence: FactConfidence;
+  confidenceRationale: string;
+  provenance: ClaimProvenance;
+  qualifiers?: Record<string, string | number | boolean | undefined>;
+  claimIdentity?: string;
+  extractionMode?: ClaimExtractionMode;
+  extractionStatus?: ClaimExtractionStatus;
+  extractionMethod?: string;
+  extractionVersion?: string;
+  extractedAt?: string;
+  queryIds?: string[];
+}
+
+export interface ConflictRecord {
+  conflictId: string;
+  claimIds: string[];
+  evidenceIds: string[];
+  conflictType: string;
+  severity: GroundingSeverity;
+  status: ConflictStatus;
+  resolution?: string;
+  resolutionRationale?: string;
+}
+
+export interface AcceptedKnowledge {
+  acceptedClaims: ClaimRecord[];
+  acceptedEntities: GroundingEntity[];
+  acceptedEvents: GroundingEvent[];
+  acceptedRelationships: GroundingRelationship[];
+  timelineFacts: {
+    subject: string;
+    relation: TemporalRelation;
+    object: string;
+    claimIds: string[];
+    sourceIds: string[];
+  }[];
+  unresolvedConflicts: ConflictRecord[];
+  reconstructionBoundaries: string[];
+}
+
+export interface UnresolvedQuestion {
+  questionId: string;
+  reason: string;
+  attemptedQueries: string[];
+  status: UnresolvedQuestionStatus;
+}
+
+export interface ResearchQualityAssessment {
+  sourceCount: number;
+  evidenceCount: number;
+  backedClaimCount: number;
+  unsupportedClaimCount: number;
+  conflictCount: number;
+  unresolvedCount: number;
+  overallStatus: ResearchQualityStatus;
+}
+
+export interface ResearchPackage {
+  classification: ContentClassificationResult;
+  researchRequirement: ResearchRequirement;
+  researchStrategy: ResearchStrategy;
+  researchQuestions: ResearchQuestion[];
+  queries: ResearchQuery[];
+  sources: SourceRegistryEntry[];
+  evidence: EvidenceRecord[];
+  claims: ClaimRecord[];
+  entities: GroundingEntity[];
+  events: GroundingEvent[];
+  relationships: GroundingRelationship[];
+  conflicts: ConflictRecord[];
+  unresolvedQuestions: UnresolvedQuestion[];
+  qualityAssessment: ResearchQualityAssessment;
+  searchResults?: SearchResult[];
+  searchExecutions?: SearchExecution[];
+  searchStatus?: SearchStatus;
+}
+
+export interface FactEntry {
+  factId: string;
+  description: string;
+  provenance: ProvenanceType;
+  sourceIds: string[];
+  confidence?: 'High' | 'Medium' | 'Low';
+  claimId?: string;
+  evidenceIds?: string[];
+}
+
+export interface GroundingEntity {
+  entityId: string;
+  name: string;
+  type: string;
+  aliases?: string[];
+  description?: string;
+  status?: 'ALIVE' | 'DECEASED' | 'NOT_YET_BORN' | 'UNKNOWN' | 'FICTIONAL' | 'OUT_OF_CONTEXT';
+  timeline?: string[];
+  sourceIds?: string[];
+  constraints?: string[];
+  birthYear?: number;
+  deathYear?: number;
+  timelineBounds?: {
+    startYear?: number;
+    endYear?: number;
+  };
+}
+
+export type GroundingParticipationState =
+  | 'KNOWN_PARTICIPANT'
+  | 'POSSIBLE_PARTICIPANT'
+  | 'NOT_ESTABLISHED'
+  | 'OUT_OF_CONTEXT'
+  | 'FORBIDDEN'
+  | 'FORBIDDEN_AS_LIVING_PARTICIPANT';
+
+export interface GroundingEvent {
+  eventId: string;
+  label: string;
+  startYear?: number;
+  endYear?: number;
+  participantEntityIds?: string[];
+  possibleParticipantEntityIds?: string[];
+  excludedEntityIds?: string[];
+  sourceIds?: string[];
+  locationId?: string;
+  sourceClaimIds?: string[];
+  confidence?: FactConfidence;
+  status?: ClaimStatus;
+}
+
+export interface GroundingEntityEvaluation {
+  entityId: string;
+  entityName: string;
+  eventId: string;
+  temporalState: 'VALID' | 'DECEASED_BEFORE_EVENT' | 'NOT_YET_BORN' | 'UNKNOWN';
+  participation: GroundingParticipationState;
+  valid: boolean;
+  reason: string;
+  sourceIds: string[];
+}
+
+export interface GroundingRelationship {
+  relationshipId: string;
+  fromEntity: string;
+  toEntity: string;
+  relation: string;
+  sourceIds?: string[];
+  claimIds?: string[];
+}
+
+export interface GroundingLocation {
+  locationId: string;
+  name: string;
+  period?: string;
+  region?: string;
+  culture?: string;
+  architecture?: string;
+  environment?: string;
+  sourceIds?: string[];
+  constraints?: string[];
+}
+
+export interface GroundingObject {
+  objectId: string;
+  name: string;
+  category?: string;
+  material?: string;
+  description?: string;
+  sourceIds?: string[];
+  constraints?: string[];
+}
+
+export interface GroundingTimelineEntry {
+  eventId: string;
+  label: string;
+  dateContext?: string;
+  sourceIds?: string[];
+  notes?: string;
+  claimIds?: string[];
+  evidenceIds?: string[];
+}
+
+export interface ContextPackage {
+  version: string;
+  contentType: GroundingContentCategory[];
+  primaryCategory?: GroundingContentCategory;
+  researchRequired: boolean;
+  researchSummary: string;
+  sources: SourceRegistryEntry[];
+  timeline: GroundingTimelineEntry[];
+  events?: GroundingEvent[];
+  entities: GroundingEntity[];
+  relationships: GroundingRelationship[];
+  locations: GroundingLocation[];
+  objects: GroundingObject[];
+  facts: FactEntry[];
+  constraints: string[];
+  unknowns: string[];
+  reconstructionRules: string[];
+  productContext?: string[];
+  culturalContext?: string[];
+  technicalContext?: string[];
+  groundingStatus: GroundingStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type StageConsistencyStatus = 'PASS' | 'WARNING' | 'CONFLICT' | 'BLOCKED';
+
+export interface StageConsistencyViolation {
+  code: string;
+  severity: 'BLOCKING' | 'WARNING';
+  message: string;
+  constraintId?: string;
+  sourceIds?: string[];
+}
+
+export interface StageConsistencyReport {
+  stage: string;
+  status: StageConsistencyStatus;
+  violations: StageConsistencyViolation[];
+  warnings: string[];
+  checkedConstraints: string[];
+}
+
+export interface GroundingState {
+  readonly contextPackage: ContextPackage;
+  readonly facts: readonly FactEntry[];
+  readonly entities: readonly GroundingEntity[];
+  readonly events: readonly GroundingEvent[];
+  readonly relationships: readonly GroundingRelationship[];
+  readonly locations: readonly GroundingLocation[];
+  readonly objects: readonly GroundingObject[];
+  readonly timeline: readonly GroundingTimelineEntry[];
+  readonly constraints: readonly string[];
+  readonly unresolvedConflicts: readonly ConflictRecord[];
+  readonly reconstructionBoundaries: readonly string[];
+}
+
+export interface GroundingValidationIssue {
+  code: string;
+  severity: GroundingSeverity;
+  message: string;
+  entityName?: string;
+  sourceIds?: string[];
+  stage?: string;
+  action?: 'BLOCKED' | 'REGENERATED' | 'FLAGGED' | 'ALLOWED';
+}
+
+export interface GroundingConstraint {
+  id: string;
+  scope: 'entity' | 'location' | 'object' | 'event' | 'relationship';
+  target: string;
+  description: string;
+  severity: GroundingConstraintSeverity;
+  action: 'BLOCK' | 'WARN' | 'ALLOW' | 'REGENERATE';
+  sourceIds: string[];
+}
+
+export interface GroundingEnforcementPlan {
+  constraints: GroundingConstraint[];
+  blockedEntities: string[];
+  allowedCinematicReconstruction: string[];
+}
+
+export interface GroundingValidationResult {
+  valid: boolean;
+  warnings: string[];
+  errors: string[];
+  blockedEntities: string[];
+  conflicts: string[];
+  unresolvedItems: string[];
+  sourceGaps: string[];
+  issues?: GroundingValidationIssue[];
+}
+
+export interface StageGroundingTrace {
+  stage: string;
+  contextVersion: string;
+  constraintIds: string[];
+  generatedCandidates: string[];
+  validation: GroundingValidationResult;
+  action: 'CONTINUE' | 'BLOCKED' | 'REGENERATE' | 'FLAGGED';
+}
+
+export interface ContentClassificationResult {
+  categories: GroundingContentCategory[];
+  primaryCategory: GroundingContentCategory;
+  researchRequired: boolean;
+  summary: string;
+}
+
+export interface ResearchStrategy {
+  required: boolean;
+  freshRequired: boolean;
+  researchRequirement?: ResearchRequirement;
+  sourceTypes: SourceType[];
+  summary: string;
+  providers: string[];
+}
+
 // --- CONTINUITY ENGINE SCHEMAS ---
 export type ContinuityViolationSeverity = 'critical' | 'high' | 'medium' | 'low';
 export type ContinuityLockStatus = 'locked' | 'unlocked' | 'modified';
@@ -106,6 +630,66 @@ export interface ContinuitySnapshot {
     character_states: Record<string, { costume_version: number; head_cover?: string; outer_garment?: string; temporary_props?: string[] }>;
     location_name: string;
   };
+}
+
+export type ContinuityTransitionType = 'CONTINUOUS' | 'TIME_JUMP' | 'LOCATION_CHANGE' | 'EVENT_CHANGE' | 'MONTAGE' | 'UNKNOWN';
+export type ContinuityIssueSeverity = 'BLOCKING' | 'WARNING';
+
+export interface ContinuityIssue {
+  code: string;
+  severity: ContinuityIssueSeverity;
+  message: string;
+  sceneId?: string;
+  sourceIds?: string[];
+}
+
+export interface CharacterState {
+  canonicalIdentity: string;
+  displayName: string;
+  aliases: string[];
+  status?: GroundingEntity['status'];
+  birthYear?: number;
+  deathYear?: number;
+  age?: string;
+  attributes: string[];
+  clothing: string[];
+  accessories: string[];
+  currentLocation?: string;
+  activeEvent?: string;
+  relationships: string[];
+  possessions: string[];
+  provenance: string[];
+  confidence?: FactConfidence;
+}
+
+export interface SceneContinuityState {
+  sceneId: string;
+  previousSceneId?: string;
+  nextSceneId?: string;
+  activeCharacters: string[];
+  location?: string;
+  event?: string;
+  objects: string[];
+  temporalState?: string;
+  visualState: Record<string, string[]>;
+  transitionType: ContinuityTransitionType;
+  continuityConstraints: string[];
+}
+
+export interface ContinuityState {
+  version: string;
+  characters: CharacterState[];
+  characterIdentities: Record<string, string>;
+  locations: Record<string, { canonicalLocation: string; aliases: string[]; currentScene?: string; temporalValidity?: string; provenance: string[]; confidence?: FactConfidence }>;
+  activeEvents: string[];
+  relationships: string[];
+  objects: Record<string, { canonicalObject: string; owner?: string; location?: string; appearance: string[]; provenance: string[] }>;
+  temporalPosition?: string;
+  temporalOrder?: Record<string, number>;
+  scenes: SceneContinuityState[];
+  visualState: Record<string, string[]>;
+  continuityConstraints: string[];
+  unresolvedIssues: ContinuityIssue[];
 }
 
 export interface ContinuityViolation {
@@ -371,6 +955,63 @@ export interface Project {
   error_message?: string | null;
   duration_validation_passed?: boolean;
   retry_count?: number;
+  groundingVersion?: string;
+  contextPackage?: ContextPackage | null;
+  sourceRegistry?: SourceRegistryEntry[];
+  validationResult?: GroundingValidationResult | null;
+  groundingStatus?: GroundingStatus;
+  researchPackage?: ResearchPackage | null;
+  consistencyReports?: StageConsistencyReport[];
+  continuityState?: ContinuityState | null;
+  assetIntegrityReports?: SceneAssetCoverageReport[];
+  finalizationReport?: FinalizationGateReport | null;
+}
+
+export interface FinalizationGateReport {
+  valid: boolean;
+  status: 'PASS' | 'BLOCKED' | 'WARNING';
+  blockers: string[];
+  warnings: string[];
+  checkedLayers: string[];
+}
+
+export type AssetCoverageStatus = 'PASS' | 'MISSING' | 'MISMATCH' | 'UNKNOWN' | 'BLOCKED' | 'WARNING' | 'RECONSTRUCTION';
+export type SceneAssetRequirementLevel = 'REQUIRED' | 'OPTIONAL' | 'NONE' | 'UNKNOWN';
+export type SceneAssetType = 'CHARACTER' | 'LOCATION' | 'OBJECT';
+
+export interface SceneAssetRequirement {
+  name: string;
+  canonicalId?: string;
+  assetType: SceneAssetType;
+  level: SceneAssetRequirementLevel;
+}
+
+export interface AssetReference {
+  canonicalAssetId: string;
+  assetType: SceneAssetType;
+  name: string;
+  source: 'CHARACTER_BIBLE' | 'LOCATION_BIBLE' | 'OBJECT_BIBLE' | 'CONTINUITY' | 'RECONSTRUCTION';
+  sceneId?: string;
+}
+
+export interface AssetCoverageRecord {
+  requirement: SceneAssetRequirement;
+  asset?: AssetReference;
+  status: AssetCoverageStatus;
+  message: string;
+}
+
+export interface SceneAssetCoverageReport {
+  sceneId?: string;
+  sceneNumber: number;
+  status: AssetCoverageStatus;
+  characters: AssetCoverageRecord[];
+  locations: AssetCoverageRecord[];
+  objects: AssetCoverageRecord[];
+  promptCoverage?: AssetCoverageRecord[];
+  masterFrameCoverage?: AssetCoverageRecord[];
+  videoPromptCoverage?: AssetCoverageRecord[];
+  phantomAssets?: string[];
 }
 
 export interface ProjectFoundation {

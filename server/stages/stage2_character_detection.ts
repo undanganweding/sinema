@@ -1,10 +1,11 @@
 import { executeLLMRequest, safeParseJSON } from '../llm_provider';
 import { Type } from '../gemini';
-import { CharacterBible, ProjectFoundation, ReasoningConfig } from '../../src/types';
+import { CharacterBible, ContextPackage, ProjectFoundation, ReasoningConfig } from '../../src/types';
 
 export interface Stage2CharacterDetectionInput {
   rawScript: string;
   foundation: Omit<ProjectFoundation, 'id' | 'project_id' | 'updated_at'>;
+  contextPackage?: ContextPackage | null;
   language: 'id' | 'en';
   model?: string;
   reasoningConfig?: ReasoningConfig;
@@ -20,6 +21,7 @@ export async function runStage2CharacterDetection(
 ): Promise<DetectedCharacter[]> {
   const isIndo = input.language === 'id';
 
+  const groundingContext = input.contextPackage ? JSON.stringify(input.contextPackage, null, 2) : 'No grounding context available.';
   const systemInstruction = isIndo
     ? `Anda adalah Casting Director & Character Bible Architect untuk produksi film sinematik.
 Tugas Anda: Deteksi dan buat profil mendalam (Character Bible) untuk SEMUA karakter utama dan pendukung yang muncul atau teridentifikasi dalam naskah.
@@ -29,6 +31,7 @@ Jika karakter tidak memiliki janggut atau tidak relevan, tulis "None" atau "Tida
 Your task: Detect and generate comprehensive Character Bibles for ALL main and supporting characters in the script.
 Provide ultra-specific physical, wardrobe, facial, vocal, and body language traits that maintain strict production continuity.
 If beard is not applicable, write "None". face_identity_locked defaults to false.`;
+  const groundedSystemInstruction = `${systemInstruction}\n\nGROUNDING CONTEXT:\n${groundingContext}`;
 
   const prompt = `Analisis naskah dan Story Understanding berikut untuk membangun Character Bible:
 
@@ -113,7 +116,7 @@ ${input.rawScript}
     reasoningConfig: input.reasoningConfig,
     model: input.model,
     prompt,
-    systemInstruction,
+    systemInstruction: groundedSystemInstruction,
     temperature: 0.3,
     responseSchema,
   });

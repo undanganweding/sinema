@@ -1,10 +1,11 @@
 import { executeLLMRequest, safeParseJSON } from '../llm_provider';
 import { Type } from '../gemini';
-import { ProjectFoundation, ReasoningConfig } from '../../src/types';
+import { ContextPackage, ProjectFoundation, ReasoningConfig } from '../../src/types';
 import { buildNarrativeVoiceInstruction, validateNarrativeStyle } from '../narrative_tone';
 
 export interface Stage1StoryUnderstandingInput {
   rawScript: string;
+  contextPackage?: ContextPackage | null;
   language: 'id' | 'en';
   model?: string;
   reasoningConfig?: ReasoningConfig;
@@ -28,7 +29,8 @@ Your task is to analyze raw scripts or storyboards and extract a comprehensive c
 Provide profound, sharp cinematic narrative insights ready for high-end film production blueprinting.
 Output in English with high narrative dignity.`;
 
-  const systemInstruction = `${baseInstruction}\n\n${narrativeDoctrine}`;
+  const groundingContext = input.contextPackage ? JSON.stringify(input.contextPackage, null, 2) : 'No grounding context available.';
+  const systemInstruction = `${baseInstruction}\n\n${narrativeDoctrine}\n\nGROUNDING CONTEXT:\n${groundingContext}`;
 
   const prompt = `Lakukan analisis mendalam (Story Understanding) pada naskah/storyboard berikut:\n\n=== RAW SCRIPT / STORYBOARD ===\n${input.rawScript}\n===============================`;
 

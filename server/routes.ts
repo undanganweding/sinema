@@ -26,6 +26,7 @@ import {
   SceneTone,
   NarrativeStyleConfig,
 } from '../src/types';
+import { buildGroundingContextPackage, validateGroundingContext, GROUNDING_VERSION } from './grounding_engine';
 import {
   TONE_PRESET_NAMES,
   TONE_PRESET_DICTIONARY,
@@ -211,6 +212,7 @@ apiRouter.post('/projects', (req: Request, res: Response) => {
     };
 
     const id = `proj_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    const groundingContext = buildGroundingContextPackage(raw_script.trim());
     const newProject: Project = {
       id,
       title: title.trim(),
@@ -232,6 +234,11 @@ apiRouter.post('/projects', (req: Request, res: Response) => {
       current_stage: 0,
       error_message: null,
       retry_count: 0,
+      groundingVersion: GROUNDING_VERSION,
+      contextPackage: groundingContext,
+      sourceRegistry: groundingContext.sources,
+      validationResult: validateGroundingContext(groundingContext),
+      groundingStatus: groundingContext.groundingStatus,
     };
 
     const saved = db.saveProject(newProject);
