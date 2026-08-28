@@ -31,6 +31,8 @@ async function main(): Promise<void> {
   const blocked = evaluateFinalizationGate(project({ contextPackage: context, consistencyReports: [{ stage: 'S8', status: 'BLOCKED', violations: [], warnings: [], checkedConstraints: [] }] }), [{ sceneId: 's1', status: 'ready' }]);
   assert(!blocked.valid && blocked.status === 'BLOCKED', 'consistency blocker prevents finalization');
   assert(evaluateFinalizationGate(project({ contextPackage: context }), [{ sceneId: 's1', status: 'continuity_failed' }]).status === 'BLOCKED', 'continuity mismatch blocks finalization');
+  const aggregate = evaluateFinalizationGate(project({ contextPackage: context }), [{ sceneId: 's1', status: 'ready' }, { sceneId: 's2', status: 'incomplete' }]);
+  assert(aggregate.status === 'BLOCKED' && aggregate.blockerDetails?.some((blocker) => blocker.code === 'SCENE_NOT_READY' && blocker.sceneId === 's2'), 'aggregate finalization includes every scene and structured blocker scope');
   assert(evaluateFinalizationGate(project({ contextPackage: context, assetIntegrityReports: [{ sceneNumber: 1, status: 'BLOCKED', characters: [], locations: [], objects: [] }] })).status === 'BLOCKED', 'missing asset blocks finalization');
   assert(evaluateFinalizationGate(project({ contextPackage: context, researchPackage: { claims: [{ status: 'UNSUPPORTED', provenance: 'UNKNOWN' }] } as any })).status === 'BLOCKED', 'unsupported claim blocks finalization');
   assert(evaluateFinalizationGate(project({ contextPackage: context, researchPackage: { researchRequirement: 'RESEARCH_REQUIRED', queries: [{ status: 'PLANNED' }] } } as any)).status === 'BLOCKED', 'required planned research blocks finalization');

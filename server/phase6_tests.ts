@@ -45,8 +45,12 @@ function main(): void {
 
   state = createContinuityState(undefined, [character('Abdullah') as any]);
   state = updateContinuityState(state, scene('m1', 1, 'Makkah', 'Start'), 'Abdullah').state;
-  assert(updateContinuityState(state, scene('m2', 2, 'Taif', 'Travel'), 'Abdullah').issues.some((issue) => issue.code === 'LOCATION_CHANGE_WITHOUT_TRANSITION'), 'location change without transition conflicts');
-  assert(updateContinuityState(state, scene('m2', 2, 'Taif', 'Travel'), 'Abdullah', 'LOCATION_CHANGE').issues.length === 0, 'explicit location transition passes');
+  assert(updateContinuityState(state, scene('m2', 2, 'Taif', 'Travel'), 'Abdullah').issues.length === 0, 'scene boundary location changes are allowed by default');
+  assert(updateContinuityState(state, scene('m2', 2, 'Taif', 'Travel'), 'Abdullah', undefined, 'scene-boundary').issues.length === 0, 'scene boundary location changes are allowed');
+  assert(updateContinuityState(state, scene('m2', 2, 'Taif', 'Travel'), { references: [{ location: 'Makkah' }, { location: 'Taif' }] }, undefined, 'within-scene').issues.length === 0, 'location references are not transition evidence');
+  assert(updateContinuityState(state, scene('m2', 2, 'Makkah', 'Travel'), { shots: [{ shot_number: 1, location: 'Makkah' }, { shot_number: 2, location: 'Taif' }] }, undefined, 'within-scene').issues.some((issue) => issue.code === 'WITHIN_SCENE_LOCATION_CHANGE'), 'within-scene location changes remain blocked');
+  assert(updateContinuityState(state, scene('m2', 2, 'Makkah', 'Travel'), { shots: [{ shot_number: 1, location: 'Makkah' }, { shot_number: 2, location: 'Taif' }] }, 'LOCATION_CHANGE', 'within-scene').issues.length === 0, 'explicit location transition passes');
+  assert(updateContinuityState(state, scene('m2', 2, 'Taif', 'Travel'), 'Abdullah', undefined, 'explicit-chain').issues.some((issue) => issue.code === 'LOCATION_CHANGE_WITHOUT_TRANSITION'), 'explicit continuity chain remains strict');
 
   state = createContinuityState(undefined, [], [], [{ name: 'Product X', description: 'historical object', category: 'prop' } as any]);
   state = updateContinuityState(state, scene('o1', 1, 'Makkah', 'Object introduced'), { objectName: 'Product X', owner: 'Character A' }).state;
@@ -59,6 +63,8 @@ function main(): void {
   const reverse = createContinuityState(context, []);
   const reverseFirst = updateContinuityState(reverse, scene('t2', 2, 'Makkah', 'Event B'), 'Event B').state;
   assert(updateContinuityState(reverseFirst, scene('t1', 1, 'Makkah', 'Event A'), 'Event A').issues.some((issue) => issue.code === 'TEMPORAL_ORDER_CONFLICT'), 'reversed event order is blocked');
+  const ordered = updateContinuityState(reverseFirst, scene('t1', 1, 'Makkah', 'Event A'), 'Event A').state;
+  assert(ordered.scenes[0].sceneNumber === 1 && ordered.scenes[1].sceneNumber === 2, 'continuity scenes remain deterministically ordered');
   assert(updateContinuityState(temporal, scene('t3', 3, 'Makkah', 'Event B'), 'Abdullah participates in Event B in 1945').issues.some((issue) => issue.code === 'DECEASED_CHARACTER_ACTIVE'), 'deceased character is blocked after death');
 
   const reconstruction = createContinuityState(context, [character('Abdullah') as any]);

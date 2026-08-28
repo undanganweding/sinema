@@ -19,6 +19,7 @@ import {
   CharacterState,
   SceneContinuityState,
   ContinuityTransitionType,
+  ContinuityScope,
 } from '../src/types';
 
 /**
@@ -588,11 +589,18 @@ export function updateContinuityState(
   state: ContinuityState,
   scene: { id?: string; scene_number?: number; location_name?: string; character_names?: string[]; event?: string; era?: string },
   output: unknown,
-  transitionType?: ContinuityTransitionType
+  transitionType?: ContinuityTransitionType,
+  scope: ContinuityScope = 'within-scene'
 ): { state: ContinuityState; issues: ContinuityIssue[] } {
   const next: ContinuityState = JSON.parse(JSON.stringify(state)) as ContinuityState;
   const sceneId = scene.id || `scene_${scene.scene_number || next.scenes.length + 1}`;
-  const previous = next.scenes[next.scenes.length - 1];
+  const priorScenes = next.scenes.filter((item) => item.sceneId !== sceneId);
+  const previous = scene.scene_number === undefined
+    ? priorScenes[priorScenes.length - 1]
+    : priorScenes
+      .filter((item) => item.sceneNumber !== undefined && item.sceneNumber < scene.scene_number!)
+      .sort((left, right) => (right.sceneNumber ?? -1) - (left.sceneNumber ?? -1) || left.sceneId.localeCompare(right.sceneId))[0]
+      || priorScenes.filter((item) => item.sceneNumber !== undefined).sort((left, right) => (right.sceneNumber ?? -1) - (left.sceneNumber ?? -1) || left.sceneId.localeCompare(right.sceneId))[0];
   const text = phase6Text({ scene, output });
   const outputRecords = (() => {
     const collect = (value: unknown): Record<string, unknown>[] => {
@@ -613,15 +621,35 @@ export function updateContinuityState(
   }
   const currentLocation = scene.location_name;
   const resolvedTransition = transitionType || phase6Transition(previous, currentLocation);
+  const shotRecords = (() => {
+    const shots = (output && typeof output === 'object' && !Array.isArray(output))
+      ? (output as Record<string, unknown>).shots
+      : undefined;
+    return Array.isArray(shots)
+      ? shots
+        .filter((shot): shot is Record<string, unknown> => Boolean(shot && typeof shot === 'object' && !Array.isArray(shot)))
+        .filter((shot) => typeof shot.shot_number === 'number')
+        .sort((left, right) => Number(left.shot_number) - Number(right.shot_number))
+      : [];
+  })();
+  const locationSequence = shotRecords.flatMap((record) => {
+    const value = record.location_name || record.location;
+    return typeof value === 'string' ? [phase6Normalize(value)] : [];
+  });
   const activeCharacters = (scene.character_names || []).map((name) => next.characters.find((character) => phase6Normalize(character.displayName) === phase6Normalize(name) || character.aliases.some((alias) => phase6Normalize(alias) === phase6Normalize(name)))?.canonicalIdentity || `unknown:${phase6Normalize(name)}`);
   const eventName = scene.event;
 
-  if (previous && currentLocation && previous.location && phase6Normalize(previous.location) !== phase6Normalize(currentLocation) && resolvedTransition === 'CONTINUOUS') {
+  if (scope === 'explicit-chain' && previous && currentLocation && previous.location && phase6Normalize(previous.location) !== phase6Normalize(currentLocation) && resolvedTransition === 'CONTINUOUS') {
     issues.push({ code: 'LOCATION_CHANGE_WITHOUT_TRANSITION', severity: 'BLOCKING', message: `Location changes from ${previous.location} to ${currentLocation} without an explicit transition.`, sceneId });
+  }
+  const hasOrderedLocationChange = locationSequence.some((location, index) => index > 0 && location !== locationSequence[index - 1]);
+  if (scope === 'within-scene' && hasOrderedLocationChange && !transitionType) {
+    issues.push({ code: 'WITHIN_SCENE_LOCATION_CHANGE', severity: 'BLOCKING', message: `Within-scene location changes across ${Array.from(new Set(locationSequence)).join(' and ')} without an explicit transition.`, sceneId });
   }
 
   const currentScene: SceneContinuityState = {
     sceneId,
+    sceneNumber: scene.scene_number,
     previousSceneId: previous?.sceneId,
     activeCharacters,
     location: currentLocation,
@@ -681,8 +709,11 @@ export function updateContinuityState(
   const existingIndex = next.scenes.findIndex((item) => item.sceneId === sceneId);
   if (existingIndex >= 0) next.scenes[existingIndex] = currentScene;
   else next.scenes.push(currentScene);
+  next.scenes.sort((left, right) => (left.sceneNumber ?? Number.MAX_SAFE_INTEGER) - (right.sceneNumber ?? Number.MAX_SAFE_INTEGER) || left.sceneId.localeCompare(right.sceneId));
   next.activeEvents = eventName ? Array.from(new Set([...next.activeEvents, eventName])) : next.activeEvents;
+  next.activeEvents.sort((left, right) => left.localeCompare(right));
   next.unresolvedIssues = [...next.unresolvedIssues.filter((item) => item.sceneId !== sceneId), ...issues];
+  next.unresolvedIssues.sort((left, right) => `${left.sceneId || ''}:${left.code}`.localeCompare(`${right.sceneId || ''}:${right.code}`));
   return { state: next, issues };
 }
 

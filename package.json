@@ -16,6 +16,10 @@
     "test:phase3c-integration": "tsx server/phase3c_integration_tests.ts",
     "test:phase3d": "tsx server/phase3d_tests.ts",
     "test:phase3e": "tsx server/phase3e_tests.ts",
+    "test:phase6": "tsx server/phase6_tests.ts",
+    "test:phase8": "tsx server/phase8_tests.ts",
+    "test:r2-production": "tsx server/patch_6_r2_production_tests.ts",
+    "test:r2-fixture": "tsx server/r2_fixture_engineering.ts",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "push": "git add . && git commit -m \"update\" && git push origin main"

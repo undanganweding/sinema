@@ -52,6 +52,11 @@ import {
   StageScope,
   StageExecutionTelemetry,
   ErrorClassification,
+  ContinuityScope,
+  ScenePipelineBlocker,
+  SceneAssetCoverageReport,
+  FinalizationBlocker,
+  ContinuityViolation,
   ContinuitySnapshot,
   NarrativeMode,
 } from '../src/types';
@@ -91,14 +96,81 @@ function enforceStageConsistency(projectId: string, stage: string, output: unkno
   assertStageConsistency(report);
 }
 
-function advanceContinuity(projectId: string, stage: string, scene: { id?: string; scene_number?: number; location_name?: string; character_names?: string[]; event?: string; era?: string }, output: unknown, state: ReturnType<typeof createContinuityState> | null): ReturnType<typeof createContinuityState> | null {
+function advanceContinuity(projectId: string, stage: string, scene: { id?: string; scene_number?: number; location_name?: string; character_names?: string[]; event?: string; era?: string; continuity_scope?: ContinuityScope }, output: unknown, state: ReturnType<typeof createContinuityState> | null, scope: ContinuityScope = 'within-scene', persist = true): ReturnType<typeof createContinuityState> | null {
   if (!state) return null;
-  const result = updateContinuityState(state, scene, output);
+  const result = updateContinuityState(state, scene, output, undefined, scope);
   const project = db.getProject(projectId);
-  if (project) db.saveProject({ ...project, continuityState: result.state });
+  if (persist && project) db.saveProject({ ...project, continuityState: result.state });
   const blocking = result.issues.find((issue) => issue.severity === 'BLOCKING');
   if (blocking) throw new Error(`CONTINUITY_BLOCKED ${stage}: ${blocking.message}`);
   return result.state;
+}
+
+export interface ScenePipelineResult {
+  status: 'READY' | 'BLOCKED' | 'FAILED';
+  success: boolean;
+  sceneId: string;
+  shots?: Shot[];
+  blockers?: ScenePipelineBlocker[];
+  continuityState?: ReturnType<typeof createContinuityState> | null;
+  assetIntegrityReport?: SceneAssetCoverageReport;
+  error?: string;
+}
+
+function knownBlocker(error: unknown, stage: string): ScenePipelineBlocker | null {
+  const message = error instanceof Error ? error.message : String(error || '');
+  const match = message.match(/^(CONTINUITY_BLOCKED|ASSET_INTEGRITY_BLOCKED|FINALIZATION_BLOCKED|CONSISTENCY_BLOCKED)\s*(.*)$/s);
+  if (!match) return null;
+  let payload: any = undefined;
+  try { payload = match[2] ? JSON.parse(match[2]) : undefined; } catch { /* preserve the message when no JSON payload exists */ }
+  const detail = payload?.blockerDetails?.[0]
+    || payload?.blockers?.[0]
+    || [...(payload?.characters || []), ...(payload?.locations || []), ...(payload?.objects || []), ...(payload?.videoPromptCoverage || [])].find((item) => item.status === 'BLOCKED' || item.status === 'MISMATCH');
+  return {
+    code: detail?.code || detail?.reason || match[1],
+    severity: 'BLOCKING',
+    message: detail?.message || message,
+    stage,
+    assetName: detail?.assetName,
+    assetType: detail?.assetType,
+  };
+}
+
+function isRetryableSceneError(error: unknown, classification: ErrorClassification): boolean {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error || '').toLowerCase();
+  return classification === 'schema_validation'
+    || classification === 'network'
+    || classification === 'rate_limit'
+    || classification === 'quota_exceeded'
+    || message.includes('empty response')
+    || message.includes('empty output');
+}
+
+function persistBlockedScene(sceneId: string, blocker: ScenePipelineBlocker): void {
+  db.updateScene(sceneId, { status: 'blocked', pipeline_status: 'BLOCKED', blockers: [blocker] });
+}
+
+function beginSceneExecution(sceneId: string): void {
+  db.updateScene(sceneId, { status: 'processing', pipeline_status: undefined, blockers: [] });
+}
+
+function persistReadyScene(sceneId: string, continuityStatus: 'passed' | 'warning' | 'continuity_failed', continuityViolations: ContinuityViolation[]): void {
+  db.updateScene(sceneId, {
+    status: continuityStatus === 'continuity_failed' ? 'blocked' : 'ready',
+    pipeline_status: continuityStatus === 'continuity_failed' ? 'BLOCKED' : 'READY',
+    blockers: continuityStatus === 'continuity_failed'
+      ? continuityViolations.map((violation) => ({ code: 'CONTINUITY_BLOCKED', severity: 'BLOCKING', message: violation.message, stage: 'FINAL' }))
+      : [],
+  });
+}
+
+export function resolveCurrentSceneStatus(
+  blockers: ScenePipelineBlocker[],
+  failed: boolean
+): ScenePipelineResult['status'] {
+  if (blockers.length > 0) return 'BLOCKED';
+  if (failed) return 'FAILED';
+  return 'READY';
 }
 
 /**
@@ -163,7 +235,7 @@ function recordTelemetry(
     started_at: string;
     completed_at?: string;
     duration_ms?: number;
-    status: 'started' | 'completed' | 'failed' | 'retrying';
+    status: 'started' | 'completed' | 'failed' | 'retrying' | 'blocked';
     error_type?: ErrorClassification;
     error_message?: string;
   }
@@ -846,8 +918,9 @@ export async function runPipelineForScene(
     stageName: string,
     message: string,
     level?: 'info' | 'success' | 'warn' | 'error'
-  ) => void
-): Promise<{ success: boolean; shots?: Shot[]; error?: string }> {
+  ) => void,
+  continuitySeed?: ReturnType<typeof createContinuityState> | null
+): Promise<ScenePipelineResult> {
   const scene = db.getScene(sceneId);
   if (!scene) {
     throw new Error(`Scene ${sceneId} tidak ditemukan.`);
@@ -876,7 +949,7 @@ export async function runPipelineForScene(
   }
 
   const refreshedProject = db.getProject(projectId) || project;
-  let sceneContinuityState = refreshedProject.continuityState || (refreshedProject.contextPackage ? createContinuityState(refreshedProject.contextPackage) : null);
+  let sceneContinuityState = continuitySeed || refreshedProject.continuityState || (refreshedProject.contextPackage ? createContinuityState(refreshedProject.contextPackage) : null);
 
   const foundation = db.getProjectFoundation(projectId);
   const characters = db.getCharacters(projectId);
@@ -890,12 +963,6 @@ export async function runPipelineForScene(
     project.contextPackage || null,
     sceneContinuityState
   );
-  assertSceneAssetCoverage(assetIntegrityReport);
-  db.saveProject({
-    ...project,
-    assetIntegrityReports: [...(project.assetIntegrityReports || []).filter((report) => report.sceneId !== sceneId), assetIntegrityReport],
-  });
-
   const log = (
     stage: number,
     stageName: string,
@@ -918,7 +985,19 @@ export async function runPipelineForScene(
     if (logFn) logFn(stage, stageName, message, level);
   };
 
-  db.updateScene(sceneId, { status: 'processing' });
+  try {
+    assertSceneAssetCoverage(assetIntegrityReport);
+  } catch (error) {
+    const blocker = knownBlocker(error, 'S6');
+    if (blocker) {
+      persistBlockedScene(sceneId, blocker);
+      return { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+    }
+    db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
+    return { sceneId, status: 'FAILED', success: false, error: error instanceof Error ? error.message : String(error), assetIntegrityReport, continuityState: sceneContinuityState };
+  }
+
+  beginSceneExecution(sceneId);
 
   // ----------------------------------------------------
   // STAGE 6: Shot Breakdown Agent (S6, per scene with isolated retry)
@@ -956,7 +1035,7 @@ export async function runPipelineForScene(
         feedbackPrompt,
       });
       enforceStageConsistency(projectId, `S6:${sceneId}`, shotsAttempt, sceneConsistencyState);
-      sceneContinuityState = advanceContinuity(projectId, `S6:${sceneId}`, scene, shotsAttempt, sceneContinuityState);
+      sceneContinuityState = advanceContinuity(projectId, `S6:${sceneId}`, scene, shotsAttempt, sceneContinuityState, scene.continuity_scope || 'scene-boundary', false);
       assetIntegrityReport = validatePromptCoverage(assetIntegrityReport, JSON.stringify({ scene, shots: shotsAttempt }));
       assertSceneAssetCoverage(assetIntegrityReport);
 
@@ -1022,6 +1101,8 @@ export async function runPipelineForScene(
       lastShotError = err?.message || 'Error executing Stage 6';
       const s6Duration = Date.now() - s6StartTime;
       const errType = classifyError(err);
+      const blocker = knownBlocker(err, `S6:${sceneId}`);
+      const retryable = isRetryableSceneError(err, errType);
       recordTelemetry(projectId, {
         stage: 6,
         stage_code: 'S6',
@@ -1031,7 +1112,7 @@ export async function runPipelineForScene(
         started_at: s6Start,
         completed_at: new Date().toISOString(),
         duration_ms: s6Duration,
-        status: attempt < MAX_SHOT_RETRIES ? 'retrying' : 'failed',
+        status: blocker ? 'blocked' : retryable && attempt < MAX_SHOT_RETRIES ? 'retrying' : 'failed',
         error_type: errType,
         error_message: lastShotError,
       });
@@ -1043,6 +1124,14 @@ export async function runPipelineForScene(
         'warn',
         'S6'
       );
+      if (blocker) {
+        persistBlockedScene(sceneId, blocker);
+        return { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+      }
+      if (!retryable) {
+        db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
+        return { sceneId, status: 'FAILED', success: false, error: lastShotError, assetIntegrityReport, continuityState: sceneContinuityState };
+      }
     }
   }
 
@@ -1055,7 +1144,7 @@ export async function runPipelineForScene(
       'error',
       'S6'
     );
-    return { success: false, error: lastShotError };
+    return { sceneId, status: 'FAILED', success: false, error: lastShotError, assetIntegrityReport, continuityState: sceneContinuityState };
   }
 
   // Derive beats & cinematic grammar for the scene
@@ -1112,7 +1201,7 @@ export async function runPipelineForScene(
       reasoningConfig: project.reasoning_config,
     });
     enforceStageConsistency(projectId, `S7:${sceneId}`, stage7Result, sceneConsistencyState);
-    sceneContinuityState = advanceContinuity(projectId, `S7:${sceneId}`, scene, stage7Result, sceneContinuityState);
+    sceneContinuityState = advanceContinuity(projectId, `S7:${sceneId}`, scene, stage7Result, sceneContinuityState, 'within-scene', false);
     assetIntegrityReport = validateMasterFrameCoverage(assetIntegrityReport, JSON.stringify(stage7Result));
     assertSceneAssetCoverage(assetIntegrityReport);
 
@@ -1139,6 +1228,11 @@ export async function runPipelineForScene(
   } catch (err: any) {
     const errMsg = err?.message || 'Error generating master frame prompt';
     const errType = classifyError(err);
+    const blocker = knownBlocker(err, `S7:${sceneId}`);
+    if (blocker) {
+      persistBlockedScene(sceneId, blocker);
+      return { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+    }
     const s7Duration = Date.now() - s7StartTime;
     db.updateScene(sceneId, {
       image_gen_status: 'failed',
@@ -1210,7 +1304,7 @@ export async function runPipelineForScene(
         continuityState: sceneContinuityState,
       });
       enforceStageConsistency(projectId, `S8:${sceneId}:${shot.id}`, stage8Result, sceneConsistencyState);
-      sceneContinuityState = advanceContinuity(projectId, `S8:${sceneId}:${shot.id}`, currentScene, stage8Result, sceneContinuityState);
+      sceneContinuityState = advanceContinuity(projectId, `S8:${sceneId}:${shot.id}`, currentScene, stage8Result, sceneContinuityState, 'within-scene', false);
       assetIntegrityReport = validateVideoPromptCoverage(assetIntegrityReport, JSON.stringify(stage8Result));
       assertSceneAssetCoverage(assetIntegrityReport);
 
@@ -1269,6 +1363,11 @@ export async function runPipelineForScene(
       failedShotsCount++;
       const s8Duration = Date.now() - s8StartTime;
       const errType = classifyError(err);
+      const blocker = knownBlocker(err, `S8:${sceneId}:${shot.id}`);
+      if (blocker) {
+        persistBlockedScene(sceneId, blocker);
+        return { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+      }
       recordTelemetry(projectId, {
         stage: 8,
         stage_code: 'S8',
@@ -1287,19 +1386,22 @@ export async function runPipelineForScene(
     }
   }
 
-  enforceStageConsistency(
-    projectId,
-    `FINAL:${sceneId}`,
-    { scene: currentScene, shots: savedShots, videoPrompts: db.getVideoPromptsByScene(sceneId) },
-    sceneConsistencyState
-  );
-  sceneContinuityState = advanceContinuity(projectId, `FINAL:${sceneId}`, currentScene, { scene: currentScene, shots: savedShots }, sceneContinuityState);
-  const finalProject = db.getProject(projectId);
-  if (finalProject) {
-    db.saveProject({
-      ...finalProject,
-      assetIntegrityReports: [...(finalProject.assetIntegrityReports || []).filter((report) => report.sceneId !== sceneId), assetIntegrityReport],
-    });
+  try {
+    enforceStageConsistency(
+      projectId,
+      `FINAL:${sceneId}`,
+      { scene: currentScene, shots: savedShots, videoPrompts: db.getVideoPromptsByScene(sceneId) },
+      sceneConsistencyState
+    );
+    sceneContinuityState = advanceContinuity(projectId, `FINAL:${sceneId}`, currentScene, { scene: currentScene, shots: savedShots }, sceneContinuityState, 'within-scene', false);
+  } catch (error) {
+    const blocker = knownBlocker(error, `FINAL:${sceneId}`);
+    if (blocker) {
+      persistBlockedScene(sceneId, blocker);
+      return { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+    }
+    db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
+    return { sceneId, status: 'FAILED', success: false, error: error instanceof Error ? error.message : String(error), assetIntegrityReport, continuityState: sceneContinuityState };
   }
 
   // ----------------------------------------------------
@@ -1386,13 +1488,7 @@ export async function runPipelineForScene(
     continuity_status: continuityStatus,
     continuity_violations: continuityViolations,
   });
-
-  const finalizationReport = evaluateFinalizationGate(db.getProject(projectId) || project, [
-    { sceneId, status: sceneFinalStatus },
-  ]);
-  const finalProjectState = db.getProject(projectId);
-  if (finalProjectState) db.saveProject({ ...finalProjectState, finalizationReport });
-  assertFinalizationGate(finalizationReport);
+  persistReadyScene(sceneId, continuityStatus, continuityViolations);
 
   if (failedShotsCount > 0 || continuityStatus === 'continuity_failed') {
     log(
@@ -1412,7 +1508,27 @@ export async function runPipelineForScene(
     );
   }
 
-  return { success: sceneFinalStatus === 'ready', shots: savedShots, error: sceneFinalStatus === 'ready' ? undefined : `Scene final status: ${sceneFinalStatus}` };
+  const currentBlockers: ScenePipelineBlocker[] = continuityStatus === 'continuity_failed'
+    ? continuityViolations.map((violation) => ({ code: 'CONTINUITY_BLOCKED', severity: 'BLOCKING', message: violation.message, stage: 'FINAL' }))
+    : [];
+  const currentStatus = resolveCurrentSceneStatus(currentBlockers, failedShotsCount > 0);
+  return { sceneId, status: currentStatus, success: currentStatus === 'READY', blockers: currentBlockers, shots: savedShots, assetIntegrityReport, continuityState: sceneContinuityState, error: currentStatus === 'READY' ? undefined : `Scene final status: ${currentStatus}` };
+}
+
+function mergeContinuityResults(
+  base: ReturnType<typeof createContinuityState> | null,
+  results: ScenePipelineResult[]
+): ReturnType<typeof createContinuityState> | null {
+  if (!base) return null;
+  const merged = JSON.parse(JSON.stringify(base)) as ReturnType<typeof createContinuityState>;
+  const sceneMap = new Map(merged.scenes.map((scene) => [scene.sceneId, scene]));
+  for (const result of results.slice().sort((left, right) => left.sceneId.localeCompare(right.sceneId))) {
+    for (const scene of result.continuityState?.scenes || []) sceneMap.set(scene.sceneId, scene);
+  }
+  merged.scenes = Array.from(sceneMap.values()).sort((left, right) => (left.sceneNumber ?? Number.MAX_SAFE_INTEGER) - (right.sceneNumber ?? Number.MAX_SAFE_INTEGER) || left.sceneId.localeCompare(right.sceneId));
+  merged.activeEvents = Array.from(new Set(results.flatMap((result) => result.continuityState?.activeEvents || []))).sort((left, right) => left.localeCompare(right));
+  merged.unresolvedIssues = Array.from(new Map(results.flatMap((result) => result.continuityState?.unresolvedIssues || []).map((issue) => [`${issue.sceneId || ''}:${issue.code}`, issue])).values()).sort((left, right) => `${left.sceneId || ''}:${left.code}`.localeCompare(`${right.sceneId || ''}:${right.code}`));
+  return merged;
 }
 
 /**
@@ -1443,7 +1559,7 @@ export async function generateAllScenes(
     }
   }
 
-  const scenes = db.getScenes(projectId);
+  const scenes = db.getScenes(projectId).slice().sort((left, right) => left.scene_number - right.scene_number || (left.id || '').localeCompare(right.id || ''));
   if (!scenes || scenes.length === 0) {
     throw new Error('Tidak ada scene yang ditemukan untuk digenerate.');
   }
@@ -1466,8 +1582,8 @@ export async function generateAllScenes(
   );
 
   let currentIndex = 0;
-  let readyCount = 0;
-  let failedCount = 0;
+  const workerResults: ScenePipelineResult[] = [];
+  const continuitySeed = project.continuityState || (project.contextPackage ? createContinuityState(project.contextPackage) : null);
 
   // Worker worker function with pacing
   async function worker(workerId: number) {
@@ -1489,14 +1605,12 @@ export async function generateAllScenes(
       );
 
       try {
-        const result = await runPipelineForScene(currentScene.id, onProgress);
-        if (result.success) {
-          readyCount++;
-        } else {
-          failedCount++;
-        }
+        const result = await runPipelineForScene(currentScene.id, onProgress, continuitySeed ? JSON.parse(JSON.stringify(continuitySeed)) : null);
+        workerResults.push(result);
       } catch (err: any) {
-        failedCount++;
+        const failedResult: ScenePipelineResult = { sceneId: currentScene.id, status: 'FAILED', success: false, error: err?.message || String(err) };
+        workerResults.push(failedResult);
+        db.updateScene(currentScene.id, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
         log(
           6,
           `Worker #${workerId}`,
@@ -1521,17 +1635,37 @@ export async function generateAllScenes(
 
   await Promise.all(activeWorkers);
 
-  // Update project status based on scene results
+  const orderedResults = workerResults.slice().sort((left, right) => {
+    const leftScene = scenes.find((scene) => scene.id === left.sceneId);
+    const rightScene = scenes.find((scene) => scene.id === right.sceneId);
+    return (leftScene?.scene_number ?? Number.MAX_SAFE_INTEGER) - (rightScene?.scene_number ?? Number.MAX_SAFE_INTEGER) || left.sceneId.localeCompare(right.sceneId);
+  });
+  const reports = orderedResults.map((result) => result.assetIntegrityReport).filter((report): report is SceneAssetCoverageReport => Boolean(report));
   const updatedProject = db.getProject(projectId);
   if (updatedProject) {
-    const finalStatus = failedCount === 0 ? 'completed' : 'failed';
+    const assetReports = [...(updatedProject.assetIntegrityReports || []).filter((report) => !reports.some((item) => item.sceneId === report.sceneId)), ...reports];
+    const continuityState = mergeContinuityResults(continuitySeed, orderedResults);
+      const aggregateProject = { ...updatedProject, continuityState, assetIntegrityReports: assetReports };
+      const finalizationReport = evaluateFinalizationGate(aggregateProject, scenes.map((scene) => {
+        const current = db.getScene(scene.id!);
+        return { sceneId: scene.id, status: current?.pipeline_status || (current?.status === 'ready' ? 'READY' : current?.status) };
+      }));
+    const sceneBlockers: FinalizationBlocker[] = orderedResults.flatMap((result) => (result.blockers || []).map((blocker) => ({ code: blocker.code, layer: blocker.stage, message: blocker.message, sceneId: result.sceneId })));
+    finalizationReport.blockerDetails = [...(finalizationReport.blockerDetails || []), ...sceneBlockers];
+    finalizationReport.blockers = Array.from(new Set([...finalizationReport.blockers, ...sceneBlockers.map((blocker) => blocker.message)]));
+    const hasFailed = orderedResults.some((result) => result.status === 'FAILED');
+    const finalStatus = hasFailed ? 'failed' : finalizationReport.status === 'BLOCKED' ? 'blocked' : 'completed';
     db.saveProject({
-      ...updatedProject,
+      ...aggregateProject,
       status: finalStatus,
       current_stage: 8,
-      error_message: failedCount > 0 ? `${failedCount} dari ${scenes.length} scene memerlukan perhatian manual.` : null,
+      finalizationReport,
+      error_message: hasFailed || finalizationReport.status === 'BLOCKED' ? `${orderedResults.filter((result) => result.status !== 'READY').length} dari ${scenes.length} scene memerlukan perhatian manual.` : null,
     });
   }
+
+  const readyCount = orderedResults.filter((result) => result.status === 'READY').length;
+  const failedCount = orderedResults.filter((result) => result.status !== 'READY').length;
 
   log(
     8,
@@ -1541,7 +1675,7 @@ export async function generateAllScenes(
   );
 
   return {
-    success: failedCount === 0,
+    success: orderedResults.every((result) => result.status === 'READY'),
     totalScenes: scenes.length,
     readyScenes: readyCount,
     failedScenes: failedCount,
@@ -1597,7 +1731,7 @@ export async function runOrchestratedPipeline({
       sceneResult.success ? 'success' : 'warn'
     );
 
-    return { success: true };
+    return { success: sceneResult.success, error: sceneResult.success ? undefined : `Pipeline aggregate status: ${sceneResult.failedScenes} scene(s) require attention.` };
   } catch (err: any) {
     const errorMsg = err?.message || 'Terjadi kesalahan pada pipeline orchestrator.';
     log(

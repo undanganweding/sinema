@@ -633,6 +633,7 @@ export interface ContinuitySnapshot {
 }
 
 export type ContinuityTransitionType = 'CONTINUOUS' | 'TIME_JUMP' | 'LOCATION_CHANGE' | 'EVENT_CHANGE' | 'MONTAGE' | 'UNKNOWN';
+export type ContinuityScope = 'scene-boundary' | 'within-scene' | 'explicit-chain';
 export type ContinuityIssueSeverity = 'BLOCKING' | 'WARNING';
 
 export interface ContinuityIssue {
@@ -664,6 +665,7 @@ export interface CharacterState {
 
 export interface SceneContinuityState {
   sceneId: string;
+  sceneNumber?: number;
   previousSceneId?: string;
   nextSceneId?: string;
   activeCharacters: string[];
@@ -950,7 +952,7 @@ export interface Project {
   include_seedance_format: boolean;
   created_at: string;
   updated_at: string;
-  status: 'draft' | 'processing' | 'completed' | 'failed';
+  status: 'draft' | 'processing' | 'completed' | 'failed' | 'blocked';
   current_stage?: number;
   error_message?: string | null;
   duration_validation_passed?: boolean;
@@ -971,8 +973,16 @@ export interface FinalizationGateReport {
   valid: boolean;
   status: 'PASS' | 'BLOCKED' | 'WARNING';
   blockers: string[];
+  blockerDetails?: FinalizationBlocker[];
   warnings: string[];
   checkedLayers: string[];
+}
+
+export interface FinalizationBlocker {
+  code: string;
+  layer: string;
+  message: string;
+  sceneId?: string;
 }
 
 export type AssetCoverageStatus = 'PASS' | 'MISSING' | 'MISMATCH' | 'UNKNOWN' | 'BLOCKED' | 'WARNING' | 'RECONSTRUCTION';
@@ -1138,6 +1148,7 @@ export interface Scene {
   narrative_function: string;
   sequence_id?: string;
   act_id?: string;
+  continuity_scope?: ContinuityScope;
   conflict?: string;
   beginning_state?: string;
   ending_state?: string;
@@ -1160,11 +1171,14 @@ export interface Scene {
   continuity_snapshot?: ContinuitySnapshot;
   continuity_status?: 'passed' | 'continuity_failed' | 'warning' | 'pending';
   continuity_violations?: ContinuityViolation[];
+  pipeline_status?: 'READY' | 'BLOCKED' | 'FAILED';
+  blockers?: ScenePipelineBlocker[];
   status?:
     | 'pending'
     | 'processing'
     | 'ready'
     | 'incomplete'
+    | 'blocked'
     | 'completed'
     | 'shot_breakdown_failed'
     | 'continuity_failed'
@@ -1172,6 +1186,15 @@ export interface Scene {
   version: number;
   created_at?: string;
   updated_at: string;
+}
+
+export interface ScenePipelineBlocker {
+  code: string;
+  severity: 'BLOCKING' | 'WARNING';
+  message: string;
+  stage: string;
+  assetName?: string;
+  assetType?: string;
 }
 
 export interface ShotDialogue {
@@ -1315,7 +1338,7 @@ export interface StageExecutionTelemetry {
   started_at: string;
   completed_at?: string;
   duration_ms?: number;
-  status: 'started' | 'completed' | 'failed' | 'retrying';
+  status: 'started' | 'completed' | 'failed' | 'retrying' | 'blocked';
   error_type?: ErrorClassification;
   error_message?: string;
 }

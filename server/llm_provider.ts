@@ -252,10 +252,6 @@ function extractResponseText(data: any): string | null {
   return JSON.stringify(data);
 }
 
-function isRateLimitOrTransientError(err: any): boolean {
-  return isRateLimitOrQuotaError(err);
-}
-
 function parseRetryDelayMs(err: any, attemptNumber: number): number {
   if (err && err.message) {
     const match = err.message.match(/retry after (\d+)/i) || err.message.match(/try again in (\d+)s/i);
@@ -333,7 +329,7 @@ async function executeSingleModelRequest(
         if (isFatalNonRecoverableError(err)) {
           throw err;
         }
-        const isRetryable = isRateLimitOrTransientError(err);
+        const isRetryable = isRetryableError(err);
         
         if (isRetryable && attempt < MAX_ATTEMPTS) {
           const delayMs = parseRetryDelayMs(err, attempt);
@@ -464,7 +460,7 @@ async function executeSingleModelRequest(
         return { text: cleanedText };
       } catch (err: any) {
         lastError = err;
-        const isRetryable = isRateLimitOrTransientError(err);
+        const isRetryable = isRetryableError(err);
         
         if (isRetryable && attempt < MAX_ATTEMPTS) {
           const delayMs = parseRetryDelayMs(err, attempt);
@@ -484,7 +480,10 @@ export const fallbackAuditLogs: FallbackLogEntry[] = [];
 export function classifyError(err: any): ErrorClassification {
   const msg = (err?.message || '').toLowerCase();
   const status = err?.status;
-  if (status === 429 || msg.includes('quota') || msg.includes('rate limit') || msg.includes('exhausted')) {
+  if (msg.includes('quota') || msg.includes('resource exhausted')) {
+    return 'quota_exceeded';
+  }
+  if (status === 429 || msg.includes('rate limit') || msg.includes('too many requests')) {
     return 'rate_limit';
   }
   if (status === 401 || status === 403 || msg.includes('api key') || msg.includes('unauthorized')) {
@@ -497,6 +496,11 @@ export function classifyError(err: any): ErrorClassification {
     return 'schema_validation';
   }
   return 'unknown';
+}
+
+export function isRetryableError(err: any): boolean {
+  const classification = classifyError(err);
+  return classification === 'quota_exceeded' || classification === 'rate_limit' || classification === 'network';
 }
 
 /**
