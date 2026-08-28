@@ -19,11 +19,21 @@ function normalize(value: string): string {
 
 function matches(candidate: string, target: string, aliases: string[] = []): boolean {
   const value = normalize(candidate);
-  return [target, ...aliases].some((item) => normalize(item) === value || normalize(item).includes(value) || value.includes(normalize(item)));
+  return [target, ...aliases].some((item) => {
+    const normalizedItem = normalize(item);
+    if (normalizedItem === value) return true;
+    const variant = normalizedItem.length > value.length ? normalizedItem : value;
+    const shorter = normalizedItem.length > value.length ? value : normalizedItem;
+    return variant.startsWith(`${shorter} `) && /\b(?:bin|binti|ibn|bint)\b/.test(variant.slice(shorter.length));
+  });
 }
 
 function canonicalId(prefix: string, id: string | undefined, name: string): string {
   return `${prefix}:${id || normalize(name).replace(/[^a-z0-9]+/g, '-')}`;
+}
+
+function isUnknownCanonicalId(value: string | undefined): boolean {
+  return !value || value.startsWith('unknown:');
 }
 
 function requirement(name: string, assetType: SceneAssetRequirement['assetType'], level: SceneAssetRequirementLevel, canonicalId?: string): SceneAssetRequirement {
@@ -48,38 +58,41 @@ export function deriveSceneAssetRequirements(scene: Pick<Scene, 'id' | 'characte
   return requirements;
 }
 
-function findCharacter(name: string, characters: CharacterBible[], continuity?: ContinuityState | null): AssetReference | undefined {
+function findCharacter(name: string, characters: CharacterBible[], continuity?: ContinuityState | null, context?: ContextPackage | null): AssetReference | undefined {
   const continuityCharacter = continuity?.characters.find((character) => matches(name, character.displayName, character.aliases));
   const bibleCharacter = characters.find((character) => matches(name, character.name));
+  const groundedEntity = context?.entities.find((entity) => matches(name, entity.name, entity.aliases || []));
   if (!continuityCharacter && !bibleCharacter) return undefined;
   return {
-    canonicalAssetId: continuityCharacter?.canonicalIdentity || canonicalId('character', bibleCharacter?.id, bibleCharacter!.name),
+    canonicalAssetId: groundedEntity ? canonicalId('character', groundedEntity.entityId, groundedEntity.name) : !isUnknownCanonicalId(continuityCharacter?.canonicalIdentity) ? continuityCharacter!.canonicalIdentity : canonicalId('character', bibleCharacter?.id, bibleCharacter?.name || continuityCharacter!.displayName),
     assetType: 'CHARACTER',
-    name: continuityCharacter?.displayName || bibleCharacter!.name,
+    name: groundedEntity?.name || continuityCharacter?.displayName || bibleCharacter!.name,
     source: 'CHARACTER_BIBLE',
   };
 }
 
-function findLocation(name: string, locations: LocationBible[], continuity?: ContinuityState | null): AssetReference | undefined {
+function findLocation(name: string, locations: LocationBible[], continuity?: ContinuityState | null, context?: ContextPackage | null): AssetReference | undefined {
   const continuityLocation = continuity && Object.values(continuity.locations).find((location) => matches(name, location.canonicalLocation, location.aliases));
   const bibleLocation = locations.find((location) => matches(name, location.name));
+  const groundedLocation = context?.locations.find((location) => matches(name, location.name));
   if (!continuityLocation && !bibleLocation) return undefined;
   return {
-    canonicalAssetId: continuityLocation?.canonicalLocation ? canonicalId('location', undefined, continuityLocation.canonicalLocation) : canonicalId('location', bibleLocation?.id, bibleLocation!.name),
+    canonicalAssetId: canonicalId('location', bibleLocation?.id || groundedLocation?.locationId, groundedLocation?.name || continuityLocation?.canonicalLocation || bibleLocation?.name || name),
     assetType: 'LOCATION',
-    name: continuityLocation?.canonicalLocation || bibleLocation!.name,
+    name: groundedLocation?.name || continuityLocation?.canonicalLocation || bibleLocation!.name,
     source: 'LOCATION_BIBLE',
   };
 }
 
-function findObject(name: string, objects: ObjectBible[], continuity?: ContinuityState | null): AssetReference | undefined {
+function findObject(name: string, objects: ObjectBible[], continuity?: ContinuityState | null, context?: ContextPackage | null): AssetReference | undefined {
   const continuityObject = continuity && Object.values(continuity.objects).find((object) => matches(name, object.canonicalObject));
   const bibleObject = objects.find((object) => matches(name, object.name));
+  const groundedObject = context?.objects.find((object) => matches(name, object.name));
   if (!continuityObject && !bibleObject) return undefined;
   return {
-    canonicalAssetId: continuityObject ? canonicalId('object', undefined, continuityObject.canonicalObject) : canonicalId('object', bibleObject?.id, bibleObject!.name),
+    canonicalAssetId: canonicalId('object', bibleObject?.id || groundedObject?.objectId, groundedObject?.name || continuityObject?.canonicalObject || bibleObject?.name || name),
     assetType: 'OBJECT',
-    name: continuityObject?.canonicalObject || bibleObject!.name,
+    name: groundedObject?.name || continuityObject?.canonicalObject || bibleObject!.name,
     source: 'OBJECT_BIBLE',
   };
 }
@@ -90,20 +103,21 @@ export function buildAssetCoverage(
   locations: LocationBible[],
   objects: ObjectBible[],
   continuity?: ContinuityState | null,
+  context?: ContextPackage | null,
   sceneId?: string,
 ): AssetCoverageRecord[] {
   return requirements.map((item) => {
     let asset: AssetReference | undefined;
-    if (item.assetType === 'CHARACTER') asset = findCharacter(item.name, characters, continuity);
-    if (item.assetType === 'LOCATION') asset = findLocation(item.name, locations, continuity);
-    if (item.assetType === 'OBJECT') asset = findObject(item.name, objects, continuity);
+    if (item.assetType === 'CHARACTER') asset = findCharacter(item.name, characters, continuity, context);
+    if (item.assetType === 'LOCATION') asset = findLocation(item.name, locations, continuity, context);
+    if (item.assetType === 'OBJECT') asset = findObject(item.name, objects, continuity, context);
     if (!asset) {
-      return { requirement: item, status: item.level === 'REQUIRED' ? 'BLOCKED' : item.level === 'UNKNOWN' ? 'UNKNOWN' : 'WARNING' as AssetCoverageStatus, message: `Missing ${item.assetType.toLowerCase()} asset: ${item.name}.` };
+      return { requirement: item, status: item.level === 'REQUIRED' ? 'BLOCKED' : item.level === 'UNKNOWN' ? 'UNKNOWN' : 'WARNING' as AssetCoverageStatus, message: `Missing ${item.assetType.toLowerCase()} asset: ${item.name}.`, reason: item.level === 'REQUIRED' ? 'MISSING_REQUIRED_ASSET' : undefined, assetName: item.name, assetType: item.assetType, sceneId };
     }
     if (item.canonicalId && asset.canonicalAssetId !== item.canonicalId) {
-      return { requirement: item, asset, status: 'MISMATCH', message: `Canonical asset mismatch for ${item.name}.` };
+      return { requirement: item, asset, status: 'MISMATCH', message: `Canonical asset mismatch for ${item.name}.`, reason: 'CANONICAL_MISMATCH', assetName: item.name, assetType: item.assetType, sceneId };
     }
-    return { requirement: item, asset: { ...asset, sceneId }, status: 'PASS', message: `${item.name} is covered by ${asset.canonicalAssetId}.` };
+    return { requirement: item, asset: { ...asset, sceneId }, status: isUnknownCanonicalId(asset.canonicalAssetId) ? 'MISMATCH' : 'PASS', message: `${item.name} is covered by ${asset.canonicalAssetId}.`, reason: isUnknownCanonicalId(asset.canonicalAssetId) ? 'CANONICAL_MISMATCH' : undefined, assetName: item.name, assetType: item.assetType, sceneId };
   });
 }
 
@@ -119,7 +133,7 @@ function promptCoverage(records: AssetCoverageRecord[], prompt: string, phase: '
   return records.map((record) => {
     if (record.status !== 'PASS' || !record.asset) return record;
     if (normalizedPrompt.includes(normalize(record.asset.name)) || normalizedPrompt.includes(normalize(record.requirement.name))) return { ...record, status: 'PASS', message: `${phase} includes ${record.asset.name}.` };
-    return { ...record, status: 'BLOCKED', message: `${phase} is missing required asset: ${record.asset.name}.` };
+    return { ...record, status: 'BLOCKED', reason: 'PROMPT_OMISSION', message: `${phase} is missing required asset: ${record.asset.name}.` };
   });
 }
 
@@ -141,19 +155,16 @@ export function validateMasterFrameCoverage(report: SceneAssetCoverageReport, pr
 export function validateVideoPromptCoverage(report: SceneAssetCoverageReport, prompt: string): SceneAssetCoverageReport {
   const records = promptCoverage([...report.characters, ...report.locations, ...report.objects], prompt, 'VIDEO_PROMPT');
   const allowedNames = records.filter((record) => record.asset).flatMap((record) => [record.requirement.name, record.asset!.name]);
-  const candidateNames = prompt.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || [];
-  const phantomAssets = Array.from(new Set(candidateNames.filter((candidate) => {
-    if (candidate === 'The' || candidate === 'A' || candidate === 'An') return false;
-    return !allowedNames.some((allowed) => {
-      const normalizedCandidate = normalize(candidate);
-      const normalizedAllowed = normalize(allowed);
-      return normalizedCandidate === normalizedAllowed || normalizedAllowed.includes(normalizedCandidate) || normalizedCandidate.includes(normalizedAllowed);
-    });
-  })));
+  const explicitIntroductions = Array.from(prompt.matchAll(/\b(?:a|an|one)\s+(?:merchant|character|man|woman|person)\s+(?:named|called)\s+([A-Z][A-Za-z'’-]*(?:\s+[A-Z][A-Za-z'’-]*)*)\b|\b(?:merchant|character|person)\s+(?:named|called|bernama)\s+([A-Z][A-Za-z'’-]*(?:\s+[A-Z][A-Za-z'’-]*)*)\b/g)).map((match) => match[1] || match[2]);
+  const phantomAssets = Array.from(new Set(explicitIntroductions.filter((candidate) => !allowedNames.some((allowed) => matches(candidate, allowed)))));
   const phantomRecords: AssetCoverageRecord[] = phantomAssets.map((name) => ({
     requirement: { name, assetType: 'CHARACTER', level: 'REQUIRED' },
     status: 'BLOCKED',
-    message: `VIDEO_PROMPT introduces phantom asset: ${name}.`,
+    reason: 'UNDECLARED_ASSET',
+    assetName: name,
+    assetType: 'CHARACTER',
+    sceneId: report.sceneId,
+    message: `VIDEO_PROMPT introduces undeclared asset: ${name}.`,
   }));
   return { ...report, videoPromptCoverage: [...records, ...phantomRecords], phantomAssets, status: phantomAssets.length > 0 ? 'BLOCKED' : coverageStatus(records) };
 }
@@ -167,7 +178,7 @@ export function createSceneAssetCoverageReport(
   continuity?: ContinuityState | null,
 ): SceneAssetCoverageReport {
   const requirements = deriveSceneAssetRequirements(scene, context);
-  const records = buildAssetCoverage(requirements, characters, locations, objects, continuity, scene.id);
+  const records = buildAssetCoverage(requirements, characters, locations, objects, continuity, context, scene.id);
   return validateAssetCoverage({
     sceneId: scene.id,
     sceneNumber: scene.scene_number,

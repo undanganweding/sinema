@@ -999,6 +999,10 @@ export interface AssetCoverageRecord {
   asset?: AssetReference;
   status: AssetCoverageStatus;
   message: string;
+  reason?: 'MISSING_REQUIRED_ASSET' | 'UNDECLARED_ASSET' | 'CANONICAL_MISMATCH' | 'PROMPT_OMISSION';
+  assetName?: string;
+  assetType?: SceneAssetType;
+  sceneId?: string;
 }
 
 export interface SceneAssetCoverageReport {
