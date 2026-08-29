@@ -100,6 +100,70 @@ function saveJsonState(state: FirestoreState): void {
 // Transient in-memory storage for active API keys to keep them out of saved JSON files
 const ephemeralApiKeys = new Map<string, string>();
 
+/**
+ * Generic recursive Firestore-safe sanitizer.
+ *
+ * Purpose: Firestore's Admin SDK rejects documents containing `undefined`
+ * values anywhere in the payload ("Cannot use undefined as a Firestore value").
+ * Source builders (e.g. grounding_engine / research_engine) legitimately
+ * produce optional fields with value `undefined` (e.g. sources[].publisher).
+ * This sanitizer is the SINGLE persistence boundary responsible for making
+ * sure only valid Firestore documents reach the SDK.
+ *
+ * Rules:
+ *  - `undefined` value        -> property/element REMOVED (recursively)
+ *  - `null`, `false`, `0`, `""`, `[]`, `{}` -> PRESERVED
+ *  - `Date`, Firestore special objects (Timestamp/GeoPoint/DocumentReference/
+ *    FieldValue/Bytes) and non-plain/class instances -> PRESERVED
+ *  - nested objects -> recursed
+ *  - arrays -> recursed per element, undefined elements dropped
+ *  - `api_key` property is ALWAYS removed (never persisted)
+ *
+ * Deliberately NOT using `ignoreUndefinedProperties: true` so undefined values
+ * stay detectable rather than silently ignored.
+ */
+export function sanitizeForFirestore<T>(value: T): T {
+  if (value === undefined) {
+    return undefined as unknown as T;
+  }
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    const cleaned = value
+      .map((item) => sanitizeForFirestore(item))
+      .filter((item) => item !== undefined);
+    return cleaned as unknown as T;
+  }
+
+  // Preserve Firestore special objects (Timestamp, GeoPoint, DocumentReference,
+  // FieldValue, Bytes) and non-plain class instances by duck-typing markers.
+  if (typeof (value as any).toMillis === 'function' ||    // Timestamp
+      (typeof (value as any).latitude === 'number' && typeof (value as any).longitude === 'number') || // GeoPoint
+      (typeof (value as any).path === 'string' && typeof (value as any).listCollections === 'function') || // DocumentReference
+      typeof (value as any).isEqual === 'function' ||     // FieldValue / Bytes / other SDK objects
+      Object.prototype.toString.call(value) !== '[object Object]') {
+    return value;
+  }
+
+  const result: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+    if (key === 'api_key') {
+      // Invariant: api_key must NEVER be persisted to Firestore.
+      continue;
+    }
+    const sanitizedVal = sanitizeForFirestore(val);
+    if (sanitizedVal !== undefined) {
+      result[key] = sanitizedVal;
+    }
+  }
+  return result as unknown as T;
+}
+
 export function sanitizeProjectForStorage(project: Project): Project {
   if (project.reasoning_config?.api_key) {
     ephemeralApiKeys.set(project.id, project.reasoning_config.api_key);
@@ -217,7 +281,7 @@ export const db = {
     const fsdb = getFirestore();
     const cleanProject = sanitizeProjectForStorage(project);
     const stored = { ...cleanProject, updated_at: now() };
-    await docRef(fsdb, 'projects', project.id).set(stored, { merge: true });
+    await docRef(fsdb, 'projects', project.id).set(sanitizeForFirestore(stored), { merge: true });
     return attachEphemeralApiKey(stored)!;
   },
 
@@ -236,7 +300,7 @@ export const db = {
     const current = currentSnap.data() as Project;
     const next = sanitizeProjectForStorage(updater({ ...current }));
     const stored = { ...next, updated_at: now() };
-    await docRef(fsdb, 'projects', projectId).set(stored, { merge: true });
+    await docRef(fsdb, 'projects', projectId).set(sanitizeForFirestore(stored), { merge: true });
     return attachEphemeralApiKey(stored)!;
   },
 
@@ -328,7 +392,7 @@ export const db = {
     const fsdb = getFirestore();
     const docId = foundation.project_id;
     const stored = { ...foundation, id: docId, updated_at: now() };
-    await docRef(fsdb, 'project_foundation', docId).set(stored);
+    await docRef(fsdb, 'project_foundation', docId).set(sanitizeForFirestore(stored));
     return stored;
   },
 
@@ -426,7 +490,7 @@ export const db = {
           version: existingMatch.version || 1,
           updated_at: now(),
         };
-        batch.set(docRef(fsdb, 'characters', existingMatch.id!), merged);
+        batch.set(docRef(fsdb, 'characters', existingMatch.id!), sanitizeForFirestore(merged));
         results.push(merged);
       } else {
         const id = `char_${projectId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -441,7 +505,7 @@ export const db = {
           created_at: now(),
           updated_at: now(),
         };
-        batch.set(docRef(fsdb, 'characters', id), created);
+        batch.set(docRef(fsdb, 'characters', id), sanitizeForFirestore(created));
         results.push(created);
       }
     }
@@ -529,7 +593,7 @@ export const db = {
           version: existingMatch.version || 1,
           updated_at: now(),
         };
-        batch.set(docRef(fsdb, 'locations', existingMatch.id!), merged);
+        batch.set(docRef(fsdb, 'locations', existingMatch.id!), sanitizeForFirestore(merged));
         results.push(merged);
       } else {
         const id = `loc_${projectId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -542,7 +606,7 @@ export const db = {
           created_at: now(),
           updated_at: now(),
         };
-        batch.set(docRef(fsdb, 'locations', id), created);
+        batch.set(docRef(fsdb, 'locations', id), sanitizeForFirestore(created));
         results.push(created);
       }
     }
@@ -616,7 +680,7 @@ export const db = {
           version: existingMatch.version || 1,
           updated_at: now(),
         };
-        batch.set(docRef(fsdb, 'objects', existingMatch.id!), merged);
+        batch.set(docRef(fsdb, 'objects', existingMatch.id!), sanitizeForFirestore(merged));
         results.push(merged);
       } else {
         const id = `obj_${projectId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -628,7 +692,7 @@ export const db = {
           created_at: now(),
           updated_at: now(),
         };
-        batch.set(docRef(fsdb, 'objects', id), created);
+        batch.set(docRef(fsdb, 'objects', id), sanitizeForFirestore(created));
         results.push(created);
       }
     }
@@ -674,7 +738,7 @@ export const db = {
     if (!currentSnap.exists) return null;
     const current = currentSnap.data() as Scene;
     const updated: Scene = { ...current, ...partial, updated_at: now() };
-    await ref.set(updated);
+    await ref.set(sanitizeForFirestore(updated));
     return updated;
   },
 
@@ -702,7 +766,7 @@ export const db = {
     for (const scene of scenes) {
       const id = `scene_${projectId}_${scene.scene_number}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const saved: Scene = { ...scene, scene_tone: scene.scene_tone || recommendSceneTone(scene), id, project_id: projectId, version: 1, created_at: now(), updated_at: now() };
-      batch.set(docRef(fsdb, 'scenes', id), saved);
+      batch.set(docRef(fsdb, 'scenes', id), sanitizeForFirestore(saved));
       results.push(saved);
     }
     await batch.commit();
@@ -766,7 +830,7 @@ export const db = {
     for (const s of shots) {
       const id = `shot_${sceneId}_${s.shot_number}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const created: Shot = { ...s, id, scene_id: sceneId, project_id: projectId, version: 1, created_at: now(), updated_at: now() };
-      batch.set(docRef(fsdb, 'shots', id), created);
+      batch.set(docRef(fsdb, 'shots', id), sanitizeForFirestore(created));
       results.push(created);
     }
     await batch.commit();
@@ -788,7 +852,7 @@ export const db = {
     if (!currentSnap.exists) return null;
     const current = currentSnap.data() as Shot;
     const updated: Shot = { ...current, ...partial, updated_at: now() };
-    await ref.set(updated);
+    await ref.set(sanitizeForFirestore(updated));
     return updated;
   },
 
@@ -845,7 +909,7 @@ export const db = {
     for (const p of prompts) {
       const id = `vprompt_${shotId}_${p.target_platform}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const created: VideoPrompt = { ...p, id, shot_id: shotId, scene_id: sceneId, project_id: projectId, version: 1, created_at: now(), updated_at: now() };
-      batch.set(docRef(fsdb, 'video_prompts', id), created);
+      batch.set(docRef(fsdb, 'video_prompts', id), sanitizeForFirestore(created));
       results.push(created);
     }
     await batch.commit();
@@ -865,7 +929,7 @@ export const db = {
     const targetSlug = prompt.prompt_target || prompt.target_platform;
     const id = prompt.id || `vprompt_${prompt.shot_id}_${targetSlug}_${Date.now()}`;
     const full: VideoPrompt = { ...prompt, id, updated_at: now() };
-    await docRef(fsdb, 'video_prompts', id).set(full);
+    await docRef(fsdb, 'video_prompts', id).set(sanitizeForFirestore(full));
     return full;
   },
 
@@ -880,10 +944,10 @@ export const db = {
     }
     const fsdb = getFirestore();
     // Append-only: store as an independent document in a subcollection (with auto id).
-    await colRef(fsdb, `projects/${projectId}/logs`).add({
+    await colRef(fsdb, `projects/${projectId}/logs`).add(sanitizeForFirestore({
       ...fullLog,
       project_id: projectId,
-    });
+    }));
     return fullLog;
   },
 
@@ -910,7 +974,7 @@ export const db = {
       return entry;
     }
     const fsdb = getFirestore();
-    await colRef(fsdb, `projects/${projectId}/telemetry`).add(entry);
+    await colRef(fsdb, `projects/${projectId}/telemetry`).add(sanitizeForFirestore(entry));
     return entry;
   },
 
@@ -947,7 +1011,7 @@ export const db = {
       const scenes = await this.getScenes(projectId);
       if (project) {
         arch = synthesizeStoryArchitectureForLegacyProject(project, foundation, scenes);
-        await docRef(fsdb, 'story_architectures', projectId).set(arch);
+        await docRef(fsdb, 'story_architectures', projectId).set(sanitizeForFirestore(arch));
       }
     }
     return arch;
@@ -963,7 +1027,7 @@ export const db = {
     }
     const fsdb = getFirestore();
     const full: StoryArchitecture = { ...arch, updated_at: now() };
-    await docRef(fsdb, 'story_architectures', arch.project_id).set(full);
+    await docRef(fsdb, 'story_architectures', arch.project_id).set(sanitizeForFirestore(full));
     return full;
   },
 
@@ -985,7 +1049,7 @@ export const db = {
     if (!states || states.length === 0) {
       const characters = await this.getCharacters(projectId);
       states = characters.map(createCharacterContinuityState);
-      await docRef(fsdb, 'continuity_states', projectId).set(states);
+      await docRef(fsdb, 'continuity_states', projectId).set(sanitizeForFirestore(states));
     }
     return states;
   },
@@ -998,7 +1062,7 @@ export const db = {
       return states;
     }
     const fsdb = getFirestore();
-    await docRef(fsdb, 'continuity_states', projectId).set(states);
+    await docRef(fsdb, 'continuity_states', projectId).set(sanitizeForFirestore(states));
     return states;
   },
 
@@ -1040,7 +1104,7 @@ export const db = {
       return snapshot;
     }
     const fsdb = getFirestore();
-    await docRef(fsdb, 'continuity_snapshots', key).set(snapshot);
+    await docRef(fsdb, 'continuity_snapshots', key).set(sanitizeForFirestore(snapshot));
     return snapshot;
   },
 

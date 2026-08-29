@@ -19,7 +19,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { db, sanitizeProjectForStorage } from './db';
+import { db, sanitizeProjectForStorage, sanitizeForFirestore } from './db';
 
 const STORE = path.join(process.cwd(), 'data', 'firestore_store.json');
 const BACKUP = `${STORE}.apikeysanitizebak`;
@@ -77,7 +77,7 @@ function makeProject(projectId: string) {
     prompt_language: 'id' as const,
     ai_model: 'gemini-3.7-flash',
     reasoning_config: {
-      provider_type: 'openai_compatible',
+      provider_type: 'custom_openai',
       provider_name: 'Custom Provider',
       base_url: 'https://custom.invalid/v1',
       model_id: 'qwen/qwen-2.5-72b-instruct:free',
@@ -109,7 +109,7 @@ async function main(): Promise<void> {
   assert(sanitizedApiKeyTrail === null, `sanitizeProjectForStorage output has NO api_key property (found at ${sanitizedApiKeyTrail})`);
   const sanitizedUndefinedTrail = findUndefinedValue(sanitized);
   assert(sanitizedUndefinedTrail === null, `sanitizeProjectForStorage output has NO undefined value (found at ${sanitizedUndefinedTrail})`);
-  assert(sanitized.reasoning_config?.provider_type === 'openai_compatible', 'sanitized reasoning_config.provider_type preserved');
+  assert(sanitized.reasoning_config?.provider_type === 'custom_openai', 'sanitized reasoning_config.provider_type preserved');
   assert(!('api_key' in (sanitized.reasoning_config || {})), 'api_key key is completely absent from sanitized reasoning_config');
 
   // A: project with api_key can be saved (JSON fallback path).
@@ -134,7 +134,7 @@ async function main(): Promise<void> {
   assert(undefinedTrail === null, `persisted document contains NO undefined value (found at ${undefinedTrail})`);
 
   // D: all other reasoning_config fields survive sanitization.
-  assert(doc.reasoning_config?.provider_type === 'openai_compatible', 'reasoning_config.provider_type preserved');
+  assert(doc.reasoning_config?.provider_type === 'custom_openai', 'reasoning_config.provider_type preserved');
   assert(doc.reasoning_config?.provider_name === 'Custom Provider', 'reasoning_config.provider_name preserved');
   assert(doc.reasoning_config?.base_url === 'https://custom.invalid/v1', 'reasoning_config.base_url preserved');
   assert(doc.reasoning_config?.model_id === 'qwen/qwen-2.5-72b-instruct:free', 'reasoning_config.model_id preserved');
