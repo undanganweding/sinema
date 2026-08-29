@@ -81,6 +81,14 @@ export interface OrchestratorRunOptions {
   sceneConcurrency?: number;
 }
 
+// Per-project in-flight init lock. Prevents runProjectInitialization from being
+// executed concurrently for the same projectId (e.g. runOrchestratedPipeline
+// running init, then generateAllScenes re-entering init while foundation is
+// still marked 'initializing'). A duplicate concurrent init burns Gemini quota
+// (HTTP 429 RESOURCE_EXHAUSTED) twice as fast and trips the retry/backoff loop
+// that surfaces as a frozen pipeline at a later stage.
+const initializationInFlight = new Map<string, Promise<{ success: boolean; error?: string }>>();
+
 export function createGenerationRunContext(projectId: string, concurrency?: number): GenerationRunContext {
   return {
     runId: `run_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
@@ -364,6 +372,32 @@ export async function runProjectInitialization(
   ) => void,
   dependencies: ProjectInitializationDependencies = {}
 ): Promise<{ success: boolean; error?: string }> {
+  // Concurrency-safe: a duplicate concurrent init (e.g. runOrchestratedPipeline
+  // running init, then generateAllScenes re-entering while foundation is still
+  // 'initializing') burns Gemini quota twice as fast and trips the 429
+  // RESOURCE_EXHAUSTED retry/backoff loop that surfaces as a frozen pipeline.
+  const existing = initializationInFlight.get(projectId);
+  if (existing) {
+    console.log(`[init] JOIN in-flight initialization project=${projectId}`);
+    return existing;
+  }
+  const promise = runProjectInitializationImpl(projectId, onProgress, dependencies).finally(() => {
+    initializationInFlight.delete(projectId);
+  });
+  initializationInFlight.set(projectId, promise);
+  return promise;
+}
+
+async function runProjectInitializationImpl(
+  projectId: string,
+  onProgress?: (
+    stage: number,
+    stageName: string,
+    message: string,
+    level?: 'info' | 'success' | 'warn' | 'error'
+  ) => void,
+  dependencies: ProjectInitializationDependencies = {}
+): Promise<{ success: boolean; error?: string }> {
   const project = await db.getProject(projectId);
   if (!project) {
     throw new Error(`Project dengan ID ${projectId} tidak ditemukan.`);
@@ -455,313 +489,401 @@ export async function runProjectInitialization(
     if (continuityState) await db.saveProject({ ...groundedProject, continuityState });
 
     // ==========================================
-    // STAGE 1: Story Understanding Agent (S1)
+    // RESUME GUARD: skip stages whose outputs already persist
     // ==========================================
-    const s1Start = new Date().toISOString();
-    const s1StartTime = Date.now();
-    console.log(`[stage1] START stage=S1 project=${projectId} model=${activeModel} ts=${s1Start}`);
-    log(1, 'Story Understanding', `Memulai analisis naskah & fondasi cerita sinematik [Model: ${activeModel}]...`, 'info', 'S1');
-    recordTelemetry(projectId, {
-      stage: 1,
-      stage_code: 'S1',
-      scope: 'project',
-      attempt: 1,
-      started_at: s1Start,
-      status: 'started',
-    });
+    // A re-entrant init (foundation not fully 'ready') must RESUME from the
+    // last completed stage instead of re-running Stage 1. Re-running S1-S5 from
+    // scratch burns Gemini free-tier quota (20 req/day/model) and trips the 429
+    // backoff loop that surfaces as a frozen pipeline. Each stage is skipped
+    // when its persisted output already exists in the DB. Stage-local in-memory
+    // vars are then rebuilt from the DB so downstream stages keep working.
+    const [existingFoundation, resumeCharacters, resumeLocations, resumeObjects, resumeScenes] = await Promise.all([
+      db.getProjectFoundation(projectId),
+      db.getCharacters(projectId),
+      db.getLocations(projectId),
+      db.getObjects(projectId),
+      db.getScenes(projectId),
+    ]);
+    const resumeFoundation = existingFoundation && existingFoundation.genre && existingFoundation.era ? existingFoundation : null;
+    const resumeNarrativeBeats = resumeFoundation?.narrative_beats?.beginning ? resumeFoundation.narrative_beats : null;
+    const haveS1 = Boolean(resumeFoundation);
+    const haveS2 = resumeCharacters.length > 0;
+    const haveS3 = resumeLocations.length > 0;
+    const haveS4 = Boolean(resumeNarrativeBeats);
+    const haveS5 = resumeScenes.length > 0;
 
-    let stage1Result;
-    try {
-      const stage1Runner = dependencies.stage1Runner || runStage1StoryUnderstanding;
-      const stage1Input = {
-        rawScript: project.raw_script,
-        contextPackage: groundedProject.contextPackage || null,
-        language: project.prompt_language,
-        model: project.ai_model,
-        reasoningConfig: project.reasoning_config,
-      };
-      stage1Result = await stage1Runner(stage1Input);
-      await enforceStageConsistency(projectId, 'S1', stage1Result, consistencyState);
-      continuityState = await advanceContinuity(projectId, 'S1', { id: `project_${projectId}`, scene_number: 1, event: 'Stage 1', character_names: stage1Result.main_characters }, stage1Result, continuityState);
-      const s1Duration = Date.now() - s1StartTime;
-      recordTelemetry(projectId, {
-        stage: 1,
-        stage_code: 'S1',
-        scope: 'project',
-        attempt: 1,
-        started_at: s1Start,
-        completed_at: new Date().toISOString(),
-        duration_ms: s1Duration,
-        status: 'completed',
+    if (haveS5) {
+      // Foundation fully materialized; nothing to re-run. Keep it ready so the
+      // orchestrator does NOT trigger another init chain.
+      await db.saveProject({
+        ...(await db.getProject(projectId))!,
+        foundation_status: 'ready',
+        status: 'processing',
+        error_message: null,
       });
-      console.log(`[stage1] COMPLETE stage=S1 project=${projectId} elapsedMs=${s1Duration} genre=${stage1Result.genre} ts=${new Date().toISOString()}`);
-    } catch (err: any) {
-      const s1Duration = Date.now() - s1StartTime;
-      const errType = classifyError(err);
-      recordTelemetry(projectId, {
-        stage: 1,
-        stage_code: 'S1',
-        scope: 'project',
-        attempt: 1,
-        started_at: s1Start,
-        completed_at: new Date().toISOString(),
-        duration_ms: s1Duration,
-        status: 'failed',
-        error_type: errType,
-        error_message: err.message,
-      });
-      console.error(`[stage1] COMPLETE stage=S1 project=${projectId} elapsedMs=${s1Duration} status=failed errorType=${errType} error="${err.message}" ts=${new Date().toISOString()}`);
-      throw err;
+      log(
+        5,
+        'Scene Breakdown & Duration',
+        `Fondasi (S1-S5) sudah lengkap (${resumeScenes.length} scene). Melewati inisialisasi ulang.`,
+        'success',
+        'S5'
+      );
+      return { success: true };
     }
 
-    const foundationData: ProjectFoundation = {
-      project_id: projectId,
-      era: stage1Result.era,
-      theme: stage1Result.theme,
-      genre: stage1Result.genre,
-      timeline: stage1Result.timeline,
-      main_characters: stage1Result.main_characters,
-      supporting_characters: stage1Result.supporting_characters,
-      locations: stage1Result.locations,
-      main_conflict: stage1Result.main_conflict,
-      emotional_arc: stage1Result.emotional_arc,
-      narrative_arc: stage1Result.narrative_arc,
-      visual_tone: stage1Result.visual_tone,
-      updated_at: new Date().toISOString(),
-    };
+    // ==========================================
+    // STAGE 1: Story Understanding Agent (S1)
+    // ==========================================
+    let foundationData: ProjectFoundation;
+    if (haveS1) {
+      // S1 already persisted: reuse it, skip the LLM call.
+      foundationData = resumeFoundation!;
+      log(
+        1,
+        'Story Understanding',
+        `Fondasi S1 sudah tersimpan (genre "${foundationData.genre}"). Melewati Stage 1.`,
+        'warn',
+        'S1'
+      );
+    } else {
+      const s1Start = new Date().toISOString();
+      const s1StartTime = Date.now();
+      console.log(`[stage1] START stage=S1 project=${projectId} model=${activeModel} ts=${s1Start}`);
+      log(1, 'Story Understanding', `Memulai analisis naskah & fondasi cerita sinematik [Model: ${activeModel}]...`, 'info', 'S1');
+      recordTelemetry(projectId, {
+        stage: 1,
+        stage_code: 'S1',
+        scope: 'project',
+        attempt: 1,
+        started_at: s1Start,
+        status: 'started',
+      });
 
-    await db.saveProjectFoundation(foundationData);
-    log(
-      1,
-      'Story Understanding',
-      `Selesai. Genre: "${stage1Result.genre}", Era: "${stage1Result.era}", Terdeteksi ${(stage1Result.main_characters || []).length} karakter utama. Tersimpan di collection 'project_foundation'.`,
-      'success',
-      'S1',
-      Date.now() - s1StartTime
-    );
+      let stage1Result;
+      try {
+        const stage1Runner = dependencies.stage1Runner || runStage1StoryUnderstanding;
+        const stage1Input = {
+          rawScript: project.raw_script,
+          contextPackage: groundedProject.contextPackage || null,
+          language: project.prompt_language,
+          model: project.ai_model,
+          reasoningConfig: project.reasoning_config,
+        };
+        stage1Result = await stage1Runner(stage1Input);
+        await enforceStageConsistency(projectId, 'S1', stage1Result, consistencyState);
+        continuityState = await advanceContinuity(projectId, 'S1', { id: `project_${projectId}`, scene_number: 1, event: 'Stage 1', character_names: stage1Result.main_characters }, stage1Result, continuityState);
+        const s1Duration = Date.now() - s1StartTime;
+        recordTelemetry(projectId, {
+          stage: 1,
+          stage_code: 'S1',
+          scope: 'project',
+          attempt: 1,
+          started_at: s1Start,
+          completed_at: new Date().toISOString(),
+          duration_ms: s1Duration,
+          status: 'completed',
+        });
+        console.log(`[stage1] COMPLETE stage=S1 project=${projectId} elapsedMs=${s1Duration} genre=${stage1Result.genre} ts=${new Date().toISOString()}`);
+      } catch (err: any) {
+        const s1Duration = Date.now() - s1StartTime;
+        const errType = classifyError(err);
+        recordTelemetry(projectId, {
+          stage: 1,
+          stage_code: 'S1',
+          scope: 'project',
+          attempt: 1,
+          started_at: s1Start,
+          completed_at: new Date().toISOString(),
+          duration_ms: s1Duration,
+          status: 'failed',
+          error_type: errType,
+          error_message: err.message,
+        });
+        console.error(`[stage1] COMPLETE stage=S1 project=${projectId} elapsedMs=${s1Duration} status=failed errorType=${errType} error="${err.message}" ts=${new Date().toISOString()}`);
+        throw err;
+      }
+
+      foundationData = {
+        project_id: projectId,
+        era: stage1Result.era,
+        theme: stage1Result.theme,
+        genre: stage1Result.genre,
+        timeline: stage1Result.timeline,
+        main_characters: stage1Result.main_characters,
+        supporting_characters: stage1Result.supporting_characters,
+        locations: stage1Result.locations,
+        main_conflict: stage1Result.main_conflict,
+        emotional_arc: stage1Result.emotional_arc,
+        narrative_arc: stage1Result.narrative_arc,
+        visual_tone: stage1Result.visual_tone,
+        updated_at: new Date().toISOString(),
+      };
+
+      await db.saveProjectFoundation(foundationData);
+      log(
+        1,
+        'Story Understanding',
+        `Selesai. Genre: "${stage1Result.genre}", Era: "${stage1Result.era}", Terdeteksi ${(stage1Result.main_characters || []).length} karakter utama. Tersimpan di collection 'project_foundation'.`,
+        'success',
+        'S1',
+        Date.now() - s1StartTime
+      );
+    }
 
     // ==========================================
     // STAGE 2: Character Detection Agent (S2)
     // ==========================================
     await db.saveProject({ ...(await db.getProject(projectId))!, current_stage: 2 });
-    const s2Start = new Date().toISOString();
-    const s2StartTime = Date.now();
-    log(2, 'Character Detection', `Mendeteksi profil karakter (Character Bible) & membaca database karakter yang ada [Model: ${activeModel}]...`, 'info', 'S2');
-    recordTelemetry(projectId, {
-      stage: 2,
-      stage_code: 'S2',
-      scope: 'project',
-      attempt: 1,
-      started_at: s2Start,
-      status: 'started',
-    });
+    let savedCharacters = resumeCharacters;
+    if (haveS2) {
+      log(
+        2,
+        'Character Detection',
+        `Character Bible sudah tersimpan (${savedCharacters.length} karakter). Melewati Stage 2.`,
+        'warn',
+        'S2'
+      );
+    } else {
+      const s2Start = new Date().toISOString();
+      const s2StartTime = Date.now();
+      log(2, 'Character Detection', `Mendeteksi profil karakter (Character Bible) & membaca database karakter yang ada [Model: ${activeModel}]...`, 'info', 'S2');
+      recordTelemetry(projectId, {
+        stage: 2,
+        stage_code: 'S2',
+        scope: 'project',
+        attempt: 1,
+        started_at: s2Start,
+        status: 'started',
+      });
 
-    let savedCharacters;
-    try {
-      const stage2Result = await runStage2CharacterDetection({
-        rawScript: project.raw_script,
-        foundation: foundationData,
-        contextPackage: project.contextPackage || null,
-        language: project.prompt_language,
-        model: project.ai_model,
-        reasoningConfig: project.reasoning_config,
-      });
-      await enforceStageConsistency(projectId, 'S2', stage2Result, consistencyState);
-      continuityState = await advanceContinuity(projectId, 'S2', { id: `project_${projectId}`, scene_number: 2, event: 'Stage 2', character_names: stage2Result.map((character) => character.name) }, stage2Result, continuityState);
-      savedCharacters = await db.saveAndMergeCharacters(projectId, stage2Result);
-      const s2Duration = Date.now() - s2StartTime;
-      recordTelemetry(projectId, {
-        stage: 2,
-        stage_code: 'S2',
-        scope: 'project',
-        attempt: 1,
-        started_at: s2Start,
-        completed_at: new Date().toISOString(),
-        duration_ms: s2Duration,
-        status: 'completed',
-      });
-    } catch (err: any) {
-      const s2Duration = Date.now() - s2StartTime;
-      const errType = classifyError(err);
-      recordTelemetry(projectId, {
-        stage: 2,
-        stage_code: 'S2',
-        scope: 'project',
-        attempt: 1,
-        started_at: s2Start,
-        completed_at: new Date().toISOString(),
-        duration_ms: s2Duration,
-        status: 'failed',
-        error_type: errType,
-        error_message: err.message,
-      });
-      throw err;
+      try {
+        const stage2Result = await runStage2CharacterDetection({
+          rawScript: project.raw_script,
+          foundation: foundationData,
+          contextPackage: project.contextPackage || null,
+          language: project.prompt_language,
+          model: project.ai_model,
+          reasoningConfig: project.reasoning_config,
+        });
+        await enforceStageConsistency(projectId, 'S2', stage2Result, consistencyState);
+        continuityState = await advanceContinuity(projectId, 'S2', { id: `project_${projectId}`, scene_number: 2, event: 'Stage 2', character_names: stage2Result.map((character) => character.name) }, stage2Result, continuityState);
+        savedCharacters = await db.saveAndMergeCharacters(projectId, stage2Result);
+        const s2Duration = Date.now() - s2StartTime;
+        recordTelemetry(projectId, {
+          stage: 2,
+          stage_code: 'S2',
+          scope: 'project',
+          attempt: 1,
+          started_at: s2Start,
+          completed_at: new Date().toISOString(),
+          duration_ms: s2Duration,
+          status: 'completed',
+        });
+      } catch (err: any) {
+        const s2Duration = Date.now() - s2StartTime;
+        const errType = classifyError(err);
+        recordTelemetry(projectId, {
+          stage: 2,
+          stage_code: 'S2',
+          scope: 'project',
+          attempt: 1,
+          started_at: s2Start,
+          completed_at: new Date().toISOString(),
+          duration_ms: s2Duration,
+          status: 'failed',
+          error_type: errType,
+          error_message: err.message,
+        });
+        throw err;
+      }
+
+      log(
+        2,
+        'Character Detection',
+        `Selesai. ${savedCharacters.length} karakter berhasil dipetakan dan disimpan ke collection 'characters' (merge verified).`,
+        'success',
+        'S2',
+        Date.now() - s2StartTime
+      );
     }
-
-    log(
-      2,
-      'Character Detection',
-      `Selesai. ${savedCharacters.length} karakter berhasil dipetakan dan disimpan ke collection 'characters' (merge verified).`,
-      'success',
-      'S2',
-      Date.now() - s2StartTime
-    );
 
     // ==========================================
     // STAGE 3: Location & Object Detection Agent (S3)
     // ==========================================
     await db.saveProject({ ...(await db.getProject(projectId))!, current_stage: 3 });
-    const s3Start = new Date().toISOString();
-    const s3StartTime = Date.now();
-    log(3, 'Location & Object Detection', `Mendeteksi set sinematik (Location Bible) dan properti kunci (Object Bible) [Model: ${activeModel}]...`, 'info', 'S3');
-    recordTelemetry(projectId, {
-      stage: 3,
-      stage_code: 'S3',
-      scope: 'project',
-      attempt: 1,
-      started_at: s3Start,
-      status: 'started',
-    });
+    let savedLocations = resumeLocations;
+    let savedObjects = resumeObjects;
+    if (haveS3) {
+      log(
+        3,
+        'Location & Object Detection',
+        `Location & Object Bible sudah tersimpan (${savedLocations.length} lokasi, ${savedObjects.length} objek). Melewati Stage 3.`,
+        'warn',
+        'S3'
+      );
+    } else {
+      const s3Start = new Date().toISOString();
+      const s3StartTime = Date.now();
+      log(3, 'Location & Object Detection', `Mendeteksi set sinematik (Location Bible) dan properti kunci (Object Bible) [Model: ${activeModel}]...`, 'info', 'S3');
+      recordTelemetry(projectId, {
+        stage: 3,
+        stage_code: 'S3',
+        scope: 'project',
+        attempt: 1,
+        started_at: s3Start,
+        status: 'started',
+      });
 
-    let savedLocations, savedObjects;
-    try {
-      const stage3Result = await runStage3LocationObjectDetection({
-        rawScript: project.raw_script,
-        foundation: foundationData,
-        contextPackage: project.contextPackage || null,
-        language: project.prompt_language,
-        model: project.ai_model,
-        reasoningConfig: project.reasoning_config,
-      });
-      await enforceStageConsistency(projectId, 'S3', stage3Result, consistencyState);
-      continuityState = await advanceContinuity(projectId, 'S3', { id: `project_${projectId}`, scene_number: 3, event: 'Stage 3' }, stage3Result, continuityState);
-      savedLocations = await db.saveAndMergeLocations(projectId, stage3Result.locations);
-      savedObjects = await db.saveAndMergeObjects(projectId, stage3Result.objects);
-      const s3Duration = Date.now() - s3StartTime;
-      recordTelemetry(projectId, {
-        stage: 3,
-        stage_code: 'S3',
-        scope: 'project',
-        attempt: 1,
-        started_at: s3Start,
-        completed_at: new Date().toISOString(),
-        duration_ms: s3Duration,
-        status: 'completed',
-      });
-    } catch (err: any) {
-      const s3Duration = Date.now() - s3StartTime;
-      const errType = classifyError(err);
-      recordTelemetry(projectId, {
-        stage: 3,
-        stage_code: 'S3',
-        scope: 'project',
-        attempt: 1,
-        started_at: s3Start,
-        completed_at: new Date().toISOString(),
-        duration_ms: s3Duration,
-        status: 'failed',
-        error_type: errType,
-        error_message: err.message,
-      });
-      throw err;
+      try {
+        const stage3Result = await runStage3LocationObjectDetection({
+          rawScript: project.raw_script,
+          foundation: foundationData,
+          contextPackage: project.contextPackage || null,
+          language: project.prompt_language,
+          model: project.ai_model,
+          reasoningConfig: project.reasoning_config,
+        });
+        await enforceStageConsistency(projectId, 'S3', stage3Result, consistencyState);
+        continuityState = await advanceContinuity(projectId, 'S3', { id: `project_${projectId}`, scene_number: 3, event: 'Stage 3' }, stage3Result, continuityState);
+        savedLocations = await db.saveAndMergeLocations(projectId, stage3Result.locations);
+        savedObjects = await db.saveAndMergeObjects(projectId, stage3Result.objects);
+        const s3Duration = Date.now() - s3StartTime;
+        recordTelemetry(projectId, {
+          stage: 3,
+          stage_code: 'S3',
+          scope: 'project',
+          attempt: 1,
+          started_at: s3Start,
+          completed_at: new Date().toISOString(),
+          duration_ms: s3Duration,
+          status: 'completed',
+        });
+      } catch (err: any) {
+        const s3Duration = Date.now() - s3StartTime;
+        const errType = classifyError(err);
+        recordTelemetry(projectId, {
+          stage: 3,
+          stage_code: 'S3',
+          scope: 'project',
+          attempt: 1,
+          started_at: s3Start,
+          completed_at: new Date().toISOString(),
+          duration_ms: s3Duration,
+          status: 'failed',
+          error_type: errType,
+          error_message: err.message,
+        });
+        throw err;
+      }
+
+      log(
+        3,
+        'Location & Object Detection',
+        `Selesai. ${savedLocations.length} lokasi dan ${savedObjects.length} objek kunci tersimpan di collection 'locations' & 'objects'.`,
+        'success',
+        'S3',
+        Date.now() - s3StartTime
+      );
     }
-
-    log(
-      3,
-      'Location & Object Detection',
-      `Selesai. ${savedLocations.length} lokasi dan ${savedObjects.length} objek kunci tersimpan di collection 'locations' & 'objects'.`,
-      'success',
-      'S3',
-      Date.now() - s3StartTime
-    );
 
     // ==========================================
     // STAGE 4: Narrative Structure Agent (S4)
     // ==========================================
     await db.saveProject({ ...(await db.getProject(projectId))!, current_stage: 4 });
-    const s4Start = new Date().toISOString();
-    const s4StartTime = Date.now();
-    log(
-      4,
-      'Narrative Structure',
-      `Menyusun Peta Struktur Naratif 5-Babak Global (Beginning, Development, Climax, Consequence, Ending) [Model: ${activeModel}]...`,
-      'info',
-      'S4'
-    );
-    recordTelemetry(projectId, {
-      stage: 4,
-      stage_code: 'S4',
-      scope: 'project',
-      attempt: 1,
-      started_at: s4Start,
-      status: 'started',
-    });
-
-    let narrativeBeats;
-    try {
-      narrativeBeats = await runStage4NarrativeStructure({
-        rawScript: project.raw_script,
-        foundation: foundationData,
-        characters: savedCharacters,
-        locations: savedLocations,
-        contextPackage: project.contextPackage || null,
-        language: project.prompt_language,
-        model: project.ai_model,
-        reasoningConfig: project.reasoning_config,
-      });
-      await enforceStageConsistency(projectId, 'S4', narrativeBeats, consistencyState);
-      continuityState = await advanceContinuity(projectId, 'S4', { id: `project_${projectId}`, scene_number: 4, event: 'Stage 4' }, narrativeBeats, continuityState);
-
-      await db.saveProjectFoundation({
-        ...foundationData,
-        narrative_beats: narrativeBeats,
-      });
-
-      // Generate & save Cinematic Story Architecture (Cold Open, Acts/Babak, Sequences)
-      const storyArch = synthesizeStoryArchitectureForLegacyProject(
-        project,
-        { ...foundationData, narrative_beats: narrativeBeats },
-        []
+    let narrativeBeats: typeof resumeNarrativeBeats;
+    if (haveS4) {
+      narrativeBeats = resumeNarrativeBeats;
+      log(
+        4,
+        'Narrative Structure',
+        'Narrative Beats (S4) sudah tersimpan. Melewati Stage 4.',
+        'warn',
+        'S4'
       );
-      await db.saveStoryArchitecture(storyArch);
+    } else {
+      const s4Start = new Date().toISOString();
+      const s4StartTime = Date.now();
+      log(
+        4,
+        'Narrative Structure',
+        `Menyusun Peta Struktur Naratif 5-Babak Global (Beginning, Development, Climax, Consequence, Ending) [Model: ${activeModel}]...`,
+        'info',
+        'S4'
+      );
+      recordTelemetry(projectId, {
+        stage: 4,
+        stage_code: 'S4',
+        scope: 'project',
+        attempt: 1,
+        started_at: s4Start,
+        status: 'started',
+      });
 
-      const s4Duration = Date.now() - s4StartTime;
-      recordTelemetry(projectId, {
-        stage: 4,
-        stage_code: 'S4',
-        scope: 'project',
-        attempt: 1,
-        started_at: s4Start,
-        completed_at: new Date().toISOString(),
-        duration_ms: s4Duration,
-        status: 'completed',
-      });
-    } catch (err: any) {
-      const s4Duration = Date.now() - s4StartTime;
-      const errType = classifyError(err);
-      recordTelemetry(projectId, {
-        stage: 4,
-        stage_code: 'S4',
-        scope: 'project',
-        attempt: 1,
-        started_at: s4Start,
-        completed_at: new Date().toISOString(),
-        duration_ms: s4Duration,
-        status: 'failed',
-        error_type: errType,
-        error_message: err.message,
-      });
-      throw err;
+      try {
+        narrativeBeats = await runStage4NarrativeStructure({
+          rawScript: project.raw_script,
+          foundation: foundationData,
+          characters: savedCharacters,
+          locations: savedLocations,
+          contextPackage: project.contextPackage || null,
+          language: project.prompt_language,
+          model: project.ai_model,
+          reasoningConfig: project.reasoning_config,
+        });
+        await enforceStageConsistency(projectId, 'S4', narrativeBeats, consistencyState);
+        continuityState = await advanceContinuity(projectId, 'S4', { id: `project_${projectId}`, scene_number: 4, event: 'Stage 4' }, narrativeBeats, continuityState);
+
+        await db.saveProjectFoundation({
+          ...foundationData,
+          narrative_beats: narrativeBeats,
+        });
+
+        // Generate & save Cinematic Story Architecture (Cold Open, Acts/Babak, Sequences)
+        const storyArch = synthesizeStoryArchitectureForLegacyProject(
+          project,
+          { ...foundationData, narrative_beats: narrativeBeats },
+          []
+        );
+        await db.saveStoryArchitecture(storyArch);
+
+        const s4Duration = Date.now() - s4StartTime;
+        recordTelemetry(projectId, {
+          stage: 4,
+          stage_code: 'S4',
+          scope: 'project',
+          attempt: 1,
+          started_at: s4Start,
+          completed_at: new Date().toISOString(),
+          duration_ms: s4Duration,
+          status: 'completed',
+        });
+      } catch (err: any) {
+        const s4Duration = Date.now() - s4StartTime;
+        const errType = classifyError(err);
+        recordTelemetry(projectId, {
+          stage: 4,
+          stage_code: 'S4',
+          scope: 'project',
+          attempt: 1,
+          started_at: s4Start,
+          completed_at: new Date().toISOString(),
+          duration_ms: s4Duration,
+          status: 'failed',
+          error_type: errType,
+          error_message: err.message,
+        });
+        throw err;
+      }
+
+      log(
+        4,
+        'Narrative Structure',
+        'Selesai. Pemahaman global 5 babak naratif berhasil disusun dan tersimpan di collection \'project_foundation\'.',
+        'success',
+        'S4',
+        Date.now() - s4StartTime
+      );
     }
-
-    log(
-      4,
-      'Narrative Structure',
-      'Selesai. Pemahaman global 5 babak naratif berhasil disusun dan tersimpan di collection \'project_foundation\'.',
-      'success',
-      'S4',
-      Date.now() - s4StartTime
-    );
 
     // ==========================================
     // STAGE 5: Scene Breakdown & Duration Allocation Agent (S5)
