@@ -14,9 +14,16 @@ import { getFirestore as getAdminFirestore, type Firestore } from 'firebase-admi
  *   1) FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY  (preferred)
  *   2) GOOGLE_APPLICATION_CREDENTIALS  (path to a service-account JSON on the runtime)
  *   3) Default application credentials (gcloud / emulator)
+ *
+ * Optional named database:
+ *   FIREBASE_DATABASE_ID  -> Firestore named database ID (e.g. "sinema").
+ *   When unset, the SDK uses the "(default)" database, preserving local/test
+ *   behavior.
  */
 
 const APP_NAME = 'cinematic-pipeline-backend';
+
+const FIREBASE_DATABASE_ID = process.env.FIREBASE_DATABASE_ID || undefined;
 
 let cachedApp: App | null = null;
 let cachedFirestore: Firestore | null = null;
@@ -77,7 +84,7 @@ function getFirebaseApp(): App {
 export function getFirestore(): Firestore {
   if (cachedFirestore) return cachedFirestore;
   const app = getFirebaseApp();
-  cachedFirestore = getAdminFirestore(app);
+  cachedFirestore = getAdminFirestore(app, FIREBASE_DATABASE_ID);
   return cachedFirestore;
 }
 
