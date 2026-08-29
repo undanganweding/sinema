@@ -25,6 +25,11 @@ const APP_NAME = 'cinematic-pipeline-backend';
 
 const FIREBASE_DATABASE_ID = process.env.FIREBASE_DATABASE_ID || undefined;
 
+/** Runtime Firestore database ID target (safe to log; no secrets). */
+export function getDatabaseId(): string {
+  return FIREBASE_DATABASE_ID ?? '(default)';
+}
+
 let cachedApp: App | null = null;
 let cachedFirestore: Firestore | null = null;
 

@@ -20,7 +20,7 @@ import {
 import { DEFAULT_NARRATIVE_STYLE_CONFIG, recommendSceneTone } from './narrative_tone';
 import { createCharacterContinuityState } from './continuity_engine';
 import { synthesizeStoryArchitectureForLegacyProject, deriveBeatsForScene } from './story_architecture';
-import { getFirestore, isFirestoreConfigured } from './firebase_admin';
+import { getFirestore, isFirestoreConfigured, getDatabaseId } from './firebase_admin';
 
 // ---------------------------------------------------------------------------
 // Backend selection
@@ -956,8 +956,21 @@ export const db = {
       return jsonState.logs[projectId] || [];
     }
     const fsdb = getFirestore();
-    const snap = await colRef(fsdb, `projects/${projectId}/logs`).orderBy('timestamp', 'asc').get();
-    return snap.docs.map((d: any) => d.data() as PipelineLogEvent);
+    try {
+      const snap = await colRef(fsdb, `projects/${projectId}/logs`).orderBy('timestamp', 'asc').get();
+      return snap.docs.map((d: any) => d.data() as PipelineLogEvent);
+    } catch (err: any) {
+      const code = err?.code ?? err?.status ?? err?.grpcStatusCode ?? 'n/a';
+      console.error(
+        `[dbg] getLogs -> ERROR ` +
+        `projectId=${projectId} ` +
+        `databaseId=${getDatabaseId()} ` +
+        `error.code=${code} ` +
+        `error.message=${err?.message ?? String(err)} ` +
+        (err?.details ? `error.details=${JSON.stringify(err.details)}` : '')
+      );
+      throw err;
+    }
   },
 
   // --- Pipeline Telemetry Tracking ---
@@ -1112,17 +1125,39 @@ export const db = {
   async getFullProjectData(projectId: string): Promise<ProjectFullData | null> {
     const project = await this.getProject(projectId);
     if (!project) return null;
-    const [foundation, characters, locations, objects, rawScenes, allShots, allVideoPrompts, storyArchitecture, continuityStates] = await Promise.all([
-      this.getProjectFoundation(projectId),
-      this.getCharacters(projectId),
-      this.getLocations(projectId),
-      this.getObjects(projectId),
-      this.getScenes(projectId),
-      this.getShotsByProject(projectId),
-      this.getVideoPromptsByProject(projectId),
-      this.getStoryArchitecture(projectId),
-      this.getCharacterContinuityStates(projectId),
-    ]);
+
+    // --- Temporary diagnostic instrumentation (remove after root cause found) ---
+    // Each operation runs sequentially so the FIRST failing one is identified.
+    // No fallback: the original error is rethrown so the true root cause is preserved.
+    console.error(`[dbg] getFullProjectData start projectId=${projectId} databaseId=${getDatabaseId()}`);
+    const dbgRun = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
+      try {
+        const result = await fn();
+        console.error(`[dbg] ${label} -> PASS`);
+        return result;
+      } catch (err: any) {
+        const code = err?.code ?? err?.status ?? err?.grpcStatusCode ?? 'n/a';
+        console.error(
+          `[dbg] ${label} -> ERROR ` +
+          `projectId=${projectId} ` +
+          `databaseId=${getDatabaseId()} ` +
+          `error.code=${code} ` +
+          `error.message=${err?.message ?? String(err)} ` +
+          (err?.details ? `error.details=${JSON.stringify(err.details)}` : '')
+        );
+        throw err;
+      }
+    };
+
+    const foundation: ProjectFoundation | null = await dbgRun<ProjectFoundation | null>('getProjectFoundation', () => this.getProjectFoundation(projectId));
+    const characters: CharacterBible[] = await dbgRun<CharacterBible[]>('getCharacters', () => this.getCharacters(projectId));
+    const locations: LocationBible[] = await dbgRun<LocationBible[]>('getLocations', () => this.getLocations(projectId));
+    const objects: ObjectBible[] = await dbgRun<ObjectBible[]>('getObjects', () => this.getObjects(projectId));
+    const rawScenes: Scene[] = await dbgRun<Scene[]>('getScenes', () => this.getScenes(projectId));
+    const allShots: Shot[] = await dbgRun<Shot[]>('getShotsByProject', () => this.getShotsByProject(projectId));
+    const allVideoPrompts: VideoPrompt[] = await dbgRun<VideoPrompt[]>('getVideoPromptsByProject', () => this.getVideoPromptsByProject(projectId));
+    const storyArchitecture: StoryArchitecture | null = await dbgRun<StoryArchitecture | null>('getStoryArchitecture', () => this.getStoryArchitecture(projectId));
+    const continuityStates: CharacterContinuityState[] = await dbgRun<CharacterContinuityState[]>('getCharacterContinuityStates', () => this.getCharacterContinuityStates(projectId));
 
     const shotsMap: Record<string, Shot[]> = {};
     for (const scene of rawScenes) {
