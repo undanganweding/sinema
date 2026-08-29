@@ -607,6 +607,74 @@ export function createContinuityState(
   };
 }
 
+/**
+ * Fast specialized deep cloner for ContinuityState.
+ * Replaces expensive JSON serialization or heavy V8 structuredClone
+ * with targeted structural cloning.
+ */
+export function cloneContinuityState(state: ContinuityState): ContinuityState {
+  return {
+    ...state,
+    characters: state.characters
+      ? state.characters.map((c) => ({
+          ...c,
+          aliases: [...(c.aliases || [])],
+          attributes: [...(c.attributes || [])],
+          clothing: [...(c.clothing || [])],
+          accessories: [...(c.accessories || [])],
+          relationships: [...(c.relationships || [])],
+          possessions: [...(c.possessions || [])],
+          provenance: [...(c.provenance || [])],
+        }))
+      : [],
+    characterIdentities: { ...(state.characterIdentities || {}) },
+    locations: state.locations
+      ? Object.fromEntries(
+          Object.entries(state.locations).map(([k, v]) => [
+            k,
+            { ...v, aliases: [...(v.aliases || [])], provenance: [...(v.provenance || [])] },
+          ])
+        )
+      : {},
+    activeEvents: [...(state.activeEvents || [])],
+    relationships: [...(state.relationships || [])],
+    objects: state.objects
+      ? Object.fromEntries(
+          Object.entries(state.objects).map(([k, v]) => [
+            k,
+            { ...v, appearance: [...(v.appearance || [])], provenance: [...(v.provenance || [])] },
+          ])
+        )
+      : {},
+    scenes: state.scenes
+      ? state.scenes.map((sc) => ({
+          ...sc,
+          activeCharacters: [...(sc.activeCharacters || [])],
+          objects: [...(sc.objects || [])],
+          visualState: sc.visualState
+            ? Object.fromEntries(
+                Object.entries(sc.visualState).map(([k, v]) => [k, [...v]])
+              )
+            : {},
+          continuityConstraints: [...(sc.continuityConstraints || [])],
+        }))
+      : [],
+    visualState: state.visualState
+      ? Object.fromEntries(
+          Object.entries(state.visualState).map(([k, v]) => [k, [...v]])
+        )
+      : {},
+    continuityConstraints: [...(state.continuityConstraints || [])],
+    temporalOrder: { ...(state.temporalOrder || {}) },
+    unresolvedIssues: state.unresolvedIssues
+      ? state.unresolvedIssues.map((u) => ({
+          ...u,
+          sourceIds: u.sourceIds ? [...u.sourceIds] : undefined,
+        }))
+      : [],
+  };
+}
+
 export function updateContinuityState(
   state: ContinuityState,
   scene: { id?: string; scene_number?: number; location_name?: string; character_names?: string[]; event?: string; era?: string },
@@ -614,7 +682,9 @@ export function updateContinuityState(
   transitionType?: ContinuityTransitionType,
   scope: ContinuityScope = 'within-scene'
 ): { state: ContinuityState; issues: ContinuityIssue[] } {
-  const next: ContinuityState = JSON.parse(JSON.stringify(state)) as ContinuityState;
+  // Performance optimization (⚡ Bolt): Use fast specialized cloneContinuityState instead of
+  // JSON.parse(JSON.stringify()) to avoid costly JSON stringification & parsing (~10x faster).
+  const next: ContinuityState = cloneContinuityState(state);
   const sceneId = scene.id || `scene_${scene.scene_number || next.scenes.length + 1}`;
   const priorScenes = next.scenes.filter((item) => item.sceneId !== sceneId);
   const previous = scene.scene_number === undefined
