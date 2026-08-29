@@ -17639,6 +17639,154 @@
           "asset_integrity"
         ]
       }
+    },
+    "apikey_sanitize_1788030274109": {
+      "id": "apikey_sanitize_1788030274109",
+      "title": "Updated title",
+      "raw_script": "Sanitization regression fixture script.",
+      "total_duration_target_sec": 60,
+      "max_scene_shot_duration_sec": 10,
+      "scene_duration_sec": 10,
+      "allow_final_scene_override": false,
+      "prompt_language": "id",
+      "ai_model": "gemini-3.7-flash",
+      "reasoning_config": {
+        "provider_type": "openai_compatible",
+        "provider_name": "Custom Provider",
+        "base_url": "https://custom.invalid/v1",
+        "model_id": "qwen/qwen-2.5-72b-instruct:free",
+        "display_name": "Custom Qwen"
+      },
+      "image_model": "nano_banana_pro",
+      "video_model": [
+        "veo"
+      ],
+      "include_seedance_format": false,
+      "created_at": "2026-08-29T19:04:34.109Z",
+      "updated_at": "2026-08-29T19:04:34.174Z",
+      "status": "draft",
+      "current_stage": 0,
+      "error_message": null,
+      "retry_count": 0,
+      "reasoning_model_preferences": {
+        "mode": "fixed",
+        "primary_model": {
+          "provider": "openai_compatible",
+          "model_id": "qwen/qwen-2.5-72b-instruct:free",
+          "display_name": "Custom Qwen"
+        },
+        "fallback_policy": "off",
+        "fallback_pool": [
+          {
+            "provider": "google",
+            "model_id": "gemini-3.6-flash",
+            "priority": 1,
+            "display_name": "Gemini 3.6 Flash"
+          },
+          {
+            "provider": "google",
+            "model_id": "gemini-3.1-pro-preview",
+            "priority": 2,
+            "display_name": "Gemini 3.1 Pro"
+          }
+        ],
+        "force_model": false,
+        "stage_routing": {}
+      },
+      "duration_mode": "fixed",
+      "fixed_scene_duration": 10,
+      "narrative_style_config": {
+        "language": "id-ID",
+        "narrative_mode": "cinematic_sirah",
+        "global_constraints": {
+          "religious_adab": "strict",
+          "historical_fidelity": "strict",
+          "dignity": "strict",
+          "clarity": "high",
+          "cinematic_quality": "high"
+        },
+        "default_scene_tone": {
+          "intensity": 50,
+          "emotional_weight": 50,
+          "pacing": "medium",
+          "atmosphere": "dramatic",
+          "dramatic_tension": 50
+        }
+      }
+    },
+    "apikey_sanitize_1788030338336": {
+      "id": "apikey_sanitize_1788030338336",
+      "title": "Updated title",
+      "raw_script": "Sanitization regression fixture script.",
+      "total_duration_target_sec": 60,
+      "max_scene_shot_duration_sec": 10,
+      "scene_duration_sec": 10,
+      "allow_final_scene_override": false,
+      "prompt_language": "id",
+      "ai_model": "gemini-3.7-flash",
+      "reasoning_config": {
+        "provider_type": "openai_compatible",
+        "provider_name": "Custom Provider",
+        "base_url": "https://custom.invalid/v1",
+        "model_id": "qwen/qwen-2.5-72b-instruct:free",
+        "display_name": "Custom Qwen"
+      },
+      "image_model": "nano_banana_pro",
+      "video_model": [
+        "veo"
+      ],
+      "include_seedance_format": false,
+      "created_at": "2026-08-29T19:05:38.336Z",
+      "updated_at": "2026-08-29T19:05:38.424Z",
+      "status": "draft",
+      "current_stage": 0,
+      "error_message": null,
+      "retry_count": 0,
+      "reasoning_model_preferences": {
+        "mode": "fixed",
+        "primary_model": {
+          "provider": "openai_compatible",
+          "model_id": "qwen/qwen-2.5-72b-instruct:free",
+          "display_name": "Custom Qwen"
+        },
+        "fallback_policy": "off",
+        "fallback_pool": [
+          {
+            "provider": "google",
+            "model_id": "gemini-3.6-flash",
+            "priority": 1,
+            "display_name": "Gemini 3.6 Flash"
+          },
+          {
+            "provider": "google",
+            "model_id": "gemini-3.1-pro-preview",
+            "priority": 2,
+            "display_name": "Gemini 3.1 Pro"
+          }
+        ],
+        "force_model": false,
+        "stage_routing": {}
+      },
+      "duration_mode": "fixed",
+      "fixed_scene_duration": 10,
+      "narrative_style_config": {
+        "language": "id-ID",
+        "narrative_mode": "cinematic_sirah",
+        "global_constraints": {
+          "religious_adab": "strict",
+          "historical_fidelity": "strict",
+          "dignity": "strict",
+          "clarity": "high",
+          "cinematic_quality": "high"
+        },
+        "default_scene_tone": {
+          "intensity": 50,
+          "emotional_weight": 50,
+          "pacing": "medium",
+          "atmosphere": "dramatic",
+          "dramatic_tension": 50
+        }
+      }
     }
   },
   "project_foundation": {

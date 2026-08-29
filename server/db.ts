@@ -100,16 +100,14 @@ function saveJsonState(state: FirestoreState): void {
 // Transient in-memory storage for active API keys to keep them out of saved JSON files
 const ephemeralApiKeys = new Map<string, string>();
 
-function sanitizeProjectForStorage(project: Project): Project {
+export function sanitizeProjectForStorage(project: Project): Project {
   if (project.reasoning_config?.api_key) {
     ephemeralApiKeys.set(project.id, project.reasoning_config.api_key);
   }
   const copy = { ...project };
   if (copy.reasoning_config) {
-    copy.reasoning_config = {
-      ...copy.reasoning_config,
-      api_key: undefined,
-    };
+    const { api_key, ...restConfig } = copy.reasoning_config;
+    copy.reasoning_config = restConfig;
   }
   return copy;
 }
