@@ -61,6 +61,13 @@ import {
   NarrativeMode,
 } from '../src/types';
 
+export interface GenerationRunContext {
+  runId: string;
+  projectId: string;
+  startedAt: string;
+  concurrency?: number;
+}
+
 export interface OrchestratorRunOptions {
   projectId: string;
   onProgress?: (
@@ -69,6 +76,18 @@ export interface OrchestratorRunOptions {
     message: string,
     level?: 'info' | 'success' | 'warn' | 'error'
   ) => void;
+  runContext?: GenerationRunContext;
+  /** Optional explicit concurrency override. Cascade: sceneConcurrency > runContext.concurrency > SCENE_GENERATION_CONCURRENCY env > 2 */
+  sceneConcurrency?: number;
+}
+
+export function createGenerationRunContext(projectId: string, concurrency?: number): GenerationRunContext {
+  return {
+    runId: `run_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+    projectId,
+    startedAt: new Date().toISOString(),
+    concurrency,
+  };
 }
 
 export interface FoundationVerificationResult {
@@ -223,27 +242,112 @@ export function verifyProjectFoundation(projectId: string): FoundationVerificati
 /**
  * Helper to record telemetry event
  */
+function safeAddLog(projectId: string, payload: Parameters<typeof db.addLog>[1]): void {
+  try {
+    db.addLog(projectId, payload);
+  } catch {
+    // Observability failure must never impact pipeline execution.
+  }
+}
+
+function safeAddTelemetry(projectId: string, payload: Parameters<typeof db.addTelemetry>[1]): StageExecutionTelemetry | null {
+  try {
+    return db.addTelemetry(projectId, payload);
+  } catch {
+    // Observability failure must never impact pipeline execution.
+    return null;
+  }
+}
+
 function recordTelemetry(
   projectId: string,
   telemetry: {
-    stage: number;
-    stage_code: StageCode;
-    scope: StageScope;
+    stage?: number;
+    stage_code?: StageCode;
+    scope?: StageScope;
     scene_id?: string;
     shot_id?: string;
-    attempt: number;
-    started_at: string;
+    attempt?: number;
+    started_at?: string;
     completed_at?: string;
     duration_ms?: number;
-    status: 'started' | 'completed' | 'failed' | 'retrying' | 'blocked';
+    status?: 'started' | 'completed' | 'failed' | 'retrying' | 'blocked';
     error_type?: ErrorClassification;
     error_message?: string;
-  }
+    run_id?: string;
+    summary_type?: 'run' | 'scene' | 'stage';
+    summary?: Record<string, any>;
+  },
+  runContext?: GenerationRunContext
 ): StageExecutionTelemetry {
-  return db.addTelemetry(projectId, {
+  const payload = {
     project_id: projectId,
+    run_id: runContext?.runId ?? telemetry.run_id,
     ...telemetry,
-  });
+  };
+  return safeAddTelemetry(projectId, payload) || ({ ...payload, project_id: projectId } as StageExecutionTelemetry);
+}
+
+function safePersistRunSummary(
+  projectId: string,
+  runId: string | undefined,
+  summary: Record<string, any>
+): void {
+  try {
+    recordTelemetry(projectId, {
+      stage: 0,
+      stage_code: 'S1',
+      scope: 'project',
+      started_at: new Date().toISOString(),
+      status: 'completed',
+      summary_type: 'run',
+      summary,
+      run_id: runId,
+    });
+  } catch {
+    // Observability must remain non-blocking.
+  }
+}
+
+function safePersistSceneSummary(
+  projectId: string,
+  runId: string | undefined,
+  sceneId: string,
+  sceneNumber: number,
+  startedAtMs: number,
+  finalStatus: ScenePipelineResult['status'],
+  result: Partial<ScenePipelineResult> & { sceneId: string }
+): void {
+  try {
+    const completedAt = Date.now();
+    const sceneDurationMs = Math.max(0, completedAt - startedAtMs);
+    recordTelemetry(projectId, {
+      stage: 8,
+      stage_code: 'S8',
+      scope: 'scene',
+      scene_id: sceneId,
+      started_at: new Date(startedAtMs).toISOString(),
+      completed_at: new Date(completedAt).toISOString(),
+      duration_ms: sceneDurationMs,
+      status: finalStatus === 'READY' ? 'completed' : finalStatus === 'BLOCKED' ? 'blocked' : 'failed',
+      summary_type: 'scene',
+      summary: {
+        scene_id: sceneId,
+        scene_number: sceneNumber,
+        scene_status: finalStatus,
+        success: result.success,
+        ready: finalStatus === 'READY',
+        blocked: finalStatus === 'BLOCKED',
+        failed: finalStatus === 'FAILED',
+        blockers: result.blockers?.length ?? 0,
+        scene_duration_ms: sceneDurationMs,
+        error: result.error,
+      },
+      run_id: runId,
+    }, { runId } as GenerationRunContext);
+  } catch {
+    // Observability must remain non-blocking.
+  }
 }
 
 /**
@@ -274,7 +378,7 @@ export async function runProjectInitialization(
     durationMs?: number,
     errorType?: ErrorClassification
   ) => {
-    db.addLog(projectId, {
+    safeAddLog(projectId, {
       stage,
       stage_name: stageName,
       stage_code: stageCode || (`S${stage}` as StageCode),
@@ -919,7 +1023,8 @@ export async function runPipelineForScene(
     message: string,
     level?: 'info' | 'success' | 'warn' | 'error'
   ) => void,
-  continuitySeed?: ReturnType<typeof createContinuityState> | null
+  continuitySeed?: ReturnType<typeof createContinuityState> | null,
+  runContext?: GenerationRunContext
 ): Promise<ScenePipelineResult> {
   const scene = db.getScene(sceneId);
   if (!scene) {
@@ -932,6 +1037,7 @@ export async function runPipelineForScene(
     throw new Error(`Project ${projectId} tidak ditemukan.`);
   }
 
+  const sceneStartedAtMs = Date.now();
   const sceneConsistencyState = project.contextPackage
     ? createGroundingState(
         project.contextPackage,
@@ -972,7 +1078,7 @@ export async function runPipelineForScene(
     durationMs?: number,
     errorType?: ErrorClassification
   ) => {
-    db.addLog(projectId, {
+    safeAddLog(projectId, {
       stage,
       stage_name: stageName,
       stage_code: stageCode || (`S${stage}` as StageCode),
@@ -981,6 +1087,7 @@ export async function runPipelineForScene(
       level,
       duration_ms: durationMs,
       error_type: errorType,
+      run_id: runContext?.runId,
     });
     if (logFn) logFn(stage, stageName, message, level);
   };
@@ -989,12 +1096,16 @@ export async function runPipelineForScene(
     assertSceneAssetCoverage(assetIntegrityReport);
   } catch (error) {
     const blocker = knownBlocker(error, 'S6');
+    const result: ScenePipelineResult = blocker
+      ? { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState }
+      : { sceneId, status: 'FAILED', success: false, error: error instanceof Error ? error.message : String(error), assetIntegrityReport, continuityState: sceneContinuityState };
     if (blocker) {
       persistBlockedScene(sceneId, blocker);
-      return { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+    } else {
+      db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
     }
-    db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
-    return { sceneId, status: 'FAILED', success: false, error: error instanceof Error ? error.message : String(error), assetIntegrityReport, continuityState: sceneContinuityState };
+    safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+    return result;
   }
 
   beginSceneExecution(sceneId);
@@ -1020,7 +1131,8 @@ export async function runPipelineForScene(
       attempt,
       started_at: s6Start,
       status: 'started',
-    });
+      run_id: runContext?.runId,
+    }, runContext);
 
     try {
       const shotsAttempt = await runStage6ShotBreakdownAttempt({
@@ -1056,7 +1168,8 @@ export async function runPipelineForScene(
           completed_at: new Date().toISOString(),
           duration_ms: s6Duration,
           status: 'completed',
-        });
+          run_id: runContext?.runId,
+        }, runContext);
 
         log(
           6,
@@ -1082,7 +1195,8 @@ export async function runPipelineForScene(
           status: attempt < MAX_SHOT_RETRIES ? 'retrying' : 'failed',
           error_type: 'duration_mismatch',
           error_message: lastShotError,
-        });
+          run_id: runContext?.runId,
+        }, runContext);
 
         log(
           6,
@@ -1115,7 +1229,8 @@ export async function runPipelineForScene(
         status: blocker ? 'blocked' : retryable && attempt < MAX_SHOT_RETRIES ? 'retrying' : 'failed',
         error_type: errType,
         error_message: lastShotError,
-      });
+        run_id: runContext?.runId,
+      }, runContext);
 
       log(
         6,
@@ -1126,11 +1241,15 @@ export async function runPipelineForScene(
       );
       if (blocker) {
         persistBlockedScene(sceneId, blocker);
-        return { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+        const result: ScenePipelineResult = { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+        safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+        return result;
       }
       if (!retryable) {
         db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
-        return { sceneId, status: 'FAILED', success: false, error: lastShotError, assetIntegrityReport, continuityState: sceneContinuityState };
+        const result: ScenePipelineResult = { sceneId, status: 'FAILED', success: false, error: lastShotError, assetIntegrityReport, continuityState: sceneContinuityState };
+        safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+        return result;
       }
     }
   }
@@ -1144,7 +1263,9 @@ export async function runPipelineForScene(
       'error',
       'S6'
     );
-    return { sceneId, status: 'FAILED', success: false, error: lastShotError, assetIntegrityReport, continuityState: sceneContinuityState };
+    const result: ScenePipelineResult = { sceneId, status: 'FAILED', success: false, error: lastShotError, assetIntegrityReport, continuityState: sceneContinuityState };
+    safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+    return result;
   }
 
   // Derive beats & cinematic grammar for the scene
@@ -1185,7 +1306,8 @@ export async function runPipelineForScene(
     attempt: 1,
     started_at: s7Start,
     status: 'started',
-  });
+    run_id: runContext?.runId,
+  }, runContext);
 
   try {
     const stage7Result = await runStage7MasterFrameAndImagePrompt({
@@ -1222,7 +1344,8 @@ export async function runPipelineForScene(
       completed_at: new Date().toISOString(),
       duration_ms: s7Duration,
       status: 'completed',
-    });
+      run_id: runContext?.runId,
+    }, runContext);
 
     log(7, 'Master Frame & Image Prompt', `Scene #${scene.scene_number}: Master Image Prompt berhasil dirumuskan & siap dipakai!`, 'success', 'S7', s7Duration);
   } catch (err: any) {
@@ -1231,7 +1354,9 @@ export async function runPipelineForScene(
     const blocker = knownBlocker(err, `S7:${sceneId}`);
     if (blocker) {
       persistBlockedScene(sceneId, blocker);
-      return { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+      const result: ScenePipelineResult = { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+      safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+      return result;
     }
     const s7Duration = Date.now() - s7StartTime;
     db.updateScene(sceneId, {
@@ -1250,7 +1375,8 @@ export async function runPipelineForScene(
       status: 'failed',
       error_type: errType,
       error_message: errMsg,
-    });
+      run_id: runContext?.runId,
+    }, runContext);
     log(7, 'Master Frame & Image Prompt', `Scene #${scene.scene_number}: Error Stage 7: ${errMsg}`, 'warn', 'S7');
   }
 
@@ -1283,7 +1409,8 @@ export async function runPipelineForScene(
       attempt: 1,
       started_at: s8Start,
       status: 'started',
-    });
+      run_id: runContext?.runId,
+    }, runContext);
 
     try {
       const stage8Result = await runStage8VideoPrompt({
@@ -1335,7 +1462,8 @@ export async function runPipelineForScene(
           status: 'failed',
           error_type: 'schema_validation',
           error_message: `Gagal pada platform ${failedPlatforms}`,
-        });
+          run_id: runContext?.runId,
+        }, runContext);
 
         log(
           8,
@@ -1357,7 +1485,8 @@ export async function runPipelineForScene(
           completed_at: new Date().toISOString(),
           duration_ms: s8Duration,
           status: 'completed',
-        });
+          run_id: runContext?.runId,
+        }, runContext);
       }
     } catch (err: any) {
       failedShotsCount++;
@@ -1366,7 +1495,9 @@ export async function runPipelineForScene(
       const blocker = knownBlocker(err, `S8:${sceneId}:${shot.id}`);
       if (blocker) {
         persistBlockedScene(sceneId, blocker);
-        return { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+        const result: ScenePipelineResult = { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
+        safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+        return result;
       }
       recordTelemetry(projectId, {
         stage: 8,
@@ -1381,7 +1512,8 @@ export async function runPipelineForScene(
         status: 'failed',
         error_type: errType,
         error_message: err?.message || 'Error executing Stage 8',
-      });
+        run_id: runContext?.runId,
+      }, runContext);
       log(8, 'Video Prompt Agent', `Shot #${shot.shot_number} error: ${err?.message || err}`, 'warn', 'S8');
     }
   }
@@ -1512,7 +1644,9 @@ export async function runPipelineForScene(
     ? continuityViolations.map((violation) => ({ code: 'CONTINUITY_BLOCKED', severity: 'BLOCKING', message: violation.message, stage: 'FINAL' }))
     : [];
   const currentStatus = resolveCurrentSceneStatus(currentBlockers, failedShotsCount > 0);
-  return { sceneId, status: currentStatus, success: currentStatus === 'READY', blockers: currentBlockers, shots: savedShots, assetIntegrityReport, continuityState: sceneContinuityState, error: currentStatus === 'READY' ? undefined : `Scene final status: ${currentStatus}` };
+  const result: ScenePipelineResult = { sceneId, status: currentStatus, success: currentStatus === 'READY', blockers: currentBlockers, shots: savedShots, assetIntegrityReport, continuityState: sceneContinuityState, error: currentStatus === 'READY' ? undefined : `Scene final status: ${currentStatus}` };
+  safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, currentStatus, result);
+  return result;
 }
 
 function mergeContinuityResults(
@@ -1543,7 +1677,8 @@ export async function generateAllScenes(
     stageName: string,
     message: string,
     level?: 'info' | 'success' | 'warn' | 'error'
-  ) => void
+  ) => void,
+  runContext?: GenerationRunContext
 ): Promise<{ success: boolean; totalScenes: number; readyScenes: number; failedScenes: number }> {
   const project = db.getProject(projectId);
   if (!project) {
@@ -1570,7 +1705,7 @@ export async function generateAllScenes(
     message: string,
     level: 'info' | 'success' | 'warn' | 'error' = 'info'
   ) => {
-    db.addLog(projectId, { stage, stage_name: stageName, message, level });
+    safeAddLog(projectId, { stage, stage_name: stageName, message, level, run_id: runContext?.runId });
     if (onProgress) onProgress(stage, stageName, message, level);
   };
 
@@ -1583,6 +1718,7 @@ export async function generateAllScenes(
 
   let currentIndex = 0;
   const workerResults: ScenePipelineResult[] = [];
+  const completionOrder: string[] = [];
   const continuitySeed = project.continuityState || (project.contextPackage ? createContinuityState(project.contextPackage) : null);
 
   // Worker worker function with pacing
@@ -1605,8 +1741,9 @@ export async function generateAllScenes(
       );
 
       try {
-        const result = await runPipelineForScene(currentScene.id, onProgress, continuitySeed ? JSON.parse(JSON.stringify(continuitySeed)) : null);
+        const result = await runPipelineForScene(currentScene.id, onProgress, continuitySeed ? JSON.parse(JSON.stringify(continuitySeed)) : null, runContext);
         workerResults.push(result);
+        completionOrder.push(result.sceneId);
       } catch (err: any) {
         const failedResult: ScenePipelineResult = { sceneId: currentScene.id, status: 'FAILED', success: false, error: err?.message || String(err) };
         workerResults.push(failedResult);
@@ -1665,7 +1802,28 @@ export async function generateAllScenes(
   }
 
   const readyCount = orderedResults.filter((result) => result.status === 'READY').length;
-  const failedCount = orderedResults.filter((result) => result.status !== 'READY').length;
+  const blockedCount = orderedResults.filter((result) => result.status === 'BLOCKED').length;
+  const failedCount = orderedResults.filter((result) => result.status === 'FAILED').length;
+
+  const stageSummaries = ['S6', 'S7', 'S8'].map((stageCode) => {
+    const stageEntries = db.getTelemetry(projectId).filter((entry) => entry.run_id === runContext?.runId && entry.stage_code === stageCode && typeof entry.duration_ms === 'number');
+    const totalMs = stageEntries.reduce((sum, entry) => sum + (entry.duration_ms || 0), 0);
+    return { stage_code: stageCode, count: stageEntries.length, total_ms: totalMs, average_ms: stageEntries.length ? totalMs / stageEntries.length : 0 };
+  });
+
+  safePersistRunSummary(projectId, runContext?.runId, {
+    run_id: runContext?.runId,
+    effective_concurrency: effectiveConcurrency,
+    total_scenes: scenes.length,
+    ready_scenes: readyCount,
+    blocked_scenes: blockedCount,
+    failed_scenes: failedCount,
+    completion_order: completionOrder,
+    started_at: runContext?.startedAt || new Date().toISOString(),
+    completed_at: new Date().toISOString(),
+    duration_ms: Date.now() - (runContext ? new Date(runContext.startedAt).getTime() : Date.now()),
+    stage_timings: Object.fromEntries(stageSummaries.map((summary) => [summary.stage_code, summary])),
+  });
 
   log(
     8,
@@ -1682,6 +1840,54 @@ export async function generateAllScenes(
   };
 }
 
+function safePersistRunSummaryAtOrchestrator(
+  projectId: string,
+  runId: string | undefined,
+  startedAt: string,
+  effectiveConcurrency: number,
+  scenesCount: number,
+  readyScenes: number,
+  blockedScenes: number,
+  failedScenes: number,
+  completionOrder: string[]
+): void {
+  try {
+    const durationMs = Date.now() - new Date(startedAt).getTime();
+    const stageSummaries = ['S6', 'S7', 'S8'].map((stageCode) => {
+      const stageEntries = db.getTelemetry(projectId).filter((entry) => entry.run_id === runId && entry.stage_code === stageCode && typeof entry.duration_ms === 'number');
+      const totalMs = stageEntries.reduce((sum, entry) => sum + (entry.duration_ms || 0), 0);
+      return { stage_code: stageCode, count: stageEntries.length, total_ms: totalMs, average_ms: stageEntries.length ? totalMs / stageEntries.length : 0 };
+    });
+
+    recordTelemetry(projectId, {
+      stage: 8,
+      stage_code: 'S8',
+      scope: 'project',
+      started_at: startedAt,
+      completed_at: new Date().toISOString(),
+      duration_ms: durationMs,
+      status: 'completed',
+      summary_type: 'run',
+      summary: {
+        run_id: runId,
+        effective_concurrency: effectiveConcurrency,
+        total_scenes: scenesCount,
+        ready_scenes: readyScenes,
+        blocked_scenes: blockedScenes,
+        failed_scenes: failedScenes,
+        completion_order: completionOrder,
+        started_at: startedAt,
+        completed_at: new Date().toISOString(),
+        duration_ms: durationMs,
+        stage_timings: Object.fromEntries(stageSummaries.map((summary) => [summary.stage_code, summary])),
+      },
+      run_id: runId,
+    }, { runId } as GenerationRunContext);
+  } catch {
+    // Observability must remain non-blocking.
+  }
+}
+
 /**
  * Top-level Orchestrator:
  * 1. Checks foundation status; runs S1-S5 if not ready.
@@ -1690,25 +1896,37 @@ export async function generateAllScenes(
 export async function runOrchestratedPipeline({
   projectId,
   onProgress,
-}: OrchestratorRunOptions): Promise<{ success: boolean; error?: string }> {
+  runContext,
+  sceneConcurrency,
+}: OrchestratorRunOptions): Promise<{ success: boolean; error?: string; runId?: string }> {
   const project = db.getProject(projectId);
   if (!project) {
     throw new Error(`Project with ID ${projectId} not found.`);
   }
 
+  const activeRunContext = runContext ?? createGenerationRunContext(projectId, 2);
   const log = (
     stage: number,
     stageName: string,
     message: string,
     level: 'info' | 'success' | 'warn' | 'error' = 'info'
   ) => {
-    db.addLog(projectId, { stage, stage_name: stageName, message, level });
+    safeAddLog(projectId, { stage, stage_name: stageName, message, level, run_id: activeRunContext.runId });
     if (onProgress) {
       onProgress(stage, stageName, message, level);
     }
   };
 
   try {
+    const runStartedAt = new Date().toISOString();
+    const completionOrder: string[] = [];
+    db.saveProject({
+      ...db.getProject(projectId)!,
+      active_run_id: activeRunContext.runId,
+      latest_run_id: activeRunContext.runId,
+      status: 'processing',
+      current_stage: 1,
+    });
     // Step 1: Project Initialization (S1-S5)
     const foundationCheck = verifyProjectFoundation(projectId);
     if (!foundationCheck.ready) {
@@ -1721,8 +1939,25 @@ export async function runOrchestratedPipeline({
       log(1, 'Pipeline Orchestrator', 'Fondasi proyek (S1–S5) sudah valid & siap. Melompati inisialisasi ulang.', 'info');
     }
 
-    // Step 2: Scene Generation (S6-S8) with concurrency = 2
-    const sceneResult = await generateAllScenes(projectId, 2, onProgress);
+    // Step 2: Scene Generation (S6-S8) with configurable concurrency
+    // Cascade: sceneConcurrency arg > runContext.concurrency > SCENE_GENERATION_CONCURRENCY env > default 2
+    const envConcurrency = process.env.SCENE_GENERATION_CONCURRENCY
+      ? parseInt(process.env.SCENE_GENERATION_CONCURRENCY, 10)
+      : undefined;
+    const resolvedConcurrency = sceneConcurrency ?? activeRunContext.concurrency ?? envConcurrency ?? 2;
+    const sceneResult = await generateAllScenes(projectId, resolvedConcurrency, onProgress, activeRunContext);
+    const blockedScenes = sceneResult.failedScenes - (sceneResult.totalScenes - sceneResult.readyScenes - sceneResult.failedScenes);
+    safePersistRunSummaryAtOrchestrator(
+      projectId,
+      activeRunContext.runId,
+      runStartedAt,
+      resolvedConcurrency,
+      sceneResult.totalScenes,
+      sceneResult.readyScenes,
+      blockedScenes,
+      sceneResult.failedScenes,
+      completionOrder
+    );
 
     log(
       8,
@@ -1731,7 +1966,11 @@ export async function runOrchestratedPipeline({
       sceneResult.success ? 'success' : 'warn'
     );
 
-    return { success: sceneResult.success, error: sceneResult.success ? undefined : `Pipeline aggregate status: ${sceneResult.failedScenes} scene(s) require attention.` };
+    return {
+      success: sceneResult.success,
+      error: sceneResult.success ? undefined : `Pipeline aggregate status: ${sceneResult.failedScenes} scene(s) require attention.`,
+      runId: activeRunContext.runId,
+    };
   } catch (err: any) {
     const errorMsg = err?.message || 'Terjadi kesalahan pada pipeline orchestrator.';
     log(
@@ -1745,8 +1984,10 @@ export async function runOrchestratedPipeline({
       ...db.getProject(projectId)!,
       status: 'failed',
       error_message: errorMsg,
+      active_run_id: activeRunContext.runId,
+      latest_run_id: activeRunContext.runId,
     });
 
-    return { success: false, error: errorMsg };
+    return { success: false, error: errorMsg, runId: activeRunContext.runId };
   }
 }

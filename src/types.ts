@@ -967,6 +967,8 @@ export interface Project {
   continuityState?: ContinuityState | null;
   assetIntegrityReports?: SceneAssetCoverageReport[];
   finalizationReport?: FinalizationGateReport | null;
+  active_run_id?: string;
+  latest_run_id?: string;
 }
 
 export interface FinalizationGateReport {
@@ -1329,18 +1331,21 @@ export type ErrorClassification = 'schema_validation' | 'duration_mismatch' | 'a
 export interface StageExecutionTelemetry {
   id?: string;
   project_id: string;
+  run_id?: string;
   scene_id?: string;
   shot_id?: string;
-  stage: number;
-  stage_code: StageCode;
-  scope: StageScope;
-  attempt: number;
-  started_at: string;
+  stage?: number;
+  stage_code?: StageCode;
+  scope?: StageScope;
+  attempt?: number;
+  started_at?: string;
   completed_at?: string;
   duration_ms?: number;
-  status: 'started' | 'completed' | 'failed' | 'retrying' | 'blocked';
+  status?: 'started' | 'completed' | 'failed' | 'retrying' | 'blocked';
   error_type?: ErrorClassification;
   error_message?: string;
+  summary_type?: 'run' | 'scene' | 'stage';
+  summary?: Record<string, any>;
 }
 
 export interface PipelineLogEvent {
@@ -1353,6 +1358,7 @@ export interface PipelineLogEvent {
   message: string;
   duration_ms?: number;
   error_type?: ErrorClassification;
+  run_id?: string;
 }
 
 export interface ProjectFullData {

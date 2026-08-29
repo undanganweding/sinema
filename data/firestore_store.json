@@ -5788,6 +5788,1979 @@
           "asset_integrity"
         ]
       }
+    },
+    "r3_2_metrics_1787981492519": {
+      "id": "r3_2_metrics_1787981492519",
+      "title": "R3.2 observability fixture",
+      "raw_script": "Six scene production path fixture",
+      "total_duration_target_sec": 60,
+      "max_scene_shot_duration_sec": 10,
+      "scene_duration_sec": 10,
+      "prompt_language": "en",
+      "image_model": "nano_banana_pro",
+      "video_model": [
+        "veo"
+      ],
+      "include_seedance_format": false,
+      "created_at": "2026-08-29T05:31:32.519Z",
+      "updated_at": "2026-08-29T05:31:35.039Z",
+      "status": "blocked",
+      "current_stage": 8,
+      "reasoning_model_preferences": {
+        "mode": "fixed",
+        "primary_model": {
+          "provider": "google",
+          "model_id": "gemini-3.7-flash",
+          "display_name": "gemini-3.7-flash"
+        },
+        "fallback_policy": "off",
+        "fallback_pool": [
+          {
+            "provider": "google",
+            "model_id": "gemini-3.6-flash",
+            "priority": 1,
+            "display_name": "Gemini 3.6 Flash"
+          },
+          {
+            "provider": "google",
+            "model_id": "gemini-3.1-pro-preview",
+            "priority": 2,
+            "display_name": "Gemini 3.1 Pro"
+          }
+        ],
+        "force_model": false,
+        "stage_routing": {}
+      },
+      "duration_mode": "fixed",
+      "fixed_scene_duration": 10,
+      "narrative_style_config": {
+        "language": "en-US",
+        "narrative_mode": "cinematic_sirah",
+        "global_constraints": {
+          "religious_adab": "strict",
+          "historical_fidelity": "strict",
+          "dignity": "strict",
+          "clarity": "high",
+          "cinematic_quality": "high"
+        },
+        "default_scene_tone": {
+          "intensity": 50,
+          "emotional_weight": 50,
+          "pacing": "medium",
+          "atmosphere": "dramatic",
+          "dramatic_tension": 50
+        }
+      },
+      "active_run_id": "run_1787981492600_9j2mqawk",
+      "latest_run_id": "run_1787981492600_9j2mqawk",
+      "foundation_status": "ready",
+      "continuityState": null,
+      "assetIntegrityReports": [
+        {
+          "sceneId": "scene_r3_2_metrics_1787981492519_1_1787981492593_levrf",
+          "sceneNumber": 1,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981492519_1_1787981492593_levrf"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981492519_1_1787981492593_levrf"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 1",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 1.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 1",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981492519_1_1787981492593_levrf"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981492519_2_1787981492593_lvuo2",
+          "sceneNumber": 2,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981492519_2_1787981492593_lvuo2"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981492519_2_1787981492593_lvuo2"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 2",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 2.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 2",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981492519_2_1787981492593_lvuo2"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981492519_3_1787981492593_oh1y7",
+          "sceneNumber": 3,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981492519_3_1787981492593_oh1y7"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981492519_3_1787981492593_oh1y7"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 3",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 3.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 3",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981492519_3_1787981492593_oh1y7"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981492519_4_1787981492593_ehlcw",
+          "sceneNumber": 4,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981492519_4_1787981492593_ehlcw"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981492519_4_1787981492593_ehlcw"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 4",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 4.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 4",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981492519_4_1787981492593_ehlcw"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981492519_5_1787981492593_q4jb3",
+          "sceneNumber": 5,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981492519_5_1787981492593_q4jb3"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981492519_5_1787981492593_q4jb3"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 5",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 5.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 5",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981492519_5_1787981492593_q4jb3"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981492519_6_1787981492593_qbq8l",
+          "sceneNumber": 6,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981492519_6_1787981492593_qbq8l"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981492519_1787981492561_pzcwi.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981492519_6_1787981492593_qbq8l"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 6",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 6.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 6",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981492519_6_1787981492593_qbq8l"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        }
+      ],
+      "finalizationReport": {
+        "valid": false,
+        "status": "BLOCKED",
+        "blockers": [
+          "Asset integrity report contains a blocking coverage failure.",
+          "Missing location asset: Missing Location 1.",
+          "Missing location asset: Missing Location 2.",
+          "Missing location asset: Missing Location 3.",
+          "Missing location asset: Missing Location 4.",
+          "Missing location asset: Missing Location 5.",
+          "Missing location asset: Missing Location 6."
+        ],
+        "blockerDetails": [
+          {
+            "code": "ASSET_INTEGRITY_BLOCKED",
+            "layer": "asset_integrity",
+            "message": "Asset integrity report contains a blocking coverage failure."
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 1.",
+            "sceneId": "scene_r3_2_metrics_1787981492519_1_1787981492593_levrf"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 2.",
+            "sceneId": "scene_r3_2_metrics_1787981492519_2_1787981492593_lvuo2"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 3.",
+            "sceneId": "scene_r3_2_metrics_1787981492519_3_1787981492593_oh1y7"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 4.",
+            "sceneId": "scene_r3_2_metrics_1787981492519_4_1787981492593_ehlcw"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 5.",
+            "sceneId": "scene_r3_2_metrics_1787981492519_5_1787981492593_q4jb3"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 6.",
+            "sceneId": "scene_r3_2_metrics_1787981492519_6_1787981492593_qbq8l"
+          }
+        ],
+        "warnings": [
+          "No ContextPackage: legacy compatibility mode."
+        ],
+        "checkedLayers": [
+          "research",
+          "grounding",
+          "stage_outputs",
+          "consistency",
+          "continuity",
+          "asset_integrity"
+        ]
+      },
+      "error_message": "6 dari 6 scene memerlukan perhatian manual."
+    },
+    "r3_2_nonblocking_1787981495161": {
+      "id": "r3_2_nonblocking_1787981495161",
+      "title": "R3.2 telemetry failure fixture",
+      "raw_script": "Six scene production path fixture",
+      "total_duration_target_sec": 60,
+      "max_scene_shot_duration_sec": 10,
+      "scene_duration_sec": 10,
+      "prompt_language": "en",
+      "image_model": "nano_banana_pro",
+      "video_model": [
+        "veo"
+      ],
+      "include_seedance_format": false,
+      "created_at": "2026-08-29T05:31:35.161Z",
+      "updated_at": "2026-08-29T05:31:35.301Z",
+      "status": "processing",
+      "current_stage": 1,
+      "reasoning_model_preferences": {
+        "mode": "fixed",
+        "primary_model": {
+          "provider": "google",
+          "model_id": "gemini-3.7-flash",
+          "display_name": "gemini-3.7-flash"
+        },
+        "fallback_policy": "off",
+        "fallback_pool": [
+          {
+            "provider": "google",
+            "model_id": "gemini-3.6-flash",
+            "priority": 1,
+            "display_name": "Gemini 3.6 Flash"
+          },
+          {
+            "provider": "google",
+            "model_id": "gemini-3.1-pro-preview",
+            "priority": 2,
+            "display_name": "Gemini 3.1 Pro"
+          }
+        ],
+        "force_model": false,
+        "stage_routing": {}
+      },
+      "duration_mode": "fixed",
+      "fixed_scene_duration": 10,
+      "narrative_style_config": {
+        "language": "en-US",
+        "narrative_mode": "cinematic_sirah",
+        "global_constraints": {
+          "religious_adab": "strict",
+          "historical_fidelity": "strict",
+          "dignity": "strict",
+          "clarity": "high",
+          "cinematic_quality": "high"
+        },
+        "default_scene_tone": {
+          "intensity": 50,
+          "emotional_weight": 50,
+          "pacing": "medium",
+          "atmosphere": "dramatic",
+          "dramatic_tension": 50
+        }
+      },
+      "active_run_id": "run_1787981495232_8bh3n65n",
+      "latest_run_id": "run_1787981495232_8bh3n65n",
+      "foundation_status": "ready"
+    },
+    "r3_2_metrics_1787981539357": {
+      "id": "r3_2_metrics_1787981539357",
+      "title": "R3.2 observability fixture",
+      "raw_script": "Six scene production path fixture",
+      "total_duration_target_sec": 60,
+      "max_scene_shot_duration_sec": 10,
+      "scene_duration_sec": 10,
+      "prompt_language": "en",
+      "image_model": "nano_banana_pro",
+      "video_model": [
+        "veo"
+      ],
+      "include_seedance_format": false,
+      "created_at": "2026-08-29T05:32:19.357Z",
+      "updated_at": "2026-08-29T05:32:21.876Z",
+      "status": "blocked",
+      "current_stage": 8,
+      "reasoning_model_preferences": {
+        "mode": "fixed",
+        "primary_model": {
+          "provider": "google",
+          "model_id": "gemini-3.7-flash",
+          "display_name": "gemini-3.7-flash"
+        },
+        "fallback_policy": "off",
+        "fallback_pool": [
+          {
+            "provider": "google",
+            "model_id": "gemini-3.6-flash",
+            "priority": 1,
+            "display_name": "Gemini 3.6 Flash"
+          },
+          {
+            "provider": "google",
+            "model_id": "gemini-3.1-pro-preview",
+            "priority": 2,
+            "display_name": "Gemini 3.1 Pro"
+          }
+        ],
+        "force_model": false,
+        "stage_routing": {}
+      },
+      "duration_mode": "fixed",
+      "fixed_scene_duration": 10,
+      "narrative_style_config": {
+        "language": "en-US",
+        "narrative_mode": "cinematic_sirah",
+        "global_constraints": {
+          "religious_adab": "strict",
+          "historical_fidelity": "strict",
+          "dignity": "strict",
+          "clarity": "high",
+          "cinematic_quality": "high"
+        },
+        "default_scene_tone": {
+          "intensity": 50,
+          "emotional_weight": 50,
+          "pacing": "medium",
+          "atmosphere": "dramatic",
+          "dramatic_tension": 50
+        }
+      },
+      "active_run_id": "run_1787981539463_c3hyinp2",
+      "latest_run_id": "run_1787981539463_c3hyinp2",
+      "foundation_status": "ready",
+      "continuityState": null,
+      "assetIntegrityReports": [
+        {
+          "sceneId": "scene_r3_2_metrics_1787981539357_1_1787981539426_zvyqx",
+          "sceneNumber": 1,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981539357_1_1787981539426_zvyqx"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981539357_1_1787981539426_zvyqx"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 1",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 1.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 1",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981539357_1_1787981539426_zvyqx"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981539357_2_1787981539427_lalnm",
+          "sceneNumber": 2,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981539357_2_1787981539427_lalnm"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981539357_2_1787981539427_lalnm"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 2",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 2.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 2",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981539357_2_1787981539427_lalnm"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981539357_3_1787981539427_csrlr",
+          "sceneNumber": 3,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981539357_3_1787981539427_csrlr"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981539357_3_1787981539427_csrlr"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 3",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 3.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 3",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981539357_3_1787981539427_csrlr"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981539357_4_1787981539427_ecs3q",
+          "sceneNumber": 4,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981539357_4_1787981539427_ecs3q"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981539357_4_1787981539427_ecs3q"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 4",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 4.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 4",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981539357_4_1787981539427_ecs3q"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981539357_5_1787981539427_19qp3",
+          "sceneNumber": 5,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981539357_5_1787981539427_19qp3"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981539357_5_1787981539427_19qp3"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 5",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 5.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 5",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981539357_5_1787981539427_19qp3"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981539357_6_1787981539427_xu9yb",
+          "sceneNumber": 6,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981539357_6_1787981539427_xu9yb"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981539357_1787981539396_t5ru7.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981539357_6_1787981539427_xu9yb"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 6",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 6.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 6",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981539357_6_1787981539427_xu9yb"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        }
+      ],
+      "finalizationReport": {
+        "valid": false,
+        "status": "BLOCKED",
+        "blockers": [
+          "Asset integrity report contains a blocking coverage failure.",
+          "Missing location asset: Missing Location 1.",
+          "Missing location asset: Missing Location 2.",
+          "Missing location asset: Missing Location 3.",
+          "Missing location asset: Missing Location 4.",
+          "Missing location asset: Missing Location 5.",
+          "Missing location asset: Missing Location 6."
+        ],
+        "blockerDetails": [
+          {
+            "code": "ASSET_INTEGRITY_BLOCKED",
+            "layer": "asset_integrity",
+            "message": "Asset integrity report contains a blocking coverage failure."
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 1.",
+            "sceneId": "scene_r3_2_metrics_1787981539357_1_1787981539426_zvyqx"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 2.",
+            "sceneId": "scene_r3_2_metrics_1787981539357_2_1787981539427_lalnm"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 3.",
+            "sceneId": "scene_r3_2_metrics_1787981539357_3_1787981539427_csrlr"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 4.",
+            "sceneId": "scene_r3_2_metrics_1787981539357_4_1787981539427_ecs3q"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 5.",
+            "sceneId": "scene_r3_2_metrics_1787981539357_5_1787981539427_19qp3"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 6.",
+            "sceneId": "scene_r3_2_metrics_1787981539357_6_1787981539427_xu9yb"
+          }
+        ],
+        "warnings": [
+          "No ContextPackage: legacy compatibility mode."
+        ],
+        "checkedLayers": [
+          "research",
+          "grounding",
+          "stage_outputs",
+          "consistency",
+          "continuity",
+          "asset_integrity"
+        ]
+      },
+      "error_message": "6 dari 6 scene memerlukan perhatian manual."
+    },
+    "r3_2_nonblocking_1787981541992": {
+      "id": "r3_2_nonblocking_1787981541992",
+      "title": "R3.2 telemetry failure fixture",
+      "raw_script": "Six scene production path fixture",
+      "total_duration_target_sec": 60,
+      "max_scene_shot_duration_sec": 10,
+      "scene_duration_sec": 10,
+      "prompt_language": "en",
+      "image_model": "nano_banana_pro",
+      "video_model": [
+        "veo"
+      ],
+      "include_seedance_format": false,
+      "created_at": "2026-08-29T05:32:21.992Z",
+      "updated_at": "2026-08-29T05:32:22.138Z",
+      "status": "processing",
+      "current_stage": 1,
+      "reasoning_model_preferences": {
+        "mode": "fixed",
+        "primary_model": {
+          "provider": "google",
+          "model_id": "gemini-3.7-flash",
+          "display_name": "gemini-3.7-flash"
+        },
+        "fallback_policy": "off",
+        "fallback_pool": [
+          {
+            "provider": "google",
+            "model_id": "gemini-3.6-flash",
+            "priority": 1,
+            "display_name": "Gemini 3.6 Flash"
+          },
+          {
+            "provider": "google",
+            "model_id": "gemini-3.1-pro-preview",
+            "priority": 2,
+            "display_name": "Gemini 3.1 Pro"
+          }
+        ],
+        "force_model": false,
+        "stage_routing": {}
+      },
+      "duration_mode": "fixed",
+      "fixed_scene_duration": 10,
+      "narrative_style_config": {
+        "language": "en-US",
+        "narrative_mode": "cinematic_sirah",
+        "global_constraints": {
+          "religious_adab": "strict",
+          "historical_fidelity": "strict",
+          "dignity": "strict",
+          "clarity": "high",
+          "cinematic_quality": "high"
+        },
+        "default_scene_tone": {
+          "intensity": 50,
+          "emotional_weight": 50,
+          "pacing": "medium",
+          "atmosphere": "dramatic",
+          "dramatic_tension": 50
+        }
+      },
+      "active_run_id": "run_1787981542067_dljk0dk2",
+      "latest_run_id": "run_1787981542067_dljk0dk2",
+      "foundation_status": "ready"
+    },
+    "r3_2_metrics_1787981567389": {
+      "id": "r3_2_metrics_1787981567389",
+      "title": "R3.2 observability fixture",
+      "raw_script": "Six scene production path fixture",
+      "total_duration_target_sec": 60,
+      "max_scene_shot_duration_sec": 10,
+      "scene_duration_sec": 10,
+      "prompt_language": "en",
+      "image_model": "nano_banana_pro",
+      "video_model": [
+        "veo"
+      ],
+      "include_seedance_format": false,
+      "created_at": "2026-08-29T05:32:47.389Z",
+      "updated_at": "2026-08-29T05:32:49.908Z",
+      "status": "blocked",
+      "current_stage": 8,
+      "reasoning_model_preferences": {
+        "mode": "fixed",
+        "primary_model": {
+          "provider": "google",
+          "model_id": "gemini-3.7-flash",
+          "display_name": "gemini-3.7-flash"
+        },
+        "fallback_policy": "off",
+        "fallback_pool": [
+          {
+            "provider": "google",
+            "model_id": "gemini-3.6-flash",
+            "priority": 1,
+            "display_name": "Gemini 3.6 Flash"
+          },
+          {
+            "provider": "google",
+            "model_id": "gemini-3.1-pro-preview",
+            "priority": 2,
+            "display_name": "Gemini 3.1 Pro"
+          }
+        ],
+        "force_model": false,
+        "stage_routing": {}
+      },
+      "duration_mode": "fixed",
+      "fixed_scene_duration": 10,
+      "narrative_style_config": {
+        "language": "en-US",
+        "narrative_mode": "cinematic_sirah",
+        "global_constraints": {
+          "religious_adab": "strict",
+          "historical_fidelity": "strict",
+          "dignity": "strict",
+          "clarity": "high",
+          "cinematic_quality": "high"
+        },
+        "default_scene_tone": {
+          "intensity": 50,
+          "emotional_weight": 50,
+          "pacing": "medium",
+          "atmosphere": "dramatic",
+          "dramatic_tension": 50
+        }
+      },
+      "active_run_id": "run_1787981567469_pt8vlwhl",
+      "latest_run_id": "run_1787981567469_pt8vlwhl",
+      "foundation_status": "ready",
+      "continuityState": null,
+      "assetIntegrityReports": [
+        {
+          "sceneId": "scene_r3_2_metrics_1787981567389_1_1787981567460_5rcuz",
+          "sceneNumber": 1,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981567389_1787981567430_m88ya",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981567389_1_1787981567460_5rcuz"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981567389_1787981567430_m88ya.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981567389_1_1787981567460_5rcuz"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 1",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 1.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 1",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981567389_1_1787981567460_5rcuz"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981567389_2_1787981567461_ngacz",
+          "sceneNumber": 2,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981567389_1787981567430_m88ya",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981567389_2_1787981567461_ngacz"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981567389_1787981567430_m88ya.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981567389_2_1787981567461_ngacz"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 2",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 2.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 2",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981567389_2_1787981567461_ngacz"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981567389_3_1787981567461_plcae",
+          "sceneNumber": 3,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981567389_1787981567430_m88ya",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981567389_3_1787981567461_plcae"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981567389_1787981567430_m88ya.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981567389_3_1787981567461_plcae"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 3",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 3.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 3",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981567389_3_1787981567461_plcae"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981567389_4_1787981567461_7xkrv",
+          "sceneNumber": 4,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981567389_1787981567430_m88ya",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981567389_4_1787981567461_7xkrv"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981567389_1787981567430_m88ya.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981567389_4_1787981567461_7xkrv"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 4",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 4.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 4",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981567389_4_1787981567461_7xkrv"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981567389_5_1787981567461_vptxb",
+          "sceneNumber": 5,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981567389_1787981567430_m88ya",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981567389_5_1787981567461_vptxb"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981567389_1787981567430_m88ya.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981567389_5_1787981567461_vptxb"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 5",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 5.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 5",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981567389_5_1787981567461_vptxb"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981567389_6_1787981567461_txmfs",
+          "sceneNumber": 6,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981567389_1787981567430_m88ya",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981567389_6_1787981567461_txmfs"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981567389_1787981567430_m88ya.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981567389_6_1787981567461_txmfs"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 6",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 6.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 6",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981567389_6_1787981567461_txmfs"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        }
+      ],
+      "finalizationReport": {
+        "valid": false,
+        "status": "BLOCKED",
+        "blockers": [
+          "Asset integrity report contains a blocking coverage failure.",
+          "Missing location asset: Missing Location 1.",
+          "Missing location asset: Missing Location 2.",
+          "Missing location asset: Missing Location 3.",
+          "Missing location asset: Missing Location 4.",
+          "Missing location asset: Missing Location 5.",
+          "Missing location asset: Missing Location 6."
+        ],
+        "blockerDetails": [
+          {
+            "code": "ASSET_INTEGRITY_BLOCKED",
+            "layer": "asset_integrity",
+            "message": "Asset integrity report contains a blocking coverage failure."
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 1.",
+            "sceneId": "scene_r3_2_metrics_1787981567389_1_1787981567460_5rcuz"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 2.",
+            "sceneId": "scene_r3_2_metrics_1787981567389_2_1787981567461_ngacz"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 3.",
+            "sceneId": "scene_r3_2_metrics_1787981567389_3_1787981567461_plcae"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 4.",
+            "sceneId": "scene_r3_2_metrics_1787981567389_4_1787981567461_7xkrv"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 5.",
+            "sceneId": "scene_r3_2_metrics_1787981567389_5_1787981567461_vptxb"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 6.",
+            "sceneId": "scene_r3_2_metrics_1787981567389_6_1787981567461_txmfs"
+          }
+        ],
+        "warnings": [
+          "No ContextPackage: legacy compatibility mode."
+        ],
+        "checkedLayers": [
+          "research",
+          "grounding",
+          "stage_outputs",
+          "consistency",
+          "continuity",
+          "asset_integrity"
+        ]
+      },
+      "error_message": "6 dari 6 scene memerlukan perhatian manual."
+    },
+    "r3_2_nonblocking_1787981570026": {
+      "id": "r3_2_nonblocking_1787981570026",
+      "title": "R3.2 telemetry failure fixture",
+      "raw_script": "Six scene production path fixture",
+      "total_duration_target_sec": 60,
+      "max_scene_shot_duration_sec": 10,
+      "scene_duration_sec": 10,
+      "prompt_language": "en",
+      "image_model": "nano_banana_pro",
+      "video_model": [
+        "veo"
+      ],
+      "include_seedance_format": false,
+      "created_at": "2026-08-29T05:32:50.026Z",
+      "updated_at": "2026-08-29T05:32:50.174Z",
+      "status": "processing",
+      "current_stage": 1,
+      "reasoning_model_preferences": {
+        "mode": "fixed",
+        "primary_model": {
+          "provider": "google",
+          "model_id": "gemini-3.7-flash",
+          "display_name": "gemini-3.7-flash"
+        },
+        "fallback_policy": "off",
+        "fallback_pool": [
+          {
+            "provider": "google",
+            "model_id": "gemini-3.6-flash",
+            "priority": 1,
+            "display_name": "Gemini 3.6 Flash"
+          },
+          {
+            "provider": "google",
+            "model_id": "gemini-3.1-pro-preview",
+            "priority": 2,
+            "display_name": "Gemini 3.1 Pro"
+          }
+        ],
+        "force_model": false,
+        "stage_routing": {}
+      },
+      "duration_mode": "fixed",
+      "fixed_scene_duration": 10,
+      "narrative_style_config": {
+        "language": "en-US",
+        "narrative_mode": "cinematic_sirah",
+        "global_constraints": {
+          "religious_adab": "strict",
+          "historical_fidelity": "strict",
+          "dignity": "strict",
+          "clarity": "high",
+          "cinematic_quality": "high"
+        },
+        "default_scene_tone": {
+          "intensity": 50,
+          "emotional_weight": 50,
+          "pacing": "medium",
+          "atmosphere": "dramatic",
+          "dramatic_tension": 50
+        }
+      },
+      "active_run_id": "run_1787981570101_nw7wxecx",
+      "latest_run_id": "run_1787981570101_nw7wxecx",
+      "foundation_status": "ready"
+    },
+    "r3_2_metrics_1787981627960": {
+      "id": "r3_2_metrics_1787981627960",
+      "title": "R3.2 observability fixture",
+      "raw_script": "Six scene production path fixture",
+      "total_duration_target_sec": 60,
+      "max_scene_shot_duration_sec": 10,
+      "scene_duration_sec": 10,
+      "prompt_language": "en",
+      "image_model": "nano_banana_pro",
+      "video_model": [
+        "veo"
+      ],
+      "include_seedance_format": false,
+      "created_at": "2026-08-29T05:33:47.960Z",
+      "updated_at": "2026-08-29T05:33:50.451Z",
+      "status": "blocked",
+      "current_stage": 8,
+      "reasoning_model_preferences": {
+        "mode": "fixed",
+        "primary_model": {
+          "provider": "google",
+          "model_id": "gemini-3.7-flash",
+          "display_name": "gemini-3.7-flash"
+        },
+        "fallback_policy": "off",
+        "fallback_pool": [
+          {
+            "provider": "google",
+            "model_id": "gemini-3.6-flash",
+            "priority": 1,
+            "display_name": "Gemini 3.6 Flash"
+          },
+          {
+            "provider": "google",
+            "model_id": "gemini-3.1-pro-preview",
+            "priority": 2,
+            "display_name": "Gemini 3.1 Pro"
+          }
+        ],
+        "force_model": false,
+        "stage_routing": {}
+      },
+      "duration_mode": "fixed",
+      "fixed_scene_duration": 10,
+      "narrative_style_config": {
+        "language": "en-US",
+        "narrative_mode": "cinematic_sirah",
+        "global_constraints": {
+          "religious_adab": "strict",
+          "historical_fidelity": "strict",
+          "dignity": "strict",
+          "clarity": "high",
+          "cinematic_quality": "high"
+        },
+        "default_scene_tone": {
+          "intensity": 50,
+          "emotional_weight": 50,
+          "pacing": "medium",
+          "atmosphere": "dramatic",
+          "dramatic_tension": 50
+        }
+      },
+      "active_run_id": "run_1787981628038_u66rfgus",
+      "latest_run_id": "run_1787981628038_u66rfgus",
+      "foundation_status": "ready",
+      "continuityState": null,
+      "assetIntegrityReports": [
+        {
+          "sceneId": "scene_r3_2_metrics_1787981627960_1_1787981628031_oq6g2",
+          "sceneNumber": 1,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981627960_1_1787981628031_oq6g2"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981627960_1_1787981628031_oq6g2"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 1",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 1.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 1",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981627960_1_1787981628031_oq6g2"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981627960_2_1787981628031_tvmtq",
+          "sceneNumber": 2,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981627960_2_1787981628031_tvmtq"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981627960_2_1787981628031_tvmtq"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 2",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 2.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 2",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981627960_2_1787981628031_tvmtq"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981627960_3_1787981628031_l6ikk",
+          "sceneNumber": 3,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981627960_3_1787981628031_l6ikk"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981627960_3_1787981628031_l6ikk"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 3",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 3.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 3",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981627960_3_1787981628031_l6ikk"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981627960_4_1787981628031_ikve9",
+          "sceneNumber": 4,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981627960_4_1787981628031_ikve9"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981627960_4_1787981628031_ikve9"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 4",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 4.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 4",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981627960_4_1787981628031_ikve9"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981627960_5_1787981628031_wf8ss",
+          "sceneNumber": 5,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981627960_5_1787981628031_wf8ss"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981627960_5_1787981628031_wf8ss"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 5",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 5.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 5",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981627960_5_1787981628031_wf8ss"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_metrics_1787981627960_6_1787981628031_nimnw",
+          "sceneNumber": 6,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_metrics_1787981627960_6_1787981628031_nimnw"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_metrics_1787981627960_1787981628000_w8tq8.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_metrics_1787981627960_6_1787981628031_nimnw"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 6",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 6.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 6",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_metrics_1787981627960_6_1787981628031_nimnw"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        }
+      ],
+      "finalizationReport": {
+        "valid": false,
+        "status": "BLOCKED",
+        "blockers": [
+          "Asset integrity report contains a blocking coverage failure.",
+          "Missing location asset: Missing Location 1.",
+          "Missing location asset: Missing Location 2.",
+          "Missing location asset: Missing Location 3.",
+          "Missing location asset: Missing Location 4.",
+          "Missing location asset: Missing Location 5.",
+          "Missing location asset: Missing Location 6."
+        ],
+        "blockerDetails": [
+          {
+            "code": "ASSET_INTEGRITY_BLOCKED",
+            "layer": "asset_integrity",
+            "message": "Asset integrity report contains a blocking coverage failure."
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 1.",
+            "sceneId": "scene_r3_2_metrics_1787981627960_1_1787981628031_oq6g2"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 2.",
+            "sceneId": "scene_r3_2_metrics_1787981627960_2_1787981628031_tvmtq"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 3.",
+            "sceneId": "scene_r3_2_metrics_1787981627960_3_1787981628031_l6ikk"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 4.",
+            "sceneId": "scene_r3_2_metrics_1787981627960_4_1787981628031_ikve9"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 5.",
+            "sceneId": "scene_r3_2_metrics_1787981627960_5_1787981628031_wf8ss"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 6.",
+            "sceneId": "scene_r3_2_metrics_1787981627960_6_1787981628031_nimnw"
+          }
+        ],
+        "warnings": [
+          "No ContextPackage: legacy compatibility mode."
+        ],
+        "checkedLayers": [
+          "research",
+          "grounding",
+          "stage_outputs",
+          "consistency",
+          "continuity",
+          "asset_integrity"
+        ]
+      },
+      "error_message": "6 dari 6 scene memerlukan perhatian manual."
+    },
+    "r3_2_nonblocking_1787981630573": {
+      "id": "r3_2_nonblocking_1787981630573",
+      "title": "R3.2 telemetry failure fixture",
+      "raw_script": "Six scene production path fixture",
+      "total_duration_target_sec": 60,
+      "max_scene_shot_duration_sec": 10,
+      "scene_duration_sec": 10,
+      "prompt_language": "en",
+      "image_model": "nano_banana_pro",
+      "video_model": [
+        "veo"
+      ],
+      "include_seedance_format": false,
+      "created_at": "2026-08-29T05:33:50.573Z",
+      "updated_at": "2026-08-29T05:33:51.725Z",
+      "status": "blocked",
+      "current_stage": 8,
+      "reasoning_model_preferences": {
+        "mode": "fixed",
+        "primary_model": {
+          "provider": "google",
+          "model_id": "gemini-3.7-flash",
+          "display_name": "gemini-3.7-flash"
+        },
+        "fallback_policy": "off",
+        "fallback_pool": [
+          {
+            "provider": "google",
+            "model_id": "gemini-3.6-flash",
+            "priority": 1,
+            "display_name": "Gemini 3.6 Flash"
+          },
+          {
+            "provider": "google",
+            "model_id": "gemini-3.1-pro-preview",
+            "priority": 2,
+            "display_name": "Gemini 3.1 Pro"
+          }
+        ],
+        "force_model": false,
+        "stage_routing": {}
+      },
+      "duration_mode": "fixed",
+      "fixed_scene_duration": 10,
+      "narrative_style_config": {
+        "language": "en-US",
+        "narrative_mode": "cinematic_sirah",
+        "global_constraints": {
+          "religious_adab": "strict",
+          "historical_fidelity": "strict",
+          "dignity": "strict",
+          "clarity": "high",
+          "cinematic_quality": "high"
+        },
+        "default_scene_tone": {
+          "intensity": 50,
+          "emotional_weight": 50,
+          "pacing": "medium",
+          "atmosphere": "dramatic",
+          "dramatic_tension": 50
+        }
+      },
+      "active_run_id": "run_1787981630652_73wdugpz",
+      "latest_run_id": "run_1787981630652_73wdugpz",
+      "foundation_status": "ready",
+      "continuityState": null,
+      "assetIntegrityReports": [
+        {
+          "sceneId": "scene_r3_2_nonblocking_1787981630573_1_1787981630645_tzvrn",
+          "sceneNumber": 1,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_nonblocking_1787981630573_1787981630615_ahgfm",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_nonblocking_1787981630573_1_1787981630645_tzvrn"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_nonblocking_1787981630573_1787981630615_ahgfm.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_nonblocking_1787981630573_1_1787981630645_tzvrn"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 1",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 1.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 1",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_nonblocking_1787981630573_1_1787981630645_tzvrn"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        },
+        {
+          "sceneId": "scene_r3_2_nonblocking_1787981630573_2_1787981630645_2u6ro",
+          "sceneNumber": 2,
+          "status": "BLOCKED",
+          "characters": [
+            {
+              "requirement": {
+                "name": "Known Character",
+                "assetType": "CHARACTER",
+                "level": "REQUIRED"
+              },
+              "asset": {
+                "canonicalAssetId": "character:char_r3_2_nonblocking_1787981630573_1787981630615_ahgfm",
+                "assetType": "CHARACTER",
+                "name": "Known Character",
+                "source": "CHARACTER_BIBLE",
+                "sceneId": "scene_r3_2_nonblocking_1787981630573_2_1787981630645_2u6ro"
+              },
+              "status": "PASS",
+              "message": "Known Character is covered by character:char_r3_2_nonblocking_1787981630573_1787981630615_ahgfm.",
+              "assetName": "Known Character",
+              "assetType": "CHARACTER",
+              "sceneId": "scene_r3_2_nonblocking_1787981630573_2_1787981630645_2u6ro"
+            }
+          ],
+          "locations": [
+            {
+              "requirement": {
+                "name": "Missing Location 2",
+                "assetType": "LOCATION",
+                "level": "REQUIRED"
+              },
+              "status": "BLOCKED",
+              "message": "Missing location asset: Missing Location 2.",
+              "reason": "MISSING_REQUIRED_ASSET",
+              "assetName": "Missing Location 2",
+              "assetType": "LOCATION",
+              "sceneId": "scene_r3_2_nonblocking_1787981630573_2_1787981630645_2u6ro"
+            }
+          ],
+          "objects": [],
+          "phantomAssets": []
+        }
+      ],
+      "finalizationReport": {
+        "valid": false,
+        "status": "BLOCKED",
+        "blockers": [
+          "Asset integrity report contains a blocking coverage failure.",
+          "Missing location asset: Missing Location 1.",
+          "Missing location asset: Missing Location 2."
+        ],
+        "blockerDetails": [
+          {
+            "code": "ASSET_INTEGRITY_BLOCKED",
+            "layer": "asset_integrity",
+            "message": "Asset integrity report contains a blocking coverage failure."
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 1.",
+            "sceneId": "scene_r3_2_nonblocking_1787981630573_1_1787981630645_tzvrn"
+          },
+          {
+            "code": "MISSING_REQUIRED_ASSET",
+            "layer": "S6",
+            "message": "Missing location asset: Missing Location 2.",
+            "sceneId": "scene_r3_2_nonblocking_1787981630573_2_1787981630645_2u6ro"
+          }
+        ],
+        "warnings": [
+          "No ContextPackage: legacy compatibility mode."
+        ],
+        "checkedLayers": [
+          "research",
+          "grounding",
+          "stage_outputs",
+          "consistency",
+          "continuity",
+          "asset_integrity"
+        ]
+      },
+      "error_message": "2 dari 2 scene memerlukan perhatian manual."
     }
   },
   "project_foundation": {
@@ -5889,6 +7862,102 @@
         "ending": "Dalam kontemplasi kolektif di ambang pintu kediaman, Aminah dan Halimah menatap jalanan Makkah yang diterangi cahaya senja. Adegan ini menutup narasi dengan kesan martabat yang luhur, meninggalkan penonton dalam refleksi mendalam akan pemeliharaan Ilahi yang senantiasa menyertai perjalanan hidup manusia."
       },
       "id": "proj_1787947530575_f89kdp"
+    },
+    "r3_2_metrics_1787981492519": {
+      "project_id": "r3_2_metrics_1787981492519",
+      "genre": "historical",
+      "era": "ancient",
+      "narrative_beats": {
+        "beginning": "begin"
+      },
+      "version": 1,
+      "created_at": "2026-08-29T05:31:32.519Z",
+      "updated_at": "2026-08-29T05:31:32.544Z",
+      "id": "r3_2_metrics_1787981492519"
+    },
+    "r3_2_nonblocking_1787981495161": {
+      "project_id": "r3_2_nonblocking_1787981495161",
+      "genre": "historical",
+      "era": "ancient",
+      "narrative_beats": {
+        "beginning": "begin"
+      },
+      "version": 1,
+      "created_at": "2026-08-29T05:31:35.161Z",
+      "updated_at": "2026-08-29T05:31:35.181Z",
+      "id": "r3_2_nonblocking_1787981495161"
+    },
+    "r3_2_metrics_1787981539357": {
+      "project_id": "r3_2_metrics_1787981539357",
+      "genre": "historical",
+      "era": "ancient",
+      "narrative_beats": {
+        "beginning": "begin"
+      },
+      "version": 1,
+      "created_at": "2026-08-29T05:32:19.357Z",
+      "updated_at": "2026-08-29T05:32:19.381Z",
+      "id": "r3_2_metrics_1787981539357"
+    },
+    "r3_2_nonblocking_1787981541992": {
+      "project_id": "r3_2_nonblocking_1787981541992",
+      "genre": "historical",
+      "era": "ancient",
+      "narrative_beats": {
+        "beginning": "begin"
+      },
+      "version": 1,
+      "created_at": "2026-08-29T05:32:21.992Z",
+      "updated_at": "2026-08-29T05:32:22.015Z",
+      "id": "r3_2_nonblocking_1787981541992"
+    },
+    "r3_2_metrics_1787981567389": {
+      "project_id": "r3_2_metrics_1787981567389",
+      "genre": "historical",
+      "era": "ancient",
+      "narrative_beats": {
+        "beginning": "begin"
+      },
+      "version": 1,
+      "created_at": "2026-08-29T05:32:47.389Z",
+      "updated_at": "2026-08-29T05:32:47.414Z",
+      "id": "r3_2_metrics_1787981567389"
+    },
+    "r3_2_nonblocking_1787981570026": {
+      "project_id": "r3_2_nonblocking_1787981570026",
+      "genre": "historical",
+      "era": "ancient",
+      "narrative_beats": {
+        "beginning": "begin"
+      },
+      "version": 1,
+      "created_at": "2026-08-29T05:32:50.026Z",
+      "updated_at": "2026-08-29T05:32:50.048Z",
+      "id": "r3_2_nonblocking_1787981570026"
+    },
+    "r3_2_metrics_1787981627960": {
+      "project_id": "r3_2_metrics_1787981627960",
+      "genre": "historical",
+      "era": "ancient",
+      "narrative_beats": {
+        "beginning": "begin"
+      },
+      "version": 1,
+      "created_at": "2026-08-29T05:33:47.960Z",
+      "updated_at": "2026-08-29T05:33:47.984Z",
+      "id": "r3_2_metrics_1787981627960"
+    },
+    "r3_2_nonblocking_1787981630573": {
+      "project_id": "r3_2_nonblocking_1787981630573",
+      "genre": "historical",
+      "era": "ancient",
+      "narrative_beats": {
+        "beginning": "begin"
+      },
+      "version": 1,
+      "created_at": "2026-08-29T05:33:50.573Z",
+      "updated_at": "2026-08-29T05:33:50.595Z",
+      "id": "r3_2_nonblocking_1787981630573"
     }
   },
   "characters": {
@@ -6179,6 +8248,94 @@
       "version": 1,
       "created_at": "2026-08-28T20:05:57.061Z",
       "updated_at": "2026-08-28T20:05:57.061Z"
+    },
+    "char_r3_2_metrics_1787981492519_1787981492561_pzcwi": {
+      "name": "Known Character",
+      "version": 1,
+      "id": "char_r3_2_metrics_1787981492519_1787981492561_pzcwi",
+      "project_id": "r3_2_metrics_1787981492519",
+      "face_identity_locked": false,
+      "clothing": [],
+      "accessories": [],
+      "created_at": "2026-08-29T05:31:32.561Z",
+      "updated_at": "2026-08-29T05:31:32.561Z"
+    },
+    "char_r3_2_nonblocking_1787981495161_1787981495197_a7ijk": {
+      "name": "Known Character",
+      "version": 1,
+      "id": "char_r3_2_nonblocking_1787981495161_1787981495197_a7ijk",
+      "project_id": "r3_2_nonblocking_1787981495161",
+      "face_identity_locked": false,
+      "clothing": [],
+      "accessories": [],
+      "created_at": "2026-08-29T05:31:35.197Z",
+      "updated_at": "2026-08-29T05:31:35.197Z"
+    },
+    "char_r3_2_metrics_1787981539357_1787981539396_t5ru7": {
+      "name": "Known Character",
+      "version": 1,
+      "id": "char_r3_2_metrics_1787981539357_1787981539396_t5ru7",
+      "project_id": "r3_2_metrics_1787981539357",
+      "face_identity_locked": false,
+      "clothing": [],
+      "accessories": [],
+      "created_at": "2026-08-29T05:32:19.396Z",
+      "updated_at": "2026-08-29T05:32:19.396Z"
+    },
+    "char_r3_2_nonblocking_1787981541992_1787981542030_grjy4": {
+      "name": "Known Character",
+      "version": 1,
+      "id": "char_r3_2_nonblocking_1787981541992_1787981542030_grjy4",
+      "project_id": "r3_2_nonblocking_1787981541992",
+      "face_identity_locked": false,
+      "clothing": [],
+      "accessories": [],
+      "created_at": "2026-08-29T05:32:22.030Z",
+      "updated_at": "2026-08-29T05:32:22.030Z"
+    },
+    "char_r3_2_metrics_1787981567389_1787981567430_m88ya": {
+      "name": "Known Character",
+      "version": 1,
+      "id": "char_r3_2_metrics_1787981567389_1787981567430_m88ya",
+      "project_id": "r3_2_metrics_1787981567389",
+      "face_identity_locked": false,
+      "clothing": [],
+      "accessories": [],
+      "created_at": "2026-08-29T05:32:47.430Z",
+      "updated_at": "2026-08-29T05:32:47.430Z"
+    },
+    "char_r3_2_nonblocking_1787981570026_1787981570063_0oujn": {
+      "name": "Known Character",
+      "version": 1,
+      "id": "char_r3_2_nonblocking_1787981570026_1787981570063_0oujn",
+      "project_id": "r3_2_nonblocking_1787981570026",
+      "face_identity_locked": false,
+      "clothing": [],
+      "accessories": [],
+      "created_at": "2026-08-29T05:32:50.063Z",
+      "updated_at": "2026-08-29T05:32:50.063Z"
+    },
+    "char_r3_2_metrics_1787981627960_1787981628000_w8tq8": {
+      "name": "Known Character",
+      "version": 1,
+      "id": "char_r3_2_metrics_1787981627960_1787981628000_w8tq8",
+      "project_id": "r3_2_metrics_1787981627960",
+      "face_identity_locked": false,
+      "clothing": [],
+      "accessories": [],
+      "created_at": "2026-08-29T05:33:48.000Z",
+      "updated_at": "2026-08-29T05:33:48.000Z"
+    },
+    "char_r3_2_nonblocking_1787981630573_1787981630615_ahgfm": {
+      "name": "Known Character",
+      "version": 1,
+      "id": "char_r3_2_nonblocking_1787981630573_1787981630615_ahgfm",
+      "project_id": "r3_2_nonblocking_1787981630573",
+      "face_identity_locked": false,
+      "clothing": [],
+      "accessories": [],
+      "created_at": "2026-08-29T05:33:50.615Z",
+      "updated_at": "2026-08-29T05:33:50.615Z"
     }
   },
   "locations": {
@@ -6423,6 +8580,78 @@
       "version": 1,
       "created_at": "2026-08-28T20:06:07.797Z",
       "updated_at": "2026-08-28T20:06:07.797Z"
+    },
+    "loc_r3_2_metrics_1787981492519_1787981492577_6d04m": {
+      "name": "Known Location",
+      "version": 1,
+      "id": "loc_r3_2_metrics_1787981492519_1787981492577_6d04m",
+      "project_id": "r3_2_metrics_1787981492519",
+      "color_palette": [],
+      "created_at": "2026-08-29T05:31:32.577Z",
+      "updated_at": "2026-08-29T05:31:32.577Z"
+    },
+    "loc_r3_2_nonblocking_1787981495161_1787981495211_kuphn": {
+      "name": "Known Location",
+      "version": 1,
+      "id": "loc_r3_2_nonblocking_1787981495161_1787981495211_kuphn",
+      "project_id": "r3_2_nonblocking_1787981495161",
+      "color_palette": [],
+      "created_at": "2026-08-29T05:31:35.211Z",
+      "updated_at": "2026-08-29T05:31:35.211Z"
+    },
+    "loc_r3_2_metrics_1787981539357_1787981539412_6j7fi": {
+      "name": "Known Location",
+      "version": 1,
+      "id": "loc_r3_2_metrics_1787981539357_1787981539412_6j7fi",
+      "project_id": "r3_2_metrics_1787981539357",
+      "color_palette": [],
+      "created_at": "2026-08-29T05:32:19.412Z",
+      "updated_at": "2026-08-29T05:32:19.412Z"
+    },
+    "loc_r3_2_nonblocking_1787981541992_1787981542045_ppgy9": {
+      "name": "Known Location",
+      "version": 1,
+      "id": "loc_r3_2_nonblocking_1787981541992_1787981542045_ppgy9",
+      "project_id": "r3_2_nonblocking_1787981541992",
+      "color_palette": [],
+      "created_at": "2026-08-29T05:32:22.045Z",
+      "updated_at": "2026-08-29T05:32:22.045Z"
+    },
+    "loc_r3_2_metrics_1787981567389_1787981567445_tki45": {
+      "name": "Known Location",
+      "version": 1,
+      "id": "loc_r3_2_metrics_1787981567389_1787981567445_tki45",
+      "project_id": "r3_2_metrics_1787981567389",
+      "color_palette": [],
+      "created_at": "2026-08-29T05:32:47.445Z",
+      "updated_at": "2026-08-29T05:32:47.445Z"
+    },
+    "loc_r3_2_nonblocking_1787981570026_1787981570079_zox1h": {
+      "name": "Known Location",
+      "version": 1,
+      "id": "loc_r3_2_nonblocking_1787981570026_1787981570079_zox1h",
+      "project_id": "r3_2_nonblocking_1787981570026",
+      "color_palette": [],
+      "created_at": "2026-08-29T05:32:50.079Z",
+      "updated_at": "2026-08-29T05:32:50.079Z"
+    },
+    "loc_r3_2_metrics_1787981627960_1787981628016_5v21s": {
+      "name": "Known Location",
+      "version": 1,
+      "id": "loc_r3_2_metrics_1787981627960_1787981628016_5v21s",
+      "project_id": "r3_2_metrics_1787981627960",
+      "color_palette": [],
+      "created_at": "2026-08-29T05:33:48.016Z",
+      "updated_at": "2026-08-29T05:33:48.016Z"
+    },
+    "loc_r3_2_nonblocking_1787981630573_1787981630630_cfk47": {
+      "name": "Known Location",
+      "version": 1,
+      "id": "loc_r3_2_nonblocking_1787981630573_1787981630630_cfk47",
+      "project_id": "r3_2_nonblocking_1787981630573",
+      "color_palette": [],
+      "created_at": "2026-08-29T05:33:50.630Z",
+      "updated_at": "2026-08-29T05:33:50.630Z"
     }
   },
   "objects": {
@@ -13243,6 +15472,1214 @@
           "assetType": "LOCATION"
         }
       ]
+    },
+    "scene_r3_2_metrics_1787981492519_1_1787981492593_levrf": {
+      "scene_number": 1,
+      "title": "Scene 1",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 1",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:31:32.871Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981492519_1_1787981492593_levrf",
+      "project_id": "r3_2_metrics_1787981492519",
+      "created_at": "2026-08-29T05:31:32.593Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 1.",
+          "stage": "S6",
+          "assetName": "Missing Location 1",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981492519_2_1787981492593_lvuo2": {
+      "scene_number": 2,
+      "title": "Scene 2",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 2",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:31:33.514Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981492519_2_1787981492593_lvuo2",
+      "project_id": "r3_2_metrics_1787981492519",
+      "created_at": "2026-08-29T05:31:32.593Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 2.",
+          "stage": "S6",
+          "assetName": "Missing Location 2",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981492519_3_1787981492593_oh1y7": {
+      "scene_number": 3,
+      "title": "Scene 3",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 3",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:31:33.762Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981492519_3_1787981492593_oh1y7",
+      "project_id": "r3_2_metrics_1787981492519",
+      "created_at": "2026-08-29T05:31:32.593Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 3.",
+          "stage": "S6",
+          "assetName": "Missing Location 3",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981492519_4_1787981492593_ehlcw": {
+      "scene_number": 4,
+      "title": "Scene 4",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 4",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:31:34.162Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981492519_4_1787981492593_ehlcw",
+      "project_id": "r3_2_metrics_1787981492519",
+      "created_at": "2026-08-29T05:31:32.593Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 4.",
+          "stage": "S6",
+          "assetName": "Missing Location 4",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981492519_5_1787981492593_q4jb3": {
+      "scene_number": 5,
+      "title": "Scene 5",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 5",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:31:34.418Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981492519_5_1787981492593_q4jb3",
+      "project_id": "r3_2_metrics_1787981492519",
+      "created_at": "2026-08-29T05:31:32.593Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 5.",
+          "stage": "S6",
+          "assetName": "Missing Location 5",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981492519_6_1787981492593_qbq8l": {
+      "scene_number": 6,
+      "title": "Scene 6",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 6",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:31:34.793Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981492519_6_1787981492593_qbq8l",
+      "project_id": "r3_2_metrics_1787981492519",
+      "created_at": "2026-08-29T05:31:32.593Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 6.",
+          "stage": "S6",
+          "assetName": "Missing Location 6",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_nonblocking_1787981495161_1_1787981495225_53znx": {
+      "scene_number": 1,
+      "title": "Scene 1",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 1",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:31:35.225Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_nonblocking_1787981495161_1_1787981495225_53znx",
+      "project_id": "r3_2_nonblocking_1787981495161",
+      "created_at": "2026-08-29T05:31:35.225Z"
+    },
+    "scene_r3_2_nonblocking_1787981495161_2_1787981495225_es78i": {
+      "scene_number": 2,
+      "title": "Scene 2",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 2",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:31:35.225Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_nonblocking_1787981495161_2_1787981495225_es78i",
+      "project_id": "r3_2_nonblocking_1787981495161",
+      "created_at": "2026-08-29T05:31:35.225Z"
+    },
+    "scene_r3_2_metrics_1787981539357_1_1787981539426_zvyqx": {
+      "scene_number": 1,
+      "title": "Scene 1",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 1",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:19.734Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981539357_1_1787981539426_zvyqx",
+      "project_id": "r3_2_metrics_1787981539357",
+      "created_at": "2026-08-29T05:32:19.426Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 1.",
+          "stage": "S6",
+          "assetName": "Missing Location 1",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981539357_2_1787981539427_lalnm": {
+      "scene_number": 2,
+      "title": "Scene 2",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 2",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:20.401Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981539357_2_1787981539427_lalnm",
+      "project_id": "r3_2_metrics_1787981539357",
+      "created_at": "2026-08-29T05:32:19.427Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 2.",
+          "stage": "S6",
+          "assetName": "Missing Location 2",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981539357_3_1787981539427_csrlr": {
+      "scene_number": 3,
+      "title": "Scene 3",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 3",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:20.650Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981539357_3_1787981539427_csrlr",
+      "project_id": "r3_2_metrics_1787981539357",
+      "created_at": "2026-08-29T05:32:19.427Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 3.",
+          "stage": "S6",
+          "assetName": "Missing Location 3",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981539357_4_1787981539427_ecs3q": {
+      "scene_number": 4,
+      "title": "Scene 4",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 4",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:21.037Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981539357_4_1787981539427_ecs3q",
+      "project_id": "r3_2_metrics_1787981539357",
+      "created_at": "2026-08-29T05:32:19.427Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 4.",
+          "stage": "S6",
+          "assetName": "Missing Location 4",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981539357_5_1787981539427_19qp3": {
+      "scene_number": 5,
+      "title": "Scene 5",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 5",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:21.286Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981539357_5_1787981539427_19qp3",
+      "project_id": "r3_2_metrics_1787981539357",
+      "created_at": "2026-08-29T05:32:19.427Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 5.",
+          "stage": "S6",
+          "assetName": "Missing Location 5",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981539357_6_1787981539427_xu9yb": {
+      "scene_number": 6,
+      "title": "Scene 6",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 6",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:21.688Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981539357_6_1787981539427_xu9yb",
+      "project_id": "r3_2_metrics_1787981539357",
+      "created_at": "2026-08-29T05:32:19.427Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 6.",
+          "stage": "S6",
+          "assetName": "Missing Location 6",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_nonblocking_1787981541992_1_1787981542060_m3fgd": {
+      "scene_number": 1,
+      "title": "Scene 1",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 1",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:22.060Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_nonblocking_1787981541992_1_1787981542060_m3fgd",
+      "project_id": "r3_2_nonblocking_1787981541992",
+      "created_at": "2026-08-29T05:32:22.060Z"
+    },
+    "scene_r3_2_nonblocking_1787981541992_2_1787981542060_up7rw": {
+      "scene_number": 2,
+      "title": "Scene 2",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 2",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:22.060Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_nonblocking_1787981541992_2_1787981542060_up7rw",
+      "project_id": "r3_2_nonblocking_1787981541992",
+      "created_at": "2026-08-29T05:32:22.060Z"
+    },
+    "scene_r3_2_metrics_1787981567389_1_1787981567460_5rcuz": {
+      "scene_number": 1,
+      "title": "Scene 1",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 1",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:47.750Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981567389_1_1787981567460_5rcuz",
+      "project_id": "r3_2_metrics_1787981567389",
+      "created_at": "2026-08-29T05:32:47.461Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 1.",
+          "stage": "S6",
+          "assetName": "Missing Location 1",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981567389_2_1787981567461_ngacz": {
+      "scene_number": 2,
+      "title": "Scene 2",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 2",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:48.396Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981567389_2_1787981567461_ngacz",
+      "project_id": "r3_2_metrics_1787981567389",
+      "created_at": "2026-08-29T05:32:47.461Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 2.",
+          "stage": "S6",
+          "assetName": "Missing Location 2",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981567389_3_1787981567461_plcae": {
+      "scene_number": 3,
+      "title": "Scene 3",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 3",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:48.651Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981567389_3_1787981567461_plcae",
+      "project_id": "r3_2_metrics_1787981567389",
+      "created_at": "2026-08-29T05:32:47.461Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 3.",
+          "stage": "S6",
+          "assetName": "Missing Location 3",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981567389_4_1787981567461_7xkrv": {
+      "scene_number": 4,
+      "title": "Scene 4",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 4",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:49.044Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981567389_4_1787981567461_7xkrv",
+      "project_id": "r3_2_metrics_1787981567389",
+      "created_at": "2026-08-29T05:32:47.461Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 4.",
+          "stage": "S6",
+          "assetName": "Missing Location 4",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981567389_5_1787981567461_vptxb": {
+      "scene_number": 5,
+      "title": "Scene 5",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 5",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:49.289Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981567389_5_1787981567461_vptxb",
+      "project_id": "r3_2_metrics_1787981567389",
+      "created_at": "2026-08-29T05:32:47.461Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 5.",
+          "stage": "S6",
+          "assetName": "Missing Location 5",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981567389_6_1787981567461_txmfs": {
+      "scene_number": 6,
+      "title": "Scene 6",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 6",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:49.678Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981567389_6_1787981567461_txmfs",
+      "project_id": "r3_2_metrics_1787981567389",
+      "created_at": "2026-08-29T05:32:47.461Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 6.",
+          "stage": "S6",
+          "assetName": "Missing Location 6",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_nonblocking_1787981570026_1_1787981570094_bt5ll": {
+      "scene_number": 1,
+      "title": "Scene 1",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 1",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:50.094Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_nonblocking_1787981570026_1_1787981570094_bt5ll",
+      "project_id": "r3_2_nonblocking_1787981570026",
+      "created_at": "2026-08-29T05:32:50.094Z"
+    },
+    "scene_r3_2_nonblocking_1787981570026_2_1787981570094_e0b3i": {
+      "scene_number": 2,
+      "title": "Scene 2",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 2",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:32:50.094Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_nonblocking_1787981570026_2_1787981570094_e0b3i",
+      "project_id": "r3_2_nonblocking_1787981570026",
+      "created_at": "2026-08-29T05:32:50.094Z"
+    },
+    "scene_r3_2_metrics_1787981627960_1_1787981628031_oq6g2": {
+      "scene_number": 1,
+      "title": "Scene 1",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 1",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:33:48.318Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981627960_1_1787981628031_oq6g2",
+      "project_id": "r3_2_metrics_1787981627960",
+      "created_at": "2026-08-29T05:33:48.031Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 1.",
+          "stage": "S6",
+          "assetName": "Missing Location 1",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981627960_2_1787981628031_tvmtq": {
+      "scene_number": 2,
+      "title": "Scene 2",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 2",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:33:48.956Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981627960_2_1787981628031_tvmtq",
+      "project_id": "r3_2_metrics_1787981627960",
+      "created_at": "2026-08-29T05:33:48.031Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 2.",
+          "stage": "S6",
+          "assetName": "Missing Location 2",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981627960_3_1787981628031_l6ikk": {
+      "scene_number": 3,
+      "title": "Scene 3",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 3",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:33:49.208Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981627960_3_1787981628031_l6ikk",
+      "project_id": "r3_2_metrics_1787981627960",
+      "created_at": "2026-08-29T05:33:48.031Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 3.",
+          "stage": "S6",
+          "assetName": "Missing Location 3",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981627960_4_1787981628031_ikve9": {
+      "scene_number": 4,
+      "title": "Scene 4",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 4",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:33:49.599Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981627960_4_1787981628031_ikve9",
+      "project_id": "r3_2_metrics_1787981627960",
+      "created_at": "2026-08-29T05:33:48.031Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 4.",
+          "stage": "S6",
+          "assetName": "Missing Location 4",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981627960_5_1787981628031_wf8ss": {
+      "scene_number": 5,
+      "title": "Scene 5",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 5",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:33:49.868Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981627960_5_1787981628031_wf8ss",
+      "project_id": "r3_2_metrics_1787981627960",
+      "created_at": "2026-08-29T05:33:48.031Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 5.",
+          "stage": "S6",
+          "assetName": "Missing Location 5",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_metrics_1787981627960_6_1787981628031_nimnw": {
+      "scene_number": 6,
+      "title": "Scene 6",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 6",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:33:50.239Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_metrics_1787981627960_6_1787981628031_nimnw",
+      "project_id": "r3_2_metrics_1787981627960",
+      "created_at": "2026-08-29T05:33:48.031Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 6.",
+          "stage": "S6",
+          "assetName": "Missing Location 6",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_nonblocking_1787981630573_1_1787981630645_tzvrn": {
+      "scene_number": 1,
+      "title": "Scene 1",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 1",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:33:50.925Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_nonblocking_1787981630573_1_1787981630645_tzvrn",
+      "project_id": "r3_2_nonblocking_1787981630573",
+      "created_at": "2026-08-29T05:33:50.645Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 1.",
+          "stage": "S6",
+          "assetName": "Missing Location 1",
+          "assetType": "LOCATION"
+        }
+      ]
+    },
+    "scene_r3_2_nonblocking_1787981630573_2_1787981630645_2u6ro": {
+      "scene_number": 2,
+      "title": "Scene 2",
+      "duration_sec": 10,
+      "story_purpose": "fixture",
+      "location_name": "Missing Location 2",
+      "time_of_day": "day",
+      "character_names": [
+        "Known Character"
+      ],
+      "emotional_objective": "fixture",
+      "event": "fixture",
+      "narrative_function": "fixture",
+      "version": 1,
+      "updated_at": "2026-08-29T05:33:51.558Z",
+      "scene_tone": {
+        "intensity": 25,
+        "emotional_weight": 65,
+        "pacing": "slow",
+        "atmosphere": "contemplative",
+        "dramatic_tension": 25,
+        "preset": "CONTEMPLATIVE",
+        "is_ai_recommended": true
+      },
+      "id": "scene_r3_2_nonblocking_1787981630573_2_1787981630645_2u6ro",
+      "project_id": "r3_2_nonblocking_1787981630573",
+      "created_at": "2026-08-29T05:33:50.645Z",
+      "status": "blocked",
+      "pipeline_status": "BLOCKED",
+      "blockers": [
+        {
+          "code": "MISSING_REQUIRED_ASSET",
+          "severity": "BLOCKING",
+          "message": "Missing location asset: Missing Location 2.",
+          "stage": "S6",
+          "assetName": "Missing Location 2",
+          "assetType": "LOCATION"
+        }
+      ]
     }
   },
   "shots": {
@@ -16978,6 +20415,574 @@
         "level": "warn",
         "timestamp": "2026-08-28T20:06:54.036Z"
       }
+    ],
+    "r3_run_identity_1787952741672": [
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "level": "info",
+        "message": "trace event",
+        "run_id": "run_1787952741672_mj1v9tjx",
+        "scope": "scene",
+        "stage_code": "S6",
+        "timestamp": "2026-08-28T21:32:21.679Z"
+      }
+    ],
+    "r3_run_isolation_1787952741705": [
+      {
+        "stage": 1,
+        "stage_name": "Run A",
+        "level": "info",
+        "message": "first run",
+        "run_id": "run_1787952741705_x80ncl1s",
+        "timestamp": "2026-08-28T21:32:21.713Z"
+      },
+      {
+        "stage": 1,
+        "stage_name": "Run B",
+        "level": "info",
+        "message": "second run",
+        "run_id": "run_1787952741705_sh4agioa",
+        "timestamp": "2026-08-28T21:32:21.729Z"
+      }
+    ],
+    "r3_run_identity_1787952788289": [
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "level": "info",
+        "message": "trace event",
+        "run_id": "run_1787952788289_w5w68v6w",
+        "scope": "scene",
+        "stage_code": "S6",
+        "timestamp": "2026-08-28T21:33:08.296Z"
+      }
+    ],
+    "r3_run_isolation_1787952788319": [
+      {
+        "stage": 1,
+        "stage_name": "Run A",
+        "level": "info",
+        "message": "first run",
+        "run_id": "run_1787952788319_lm8dozo7",
+        "timestamp": "2026-08-28T21:33:08.328Z"
+      },
+      {
+        "stage": 1,
+        "stage_name": "Run B",
+        "level": "info",
+        "message": "second run",
+        "run_id": "run_1787952788319_icx0mto2",
+        "timestamp": "2026-08-28T21:33:08.342Z"
+      }
+    ],
+    "r3_run_identity_1787952815922": [
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "level": "info",
+        "message": "trace event",
+        "run_id": "run_1787952815922_k3ti80br",
+        "scope": "scene",
+        "stage_code": "S6",
+        "timestamp": "2026-08-28T21:33:35.929Z"
+      }
+    ],
+    "r3_run_isolation_1787952815952": [
+      {
+        "stage": 1,
+        "stage_name": "Run A",
+        "level": "info",
+        "message": "first run",
+        "run_id": "run_1787952815952_xdt5x3ka",
+        "timestamp": "2026-08-28T21:33:35.960Z"
+      },
+      {
+        "stage": 1,
+        "stage_name": "Run B",
+        "level": "info",
+        "message": "second run",
+        "run_id": "run_1787952815952_bsa97s6b",
+        "timestamp": "2026-08-28T21:33:35.974Z"
+      }
+    ],
+    "r3_run_identity_1787980334461": [
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "level": "info",
+        "message": "trace event",
+        "run_id": "run_1787980334461_qeei6775",
+        "scope": "scene",
+        "stage_code": "S6",
+        "timestamp": "2026-08-29T05:12:14.468Z"
+      }
+    ],
+    "r3_run_isolation_1787980334491": [
+      {
+        "stage": 1,
+        "stage_name": "Run A",
+        "level": "info",
+        "message": "first run",
+        "run_id": "run_1787980334491_fi0sxqc5",
+        "timestamp": "2026-08-29T05:12:14.498Z"
+      },
+      {
+        "stage": 1,
+        "stage_name": "Run B",
+        "level": "info",
+        "message": "second run",
+        "run_id": "run_1787980334491_56hbjt23",
+        "timestamp": "2026-08-29T05:12:14.513Z"
+      }
+    ],
+    "r3_run_identity_1787980515426": [
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "level": "info",
+        "message": "trace event",
+        "run_id": "run_1787980515426_av0m5025",
+        "scope": "scene",
+        "stage_code": "S6",
+        "timestamp": "2026-08-29T05:15:15.433Z"
+      }
+    ],
+    "r3_run_isolation_1787980515456": [
+      {
+        "stage": 1,
+        "stage_name": "Run A",
+        "level": "info",
+        "message": "first run",
+        "run_id": "run_1787980515456_d54gq5lb",
+        "timestamp": "2026-08-29T05:15:15.465Z"
+      },
+      {
+        "stage": 1,
+        "stage_name": "Run B",
+        "level": "info",
+        "message": "second run",
+        "run_id": "run_1787980515456_gxvl6jhd",
+        "timestamp": "2026-08-29T05:15:15.479Z"
+      }
+    ],
+    "r3_2_metrics_1787981492519": [
+      {
+        "stage": 1,
+        "stage_name": "Pipeline Orchestrator",
+        "message": "Fondasi proyek (S1–S5) sudah valid & siap. Melompati inisialisasi ulang.",
+        "level": "info",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "timestamp": "2026-08-29T05:31:32.690Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "message": "Memulai generasi 6 scene (Tahap S6–S8) dengan konkurensi 2 worker...",
+        "level": "info",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "timestamp": "2026-08-29T05:31:32.754Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #1 (1/6)...",
+        "level": "info",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "timestamp": "2026-08-29T05:31:32.769Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #2 (2/6)...",
+        "level": "info",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "timestamp": "2026-08-29T05:31:33.416Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #2",
+        "message": "Memproses Scene #3 (3/6)...",
+        "level": "info",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "timestamp": "2026-08-29T05:31:33.662Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #4 (4/6)...",
+        "level": "info",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "timestamp": "2026-08-29T05:31:34.063Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #2",
+        "message": "Memproses Scene #5 (5/6)...",
+        "level": "info",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "timestamp": "2026-08-29T05:31:34.315Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #6 (6/6)...",
+        "level": "info",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "timestamp": "2026-08-29T05:31:34.697Z"
+      },
+      {
+        "stage": 8,
+        "stage_name": "Scene Generation Pool",
+        "message": "Generasi seluruh scene selesai. 0 scene siap, 0 scene perlu perhatian.",
+        "level": "success",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "timestamp": "2026-08-29T05:31:35.096Z"
+      },
+      {
+        "stage": 8,
+        "stage_name": "Pipeline Orchestrator",
+        "message": "Pipeline selesai! 0/6 scene siap untuk produksi.",
+        "level": "warn",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "timestamp": "2026-08-29T05:31:35.147Z"
+      }
+    ],
+    "r3_run_identity_1787981503279": [
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "level": "info",
+        "message": "trace event",
+        "run_id": "run_1787981503279_zhs24mpg",
+        "scope": "scene",
+        "stage_code": "S6",
+        "timestamp": "2026-08-29T05:31:43.287Z"
+      }
+    ],
+    "r3_run_isolation_1787981503310": [
+      {
+        "stage": 1,
+        "stage_name": "Run A",
+        "level": "info",
+        "message": "first run",
+        "run_id": "run_1787981503310_6erabfsa",
+        "timestamp": "2026-08-29T05:31:43.319Z"
+      },
+      {
+        "stage": 1,
+        "stage_name": "Run B",
+        "level": "info",
+        "message": "second run",
+        "run_id": "run_1787981503310_q1jhaeik",
+        "timestamp": "2026-08-29T05:31:43.334Z"
+      }
+    ],
+    "r3_2_metrics_1787981539357": [
+      {
+        "stage": 1,
+        "stage_name": "Pipeline Orchestrator",
+        "message": "Fondasi proyek (S1–S5) sudah valid & siap. Melompati inisialisasi ulang.",
+        "level": "info",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "timestamp": "2026-08-29T05:32:19.553Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "message": "Memulai generasi 6 scene (Tahap S6–S8) dengan konkurensi 2 worker...",
+        "level": "info",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "timestamp": "2026-08-29T05:32:19.618Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #1 (1/6)...",
+        "level": "info",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "timestamp": "2026-08-29T05:32:19.634Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #2 (2/6)...",
+        "level": "info",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "timestamp": "2026-08-29T05:32:20.287Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #2",
+        "message": "Memproses Scene #3 (3/6)...",
+        "level": "info",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "timestamp": "2026-08-29T05:32:20.539Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #4 (4/6)...",
+        "level": "info",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "timestamp": "2026-08-29T05:32:20.938Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #2",
+        "message": "Memproses Scene #5 (5/6)...",
+        "level": "info",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "timestamp": "2026-08-29T05:32:21.186Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #6 (6/6)...",
+        "level": "info",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "timestamp": "2026-08-29T05:32:21.587Z"
+      },
+      {
+        "stage": 8,
+        "stage_name": "Scene Generation Pool",
+        "message": "Generasi seluruh scene selesai. 0 scene siap, 0 scene perlu perhatian.",
+        "level": "success",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "timestamp": "2026-08-29T05:32:21.926Z"
+      },
+      {
+        "stage": 8,
+        "stage_name": "Pipeline Orchestrator",
+        "message": "Pipeline selesai! 0/6 scene siap untuk produksi.",
+        "level": "warn",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "timestamp": "2026-08-29T05:32:21.978Z"
+      }
+    ],
+    "r3_2_metrics_1787981567389": [
+      {
+        "stage": 1,
+        "stage_name": "Pipeline Orchestrator",
+        "message": "Fondasi proyek (S1–S5) sudah valid & siap. Melompati inisialisasi ulang.",
+        "level": "info",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "timestamp": "2026-08-29T05:32:47.560Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "message": "Memulai generasi 6 scene (Tahap S6–S8) dengan konkurensi 2 worker...",
+        "level": "info",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "timestamp": "2026-08-29T05:32:47.631Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #1 (1/6)...",
+        "level": "info",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "timestamp": "2026-08-29T05:32:47.646Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #2 (2/6)...",
+        "level": "info",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "timestamp": "2026-08-29T05:32:48.295Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #2",
+        "message": "Memproses Scene #3 (3/6)...",
+        "level": "info",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "timestamp": "2026-08-29T05:32:48.548Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #4 (4/6)...",
+        "level": "info",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "timestamp": "2026-08-29T05:32:48.942Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #2",
+        "message": "Memproses Scene #5 (5/6)...",
+        "level": "info",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "timestamp": "2026-08-29T05:32:49.188Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #6 (6/6)...",
+        "level": "info",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "timestamp": "2026-08-29T05:32:49.580Z"
+      },
+      {
+        "stage": 8,
+        "stage_name": "Scene Generation Pool",
+        "message": "Generasi seluruh scene selesai. 0 scene siap, 0 scene perlu perhatian.",
+        "level": "success",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "timestamp": "2026-08-29T05:32:49.959Z"
+      },
+      {
+        "stage": 8,
+        "stage_name": "Pipeline Orchestrator",
+        "message": "Pipeline selesai! 0/6 scene siap untuk produksi.",
+        "level": "warn",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "timestamp": "2026-08-29T05:32:50.011Z"
+      }
+    ],
+    "r3_run_identity_1787981574411": [
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "level": "info",
+        "message": "trace event",
+        "run_id": "run_1787981574411_hsiyjagu",
+        "scope": "scene",
+        "stage_code": "S6",
+        "timestamp": "2026-08-29T05:32:54.419Z"
+      }
+    ],
+    "r3_run_isolation_1787981574444": [
+      {
+        "stage": 1,
+        "stage_name": "Run A",
+        "level": "info",
+        "message": "first run",
+        "run_id": "run_1787981574444_y4ia0lpl",
+        "timestamp": "2026-08-29T05:32:54.453Z"
+      },
+      {
+        "stage": 1,
+        "stage_name": "Run B",
+        "level": "info",
+        "message": "second run",
+        "run_id": "run_1787981574444_ce6t3pyr",
+        "timestamp": "2026-08-29T05:32:54.468Z"
+      }
+    ],
+    "r3_2_metrics_1787981627960": [
+      {
+        "stage": 1,
+        "stage_name": "Pipeline Orchestrator",
+        "message": "Fondasi proyek (S1–S5) sudah valid & siap. Melompati inisialisasi ulang.",
+        "level": "info",
+        "run_id": "run_1787981628038_u66rfgus",
+        "timestamp": "2026-08-29T05:33:48.130Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "message": "Memulai generasi 6 scene (Tahap S6–S8) dengan konkurensi 2 worker...",
+        "level": "info",
+        "run_id": "run_1787981628038_u66rfgus",
+        "timestamp": "2026-08-29T05:33:48.199Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #1 (1/6)...",
+        "level": "info",
+        "run_id": "run_1787981628038_u66rfgus",
+        "timestamp": "2026-08-29T05:33:48.214Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #2 (2/6)...",
+        "level": "info",
+        "run_id": "run_1787981628038_u66rfgus",
+        "timestamp": "2026-08-29T05:33:48.852Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #2",
+        "message": "Memproses Scene #3 (3/6)...",
+        "level": "info",
+        "run_id": "run_1787981628038_u66rfgus",
+        "timestamp": "2026-08-29T05:33:49.103Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #4 (4/6)...",
+        "level": "info",
+        "run_id": "run_1787981628038_u66rfgus",
+        "timestamp": "2026-08-29T05:33:49.497Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #2",
+        "message": "Memproses Scene #5 (5/6)...",
+        "level": "info",
+        "run_id": "run_1787981628038_u66rfgus",
+        "timestamp": "2026-08-29T05:33:49.766Z"
+      },
+      {
+        "stage": 6,
+        "stage_name": "Worker #1",
+        "message": "Memproses Scene #6 (6/6)...",
+        "level": "info",
+        "run_id": "run_1787981628038_u66rfgus",
+        "timestamp": "2026-08-29T05:33:50.133Z"
+      },
+      {
+        "stage": 8,
+        "stage_name": "Scene Generation Pool",
+        "message": "Generasi seluruh scene selesai. 0 scene siap, 0 scene perlu perhatian.",
+        "level": "success",
+        "run_id": "run_1787981628038_u66rfgus",
+        "timestamp": "2026-08-29T05:33:50.505Z"
+      },
+      {
+        "stage": 8,
+        "stage_name": "Pipeline Orchestrator",
+        "message": "Pipeline selesai! 0/6 scene siap untuk produksi.",
+        "level": "warn",
+        "run_id": "run_1787981628038_u66rfgus",
+        "timestamp": "2026-08-29T05:33:50.558Z"
+      }
+    ],
+    "r3_run_identity_1787981635888": [
+      {
+        "stage": 6,
+        "stage_name": "Scene Generation Pool",
+        "level": "info",
+        "message": "trace event",
+        "run_id": "run_1787981635888_f8hoonyc",
+        "scope": "scene",
+        "stage_code": "S6",
+        "timestamp": "2026-08-29T05:33:55.896Z"
+      }
+    ],
+    "r3_run_isolation_1787981635921": [
+      {
+        "stage": 1,
+        "stage_name": "Run A",
+        "level": "info",
+        "message": "first run",
+        "run_id": "run_1787981635921_b3k036go",
+        "timestamp": "2026-08-29T05:33:55.930Z"
+      },
+      {
+        "stage": 1,
+        "stage_name": "Run B",
+        "level": "info",
+        "message": "second run",
+        "run_id": "run_1787981635921_584vhqjc",
+        "timestamp": "2026-08-29T05:33:55.946Z"
+      }
     ]
   },
   "telemetry": {
@@ -19441,6 +23446,1106 @@
         "completed_at": "2026-08-28T20:06:53.804Z",
         "duration_ms": 50,
         "status": "completed"
+      }
+    ],
+    "r3_run_identity_1787952741672": [
+      {
+        "id": "telem_1787952741697_7o6qsf",
+        "project_id": "r3_run_identity_1787952741672",
+        "scene_id": "scene_1",
+        "stage": 6,
+        "stage_code": "S6",
+        "scope": "scene",
+        "attempt": 1,
+        "started_at": "2026-08-28T21:32:21.686Z",
+        "status": "started",
+        "run_id": "run_1787952741672_mj1v9tjx"
+      }
+    ],
+    "r3_run_identity_1787952788289": [
+      {
+        "id": "telem_1787952788312_ufkvwn",
+        "project_id": "r3_run_identity_1787952788289",
+        "scene_id": "scene_1",
+        "stage": 6,
+        "stage_code": "S6",
+        "scope": "scene",
+        "attempt": 1,
+        "started_at": "2026-08-28T21:33:08.303Z",
+        "status": "started",
+        "run_id": "run_1787952788289_w5w68v6w"
+      }
+    ],
+    "r3_run_identity_1787952815922": [
+      {
+        "id": "telem_1787952815944_m21vp9",
+        "project_id": "r3_run_identity_1787952815922",
+        "scene_id": "scene_1",
+        "stage": 6,
+        "stage_code": "S6",
+        "scope": "scene",
+        "attempt": 1,
+        "started_at": "2026-08-28T21:33:35.936Z",
+        "status": "started",
+        "run_id": "run_1787952815922_k3ti80br"
+      }
+    ],
+    "r3_run_identity_1787980334461": [
+      {
+        "id": "telem_1787980334484_lji6vs",
+        "project_id": "r3_run_identity_1787980334461",
+        "scene_id": "scene_1",
+        "stage": 6,
+        "stage_code": "S6",
+        "scope": "scene",
+        "attempt": 1,
+        "started_at": "2026-08-29T05:12:14.475Z",
+        "status": "started",
+        "run_id": "run_1787980334461_qeei6775"
+      }
+    ],
+    "r3_run_identity_1787980515426": [
+      {
+        "id": "telem_1787980515449_odp4rj",
+        "project_id": "r3_run_identity_1787980515426",
+        "scene_id": "scene_1",
+        "stage": 6,
+        "stage_code": "S6",
+        "scope": "scene",
+        "attempt": 1,
+        "started_at": "2026-08-29T05:15:15.440Z",
+        "status": "started",
+        "run_id": "run_1787980515426_av0m5025"
+      }
+    ],
+    "r3_2_metrics_1787981492519": [
+      {
+        "id": "telem_1787981492886_3t88da",
+        "project_id": "r3_2_metrics_1787981492519",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981492519_1_1787981492593_levrf",
+        "started_at": "2026-08-29T05:31:32.791Z",
+        "completed_at": "2026-08-29T05:31:32.878Z",
+        "duration_ms": 87,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981492519_1_1787981492593_levrf",
+          "scene_number": 1,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 87
+        }
+      },
+      {
+        "id": "telem_1787981493530_i5qt61",
+        "project_id": "r3_2_metrics_1787981492519",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981492519_2_1787981492593_lvuo2",
+        "started_at": "2026-08-29T05:31:33.437Z",
+        "completed_at": "2026-08-29T05:31:33.523Z",
+        "duration_ms": 86,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981492519_2_1787981492593_lvuo2",
+          "scene_number": 2,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 86
+        }
+      },
+      {
+        "id": "telem_1787981493777_e1keso",
+        "project_id": "r3_2_metrics_1787981492519",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981492519_3_1787981492593_oh1y7",
+        "started_at": "2026-08-29T05:31:33.684Z",
+        "completed_at": "2026-08-29T05:31:33.769Z",
+        "duration_ms": 85,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981492519_3_1787981492593_oh1y7",
+          "scene_number": 3,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 85
+        }
+      },
+      {
+        "id": "telem_1787981494176_tqpnxh",
+        "project_id": "r3_2_metrics_1787981492519",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981492519_4_1787981492593_ehlcw",
+        "started_at": "2026-08-29T05:31:34.086Z",
+        "completed_at": "2026-08-29T05:31:34.168Z",
+        "duration_ms": 82,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981492519_4_1787981492593_ehlcw",
+          "scene_number": 4,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 82
+        }
+      },
+      {
+        "id": "telem_1787981494433_chsv2i",
+        "project_id": "r3_2_metrics_1787981492519",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981492519_5_1787981492593_q4jb3",
+        "started_at": "2026-08-29T05:31:34.340Z",
+        "completed_at": "2026-08-29T05:31:34.426Z",
+        "duration_ms": 86,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981492519_5_1787981492593_q4jb3",
+          "scene_number": 5,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 86
+        }
+      },
+      {
+        "id": "telem_1787981494809_mu249c",
+        "project_id": "r3_2_metrics_1787981492519",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981492519_6_1787981492593_qbq8l",
+        "started_at": "2026-08-29T05:31:34.717Z",
+        "completed_at": "2026-08-29T05:31:34.800Z",
+        "duration_ms": 83,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981492519_6_1787981492593_qbq8l",
+          "scene_number": 6,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 83
+        }
+      },
+      {
+        "id": "telem_1787981495083_uttkhe",
+        "project_id": "r3_2_metrics_1787981492519",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "stage": 0,
+        "stage_code": "S1",
+        "scope": "project",
+        "started_at": "2026-08-29T05:31:35.076Z",
+        "status": "completed",
+        "summary_type": "run",
+        "summary": {
+          "run_id": "run_1787981492600_9j2mqawk",
+          "effective_concurrency": 2,
+          "total_scenes": 6,
+          "ready_scenes": 0,
+          "blocked_scenes": 6,
+          "failed_scenes": 0,
+          "completion_order": [
+            "scene_r3_2_metrics_1787981492519_1_1787981492593_levrf",
+            "scene_r3_2_metrics_1787981492519_2_1787981492593_lvuo2",
+            "scene_r3_2_metrics_1787981492519_3_1787981492593_oh1y7",
+            "scene_r3_2_metrics_1787981492519_4_1787981492593_ehlcw",
+            "scene_r3_2_metrics_1787981492519_5_1787981492593_q4jb3",
+            "scene_r3_2_metrics_1787981492519_6_1787981492593_qbq8l"
+          ],
+          "started_at": "2026-08-29T05:31:32.600Z",
+          "completed_at": "2026-08-29T05:31:35.076Z",
+          "duration_ms": 2476,
+          "stage_timings": {
+            "S6": {
+              "stage_code": "S6",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S7": {
+              "stage_code": "S7",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S8": {
+              "stage_code": "S8",
+              "count": 6,
+              "total_ms": 509,
+              "average_ms": 84.83333333333333
+            }
+          }
+        }
+      },
+      {
+        "id": "telem_1787981495133_bnaobx",
+        "project_id": "r3_2_metrics_1787981492519",
+        "run_id": "run_1787981492600_9j2mqawk",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "project",
+        "started_at": "2026-08-29T05:31:32.611Z",
+        "completed_at": "2026-08-29T05:31:35.126Z",
+        "duration_ms": 2493,
+        "status": "completed",
+        "summary_type": "run",
+        "summary": {
+          "run_id": "run_1787981492600_9j2mqawk",
+          "effective_concurrency": 2,
+          "total_scenes": 6,
+          "ready_scenes": 0,
+          "blocked_scenes": -6,
+          "failed_scenes": 0,
+          "completion_order": [],
+          "started_at": "2026-08-29T05:31:32.611Z",
+          "completed_at": "2026-08-29T05:31:35.126Z",
+          "duration_ms": 2493,
+          "stage_timings": {
+            "S6": {
+              "stage_code": "S6",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S7": {
+              "stage_code": "S7",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S8": {
+              "stage_code": "S8",
+              "count": 6,
+              "total_ms": 509,
+              "average_ms": 84.83333333333333
+            }
+          }
+        }
+      }
+    ],
+    "r3_run_identity_1787981503279": [
+      {
+        "id": "telem_1787981503303_v9a7xk",
+        "project_id": "r3_run_identity_1787981503279",
+        "scene_id": "scene_1",
+        "stage": 6,
+        "stage_code": "S6",
+        "scope": "scene",
+        "attempt": 1,
+        "started_at": "2026-08-29T05:31:43.294Z",
+        "status": "started",
+        "run_id": "run_1787981503279_zhs24mpg"
+      }
+    ],
+    "r3_2_metrics_1787981539357": [
+      {
+        "id": "telem_1787981539748_7z1837",
+        "project_id": "r3_2_metrics_1787981539357",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981539357_1_1787981539426_zvyqx",
+        "started_at": "2026-08-29T05:32:19.654Z",
+        "completed_at": "2026-08-29T05:32:19.742Z",
+        "duration_ms": 88,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981539357_1_1787981539426_zvyqx",
+          "scene_number": 1,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 88
+        }
+      },
+      {
+        "id": "telem_1787981540418_8ij8qf",
+        "project_id": "r3_2_metrics_1787981539357",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981539357_2_1787981539427_lalnm",
+        "started_at": "2026-08-29T05:32:20.321Z",
+        "completed_at": "2026-08-29T05:32:20.409Z",
+        "duration_ms": 88,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981539357_2_1787981539427_lalnm",
+          "scene_number": 2,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 88
+        }
+      },
+      {
+        "id": "telem_1787981540664_weg9t9",
+        "project_id": "r3_2_metrics_1787981539357",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981539357_3_1787981539427_csrlr",
+        "started_at": "2026-08-29T05:32:20.571Z",
+        "completed_at": "2026-08-29T05:32:20.657Z",
+        "duration_ms": 86,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981539357_3_1787981539427_csrlr",
+          "scene_number": 3,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 86
+        }
+      },
+      {
+        "id": "telem_1787981541051_6iwtrn",
+        "project_id": "r3_2_metrics_1787981539357",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981539357_4_1787981539427_ecs3q",
+        "started_at": "2026-08-29T05:32:20.961Z",
+        "completed_at": "2026-08-29T05:32:21.044Z",
+        "duration_ms": 83,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981539357_4_1787981539427_ecs3q",
+          "scene_number": 4,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 83
+        }
+      },
+      {
+        "id": "telem_1787981541301_vb53e4",
+        "project_id": "r3_2_metrics_1787981539357",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981539357_5_1787981539427_19qp3",
+        "started_at": "2026-08-29T05:32:21.209Z",
+        "completed_at": "2026-08-29T05:32:21.294Z",
+        "duration_ms": 85,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981539357_5_1787981539427_19qp3",
+          "scene_number": 5,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 85
+        }
+      },
+      {
+        "id": "telem_1787981541702_h4syi9",
+        "project_id": "r3_2_metrics_1787981539357",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981539357_6_1787981539427_xu9yb",
+        "started_at": "2026-08-29T05:32:21.611Z",
+        "completed_at": "2026-08-29T05:32:21.695Z",
+        "duration_ms": 84,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981539357_6_1787981539427_xu9yb",
+          "scene_number": 6,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 84
+        }
+      },
+      {
+        "id": "telem_1787981541911_mwp6ag",
+        "project_id": "r3_2_metrics_1787981539357",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "stage": 0,
+        "stage_code": "S1",
+        "scope": "project",
+        "started_at": "2026-08-29T05:32:21.904Z",
+        "status": "completed",
+        "summary_type": "run",
+        "summary": {
+          "run_id": "run_1787981539463_c3hyinp2",
+          "effective_concurrency": 2,
+          "total_scenes": 6,
+          "ready_scenes": 0,
+          "blocked_scenes": 6,
+          "failed_scenes": 0,
+          "completion_order": [
+            "scene_r3_2_metrics_1787981539357_1_1787981539426_zvyqx",
+            "scene_r3_2_metrics_1787981539357_2_1787981539427_lalnm",
+            "scene_r3_2_metrics_1787981539357_3_1787981539427_csrlr",
+            "scene_r3_2_metrics_1787981539357_4_1787981539427_ecs3q",
+            "scene_r3_2_metrics_1787981539357_5_1787981539427_19qp3",
+            "scene_r3_2_metrics_1787981539357_6_1787981539427_xu9yb"
+          ],
+          "started_at": "2026-08-29T05:32:19.463Z",
+          "completed_at": "2026-08-29T05:32:21.904Z",
+          "duration_ms": 2441,
+          "stage_timings": {
+            "S6": {
+              "stage_code": "S6",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S7": {
+              "stage_code": "S7",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S8": {
+              "stage_code": "S8",
+              "count": 6,
+              "total_ms": 514,
+              "average_ms": 85.66666666666667
+            }
+          }
+        }
+      },
+      {
+        "id": "telem_1787981541963_ny54b1",
+        "project_id": "r3_2_metrics_1787981539357",
+        "run_id": "run_1787981539463_c3hyinp2",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "project",
+        "started_at": "2026-08-29T05:32:19.470Z",
+        "completed_at": "2026-08-29T05:32:21.957Z",
+        "duration_ms": 2463,
+        "status": "completed",
+        "summary_type": "run",
+        "summary": {
+          "run_id": "run_1787981539463_c3hyinp2",
+          "effective_concurrency": 2,
+          "total_scenes": 6,
+          "ready_scenes": 0,
+          "blocked_scenes": -6,
+          "failed_scenes": 0,
+          "completion_order": [],
+          "started_at": "2026-08-29T05:32:19.470Z",
+          "completed_at": "2026-08-29T05:32:21.957Z",
+          "duration_ms": 2463,
+          "stage_timings": {
+            "S6": {
+              "stage_code": "S6",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S7": {
+              "stage_code": "S7",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S8": {
+              "stage_code": "S8",
+              "count": 6,
+              "total_ms": 514,
+              "average_ms": 85.66666666666667
+            }
+          }
+        }
+      }
+    ],
+    "r3_2_metrics_1787981567389": [
+      {
+        "id": "telem_1787981567765_1968bc",
+        "project_id": "r3_2_metrics_1787981567389",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981567389_1_1787981567460_5rcuz",
+        "started_at": "2026-08-29T05:32:47.668Z",
+        "completed_at": "2026-08-29T05:32:47.758Z",
+        "duration_ms": 90,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981567389_1_1787981567460_5rcuz",
+          "scene_number": 1,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 90
+        }
+      },
+      {
+        "id": "telem_1787981568410_u8v6b3",
+        "project_id": "r3_2_metrics_1787981567389",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981567389_2_1787981567461_ngacz",
+        "started_at": "2026-08-29T05:32:48.316Z",
+        "completed_at": "2026-08-29T05:32:48.403Z",
+        "duration_ms": 87,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981567389_2_1787981567461_ngacz",
+          "scene_number": 2,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 87
+        }
+      },
+      {
+        "id": "telem_1787981568666_82vhyk",
+        "project_id": "r3_2_metrics_1787981567389",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981567389_3_1787981567461_plcae",
+        "started_at": "2026-08-29T05:32:48.572Z",
+        "completed_at": "2026-08-29T05:32:48.658Z",
+        "duration_ms": 86,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981567389_3_1787981567461_plcae",
+          "scene_number": 3,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 86
+        }
+      },
+      {
+        "id": "telem_1787981569058_8hctb7",
+        "project_id": "r3_2_metrics_1787981567389",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981567389_4_1787981567461_7xkrv",
+        "started_at": "2026-08-29T05:32:48.965Z",
+        "completed_at": "2026-08-29T05:32:49.051Z",
+        "duration_ms": 86,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981567389_4_1787981567461_7xkrv",
+          "scene_number": 4,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 86
+        }
+      },
+      {
+        "id": "telem_1787981569305_gqsasr",
+        "project_id": "r3_2_metrics_1787981567389",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981567389_5_1787981567461_vptxb",
+        "started_at": "2026-08-29T05:32:49.211Z",
+        "completed_at": "2026-08-29T05:32:49.298Z",
+        "duration_ms": 87,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981567389_5_1787981567461_vptxb",
+          "scene_number": 5,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 87
+        }
+      },
+      {
+        "id": "telem_1787981569693_9cwj9p",
+        "project_id": "r3_2_metrics_1787981567389",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981567389_6_1787981567461_txmfs",
+        "started_at": "2026-08-29T05:32:49.601Z",
+        "completed_at": "2026-08-29T05:32:49.685Z",
+        "duration_ms": 84,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981567389_6_1787981567461_txmfs",
+          "scene_number": 6,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 84
+        }
+      },
+      {
+        "id": "telem_1787981569944_5fmd5r",
+        "project_id": "r3_2_metrics_1787981567389",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "stage": 0,
+        "stage_code": "S1",
+        "scope": "project",
+        "started_at": "2026-08-29T05:32:49.937Z",
+        "status": "completed",
+        "summary_type": "run",
+        "summary": {
+          "run_id": "run_1787981567469_pt8vlwhl",
+          "effective_concurrency": 2,
+          "total_scenes": 6,
+          "ready_scenes": 0,
+          "blocked_scenes": 6,
+          "failed_scenes": 0,
+          "completion_order": [
+            "scene_r3_2_metrics_1787981567389_1_1787981567460_5rcuz",
+            "scene_r3_2_metrics_1787981567389_2_1787981567461_ngacz",
+            "scene_r3_2_metrics_1787981567389_3_1787981567461_plcae",
+            "scene_r3_2_metrics_1787981567389_4_1787981567461_7xkrv",
+            "scene_r3_2_metrics_1787981567389_5_1787981567461_vptxb",
+            "scene_r3_2_metrics_1787981567389_6_1787981567461_txmfs"
+          ],
+          "started_at": "2026-08-29T05:32:47.469Z",
+          "completed_at": "2026-08-29T05:32:49.937Z",
+          "duration_ms": 2468,
+          "stage_timings": {
+            "S6": {
+              "stage_code": "S6",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S7": {
+              "stage_code": "S7",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S8": {
+              "stage_code": "S8",
+              "count": 6,
+              "total_ms": 520,
+              "average_ms": 86.66666666666667
+            }
+          }
+        }
+      },
+      {
+        "id": "telem_1787981569996_ifqndz",
+        "project_id": "r3_2_metrics_1787981567389",
+        "run_id": "run_1787981567469_pt8vlwhl",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "project",
+        "started_at": "2026-08-29T05:32:47.477Z",
+        "completed_at": "2026-08-29T05:32:49.987Z",
+        "duration_ms": 2489,
+        "status": "completed",
+        "summary_type": "run",
+        "summary": {
+          "run_id": "run_1787981567469_pt8vlwhl",
+          "effective_concurrency": 2,
+          "total_scenes": 6,
+          "ready_scenes": 0,
+          "blocked_scenes": -6,
+          "failed_scenes": 0,
+          "completion_order": [],
+          "started_at": "2026-08-29T05:32:47.477Z",
+          "completed_at": "2026-08-29T05:32:49.987Z",
+          "duration_ms": 2489,
+          "stage_timings": {
+            "S6": {
+              "stage_code": "S6",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S7": {
+              "stage_code": "S7",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S8": {
+              "stage_code": "S8",
+              "count": 6,
+              "total_ms": 520,
+              "average_ms": 86.66666666666667
+            }
+          }
+        }
+      }
+    ],
+    "r3_run_identity_1787981574411": [
+      {
+        "id": "telem_1787981574436_tbhmzo",
+        "project_id": "r3_run_identity_1787981574411",
+        "scene_id": "scene_1",
+        "stage": 6,
+        "stage_code": "S6",
+        "scope": "scene",
+        "attempt": 1,
+        "started_at": "2026-08-29T05:32:54.427Z",
+        "status": "started",
+        "run_id": "run_1787981574411_hsiyjagu"
+      }
+    ],
+    "r3_2_metrics_1787981627960": [
+      {
+        "id": "telem_1787981628333_4vbvck",
+        "project_id": "r3_2_metrics_1787981627960",
+        "run_id": "run_1787981628038_u66rfgus",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981627960_1_1787981628031_oq6g2",
+        "started_at": "2026-08-29T05:33:48.237Z",
+        "completed_at": "2026-08-29T05:33:48.326Z",
+        "duration_ms": 89,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981627960_1_1787981628031_oq6g2",
+          "scene_number": 1,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 89
+        }
+      },
+      {
+        "id": "telem_1787981628970_nf2ezz",
+        "project_id": "r3_2_metrics_1787981627960",
+        "run_id": "run_1787981628038_u66rfgus",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981627960_2_1787981628031_tvmtq",
+        "started_at": "2026-08-29T05:33:48.876Z",
+        "completed_at": "2026-08-29T05:33:48.963Z",
+        "duration_ms": 87,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981627960_2_1787981628031_tvmtq",
+          "scene_number": 2,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 87
+        }
+      },
+      {
+        "id": "telem_1787981629223_mj5h41",
+        "project_id": "r3_2_metrics_1787981627960",
+        "run_id": "run_1787981628038_u66rfgus",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981627960_3_1787981628031_l6ikk",
+        "started_at": "2026-08-29T05:33:49.128Z",
+        "completed_at": "2026-08-29T05:33:49.215Z",
+        "duration_ms": 87,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981627960_3_1787981628031_l6ikk",
+          "scene_number": 3,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 87
+        }
+      },
+      {
+        "id": "telem_1787981629618_ron96e",
+        "project_id": "r3_2_metrics_1787981627960",
+        "run_id": "run_1787981628038_u66rfgus",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981627960_4_1787981628031_ikve9",
+        "started_at": "2026-08-29T05:33:49.520Z",
+        "completed_at": "2026-08-29T05:33:49.611Z",
+        "duration_ms": 91,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981627960_4_1787981628031_ikve9",
+          "scene_number": 4,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 91
+        }
+      },
+      {
+        "id": "telem_1787981629884_u6l2fj",
+        "project_id": "r3_2_metrics_1787981627960",
+        "run_id": "run_1787981628038_u66rfgus",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981627960_5_1787981628031_wf8ss",
+        "started_at": "2026-08-29T05:33:49.790Z",
+        "completed_at": "2026-08-29T05:33:49.876Z",
+        "duration_ms": 86,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981627960_5_1787981628031_wf8ss",
+          "scene_number": 5,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 86
+        }
+      },
+      {
+        "id": "telem_1787981630253_pposfm",
+        "project_id": "r3_2_metrics_1787981627960",
+        "run_id": "run_1787981628038_u66rfgus",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "scene",
+        "scene_id": "scene_r3_2_metrics_1787981627960_6_1787981628031_nimnw",
+        "started_at": "2026-08-29T05:33:50.157Z",
+        "completed_at": "2026-08-29T05:33:50.246Z",
+        "duration_ms": 89,
+        "status": "blocked",
+        "summary_type": "scene",
+        "summary": {
+          "scene_id": "scene_r3_2_metrics_1787981627960_6_1787981628031_nimnw",
+          "scene_number": 6,
+          "scene_status": "BLOCKED",
+          "success": false,
+          "ready": false,
+          "blocked": true,
+          "failed": false,
+          "blockers": 1,
+          "scene_duration_ms": 89
+        }
+      },
+      {
+        "id": "telem_1787981630490_rnqw8n",
+        "project_id": "r3_2_metrics_1787981627960",
+        "run_id": "run_1787981628038_u66rfgus",
+        "stage": 0,
+        "stage_code": "S1",
+        "scope": "project",
+        "started_at": "2026-08-29T05:33:50.483Z",
+        "status": "completed",
+        "summary_type": "run",
+        "summary": {
+          "run_id": "run_1787981628038_u66rfgus",
+          "effective_concurrency": 2,
+          "total_scenes": 6,
+          "ready_scenes": 0,
+          "blocked_scenes": 6,
+          "failed_scenes": 0,
+          "completion_order": [
+            "scene_r3_2_metrics_1787981627960_1_1787981628031_oq6g2",
+            "scene_r3_2_metrics_1787981627960_2_1787981628031_tvmtq",
+            "scene_r3_2_metrics_1787981627960_3_1787981628031_l6ikk",
+            "scene_r3_2_metrics_1787981627960_4_1787981628031_ikve9",
+            "scene_r3_2_metrics_1787981627960_5_1787981628031_wf8ss",
+            "scene_r3_2_metrics_1787981627960_6_1787981628031_nimnw"
+          ],
+          "started_at": "2026-08-29T05:33:48.038Z",
+          "completed_at": "2026-08-29T05:33:50.483Z",
+          "duration_ms": 2445,
+          "stage_timings": {
+            "S6": {
+              "stage_code": "S6",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S7": {
+              "stage_code": "S7",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S8": {
+              "stage_code": "S8",
+              "count": 6,
+              "total_ms": 529,
+              "average_ms": 88.16666666666667
+            }
+          }
+        }
+      },
+      {
+        "id": "telem_1787981630543_zp3c62",
+        "project_id": "r3_2_metrics_1787981627960",
+        "run_id": "run_1787981628038_u66rfgus",
+        "stage": 8,
+        "stage_code": "S8",
+        "scope": "project",
+        "started_at": "2026-08-29T05:33:48.046Z",
+        "completed_at": "2026-08-29T05:33:50.534Z",
+        "duration_ms": 2466,
+        "status": "completed",
+        "summary_type": "run",
+        "summary": {
+          "run_id": "run_1787981628038_u66rfgus",
+          "effective_concurrency": 2,
+          "total_scenes": 6,
+          "ready_scenes": 0,
+          "blocked_scenes": -6,
+          "failed_scenes": 0,
+          "completion_order": [],
+          "started_at": "2026-08-29T05:33:48.046Z",
+          "completed_at": "2026-08-29T05:33:50.534Z",
+          "duration_ms": 2466,
+          "stage_timings": {
+            "S6": {
+              "stage_code": "S6",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S7": {
+              "stage_code": "S7",
+              "count": 0,
+              "total_ms": 0,
+              "average_ms": 0
+            },
+            "S8": {
+              "stage_code": "S8",
+              "count": 6,
+              "total_ms": 529,
+              "average_ms": 88.16666666666667
+            }
+          }
+        }
+      }
+    ],
+    "r3_run_identity_1787981635888": [
+      {
+        "id": "telem_1787981635914_3jt9rg",
+        "project_id": "r3_run_identity_1787981635888",
+        "scene_id": "scene_1",
+        "stage": 6,
+        "stage_code": "S6",
+        "scope": "scene",
+        "attempt": 1,
+        "started_at": "2026-08-29T05:33:55.904Z",
+        "status": "started",
+        "run_id": "run_1787981635888_f8hoonyc"
       }
     ]
   },

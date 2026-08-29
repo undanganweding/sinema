@@ -395,11 +395,18 @@ apiRouter.post('/projects/:id/generate-scenes', async (req: Request, res: Respon
     }
 
     const concurrency = Number(req.body.concurrency) || 2;
+    const runContext = {
+      runId: `run_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+      projectId: id,
+      startedAt: new Date().toISOString(),
+      concurrency,
+    };
 
     res.json({
       status: 'started',
       message: `Generasi seluruh scene (S6–S8) dimulai dengan konkurensi ${concurrency}.`,
       projectId: id,
+      runId: runContext.runId,
     });
 
     generateAllScenes(id, concurrency, (stage, stageName, message, level) => {
@@ -410,13 +417,15 @@ apiRouter.post('/projects/:id/generate-scenes', async (req: Request, res: Respon
         message,
         level,
         timestamp: new Date().toISOString(),
+        runId: runContext.runId,
       });
-    }).then((result) => {
+    }, runContext).then((result) => {
       broadcastSSE(id, {
         type: 'finished',
         success: result.success,
         readyScenes: result.readyScenes,
         totalScenes: result.totalScenes,
+        runId: runContext.runId,
         timestamp: new Date().toISOString(),
       });
     });
@@ -445,14 +454,25 @@ apiRouter.post('/projects/:id/generate', async (req: Request, res: Response) => 
       return res.status(404).json({ error: 'Project tidak ditemukan.' });
     }
 
+    const concurrency = Number(req.body.concurrency) || 2;
+    const runContext = {
+      runId: `run_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+      projectId: id,
+      startedAt: new Date().toISOString(),
+      concurrency,
+    };
+
     res.json({
       status: 'started',
       message: 'Orchestrator pipeline dimulai.',
       projectId: id,
+      runId: runContext.runId,
     });
 
     runOrchestratedPipeline({
       projectId: id,
+      runContext,
+      sceneConcurrency: concurrency,
       onProgress: (stage, stageName, message, level) => {
         broadcastSSE(id, {
           type: 'progress',
@@ -461,6 +481,7 @@ apiRouter.post('/projects/:id/generate', async (req: Request, res: Response) => 
           message,
           level,
           timestamp: new Date().toISOString(),
+          runId: runContext.runId,
         });
       },
     }).then((result) => {
@@ -468,6 +489,7 @@ apiRouter.post('/projects/:id/generate', async (req: Request, res: Response) => 
         type: 'finished',
         success: result.success,
         error: result.error,
+        runId: result.runId ?? runContext.runId,
         timestamp: new Date().toISOString(),
       });
     });
