@@ -289,6 +289,23 @@ export function getFallbackModels(primaryModel: string): string[] {
 }
 
 /**
+ * Race a promise against a hard timeout. Rejects with a descriptive Error when
+ * the deadline elapses, so a hanging HTTP/streaming call cannot leave an await
+ * pending forever. The thrown error (message contains "timed out") classifies
+ * as `network` via classifyError(), so it propagates to retry/fallback instead
+ * of being swallowed.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (err) => { clearTimeout(timer); reject(err); }
+    );
+  });
+}
+
+/**
  * Execute a single model request without global adaptive orchestration wrapper
  */
 async function executeSingleModelRequest(
@@ -305,23 +322,38 @@ async function executeSingleModelRequest(
     const ai = getGeminiAI(config?.api_key);
     const primaryModel = resolveGeminiModel(config?.model_id || options.model);
     const fallbackList = getFallbackModels(primaryModel);
+    const stageTag = `[${options.stage || 'S1'}]`;
+    // Hard deadline for a single Google generation call. Without this the SDK's
+    // generateContent() can hold the connection open indefinitely and the stage
+    // await never resolves, hanging the pipeline forever. 90s is generous for
+    // structured JSON generation while still bounded.
+    const GOOGLE_CONTENT_TIMEOUT_MS = 90000;
 
     let lastError: any = null;
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const currentModel = fallbackList[(attempt - 1) % fallbackList.length];
+      const attemptStart = Date.now();
       try {
-        const response = await ai.models.generateContent({
-          model: currentModel,
-          contents: options.prompt,
-          config: {
-            systemInstruction: options.systemInstruction,
-            temperature: options.temperature ?? 0.3,
-            maxOutputTokens: options.maxOutputTokens,
-            responseMimeType: options.responseSchema ? 'application/json' : undefined,
-            responseSchema: options.responseSchema,
-          },
-        });
+        const requestStart = Date.now();
+        console.log(`${stageTag} AI REQUEST provider=google model=${currentModel} attempt=${attempt} stage=${options.stage || 'S1'}`);
+        const response = await withTimeout(
+          ai.models.generateContent({
+            model: currentModel,
+            contents: options.prompt,
+            config: {
+              systemInstruction: options.systemInstruction,
+              temperature: options.temperature ?? 0.3,
+              maxOutputTokens: options.maxOutputTokens,
+              responseMimeType: options.responseSchema ? 'application/json' : undefined,
+              responseSchema: options.responseSchema,
+            },
+          }),
+          GOOGLE_CONTENT_TIMEOUT_MS,
+          `Google Gemini request timed out after ${GOOGLE_CONTENT_TIMEOUT_MS}ms (model ${currentModel})`
+        );
+        const requestElapsed = Date.now() - requestStart;
+        console.log(`${stageTag} AI RESPONSE provider=google model=${currentModel} attempt=${attempt} elapsedMs=${requestElapsed} stage=${options.stage || 'S1'}`);
 
         if (!response.text) {
           throw new Error('Google Gemini returned an empty response.');
@@ -329,6 +361,8 @@ async function executeSingleModelRequest(
         return { text: cleanJsonResponse(response.text) };
       } catch (err: any) {
         lastError = err;
+        const attemptElapsed = Date.now() - attemptStart;
+        console.warn(`${stageTag} AI ERROR provider=google model=${currentModel} attempt=${attempt} elapsedMs=${attemptElapsed} error="${err?.message || err}" stage=${options.stage || 'S1'}`);
         if (isFatalNonRecoverableError(err)) {
           throw err;
         }

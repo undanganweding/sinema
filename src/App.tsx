@@ -180,6 +180,11 @@ export default function App() {
             loadProjectDetails(currentProject.id);
             fetchProjects();
           }
+        } else if (data.type === 'end') {
+          // The server intentionally ended this stream (serverless-safe) — stop
+          // the EventSource so it does not auto-reconnect and churn invocations.
+          sse.close();
+          eventSourceRef.current = null;
         }
       } catch (err) {
         console.error('Error parsing SSE event:', err);

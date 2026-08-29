@@ -459,6 +459,7 @@ export async function runProjectInitialization(
     // ==========================================
     const s1Start = new Date().toISOString();
     const s1StartTime = Date.now();
+    console.log(`[stage1] START stage=S1 project=${projectId} model=${activeModel} ts=${s1Start}`);
     log(1, 'Story Understanding', `Memulai analisis naskah & fondasi cerita sinematik [Model: ${activeModel}]...`, 'info', 'S1');
     recordTelemetry(projectId, {
       stage: 1,
@@ -493,6 +494,7 @@ export async function runProjectInitialization(
         duration_ms: s1Duration,
         status: 'completed',
       });
+      console.log(`[stage1] COMPLETE stage=S1 project=${projectId} elapsedMs=${s1Duration} genre=${stage1Result.genre} ts=${new Date().toISOString()}`);
     } catch (err: any) {
       const s1Duration = Date.now() - s1StartTime;
       const errType = classifyError(err);
@@ -508,6 +510,7 @@ export async function runProjectInitialization(
         error_type: errType,
         error_message: err.message,
       });
+      console.error(`[stage1] COMPLETE stage=S1 project=${projectId} elapsedMs=${s1Duration} status=failed errorType=${errType} error="${err.message}" ts=${new Date().toISOString()}`);
       throw err;
     }
 

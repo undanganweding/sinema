@@ -990,8 +990,37 @@ apiRouter.get('/projects/:id/stream', async (req: Request, res: Response) => {
   const project = await db.getProject(id);
   res.write(`data: ${JSON.stringify({ type: 'init', project, logs })}\n\n`);
 
-  req.on('close', () => {
+  const onClose = () => {
     sseClients[id] = (sseClients[id] || []).filter((c) => c !== res);
-  });
+  };
+  req.on('close', onClose);
+
+  // Serverless-safe lifecycle. Vercel hard-caps a single function invocation at
+  // 300s and requires the response to settle; a socket held open forever trips
+  // that cap and yields "Task timed out after 300 seconds". We keep SSE for the
+  // (short-lived) duration of an active pipeline run, then terminate cleanly.
+  // A heartbeat detects dead/lost clients and prevents a stale socket from
+  // pinning the invocation.
+  let terminated = false;
+  const terminate = () => {
+    if (terminated) return;
+    terminated = true;
+    clearInterval(heartbeat);
+    clearTimeout(watchdog);
+    res.write(`data: ${JSON.stringify({ type: 'end', timestamp: new Date().toISOString() })}\n\n`);
+    res.end();
+    req.removeListener('close', onClose);
+  };
+
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: new Date().toISOString() })}\n\n`);
+    } catch {
+      terminate();
+    }
+  }, 15000);
+
+  // Safety cap: end the stream after the Vercel function limit minus a margin.
+  const watchdog = setTimeout(terminate, 60 * 1000);
 });
 
