@@ -299,7 +299,10 @@ async function executeSingleModelRequest(
   const MAX_ATTEMPTS = 3;
 
   if (providerType === 'google') {
-    const ai = getGeminiAI();
+    // Request-scoped Google credential from reasoning_config.api_key is respected here.
+    // getGeminiAI() only writes to a request-local client, never process.env, so concurrent
+    // workers cannot leak credentials into each other.
+    const ai = getGeminiAI(config?.api_key);
     const primaryModel = resolveGeminiModel(config?.model_id || options.model);
     const fallbackList = getFallbackModels(primaryModel);
 

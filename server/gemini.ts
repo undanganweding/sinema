@@ -5,10 +5,20 @@ dotenv.config();
 
 let aiInstance: GoogleGenAI | null = null;
 
-export function getGeminiAI(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY;
+export function getGeminiAI(apiKeyOverride?: string | null): GoogleGenAI {
+  // Request-scoped credential resolution: an explicit per-request key (from reasoning_config.api_key)
+  // takes precedence over the global server secret. This is intentionally NOT written to process.env,
+  // so concurrent workers cannot bleed credentials into each other or leak into logs/telemetry.
+  const apiKey = (apiKeyOverride && apiKeyOverride.trim().length > 0)
+    ? apiKeyOverride.trim()
+    : process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY is not defined in environment variables');
+  }
+  // Only reuse the singleton when it was built from the same (global env) key.
+  // When an explicit override is supplied, build a request-scoped client instead.
+  if (apiKeyOverride && apiKeyOverride.trim().length > 0) {
+    return new GoogleGenAI({ apiKey });
   }
   if (!aiInstance) {
     aiInstance = new GoogleGenAI({ apiKey });

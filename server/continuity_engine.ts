@@ -428,14 +428,36 @@ export function validateLocationContinuity(
 export function validateSceneContinuity(
   scene: Scene,
   shots: Shot[],
-  snapshot: ContinuitySnapshot
+  snapshot: ContinuitySnapshot,
+  runtimeState?: ContinuityState | null
 ): ContinuityValidationResult {
   const violations: ContinuityViolation[] = [];
   const sceneNumber = scene.scene_number;
 
+  // Canonical continuity source-of-truth:
+  //   CharacterBible (S2) → buildContinuitySnapshot() → persisted snapshot (validation baseline).
+  //   project.continuityState (runtime ContinuityState) → mutable scene-to-scene state mutated by S6 advanceContinuity().
+  // The runtime state is authoritative for scene-to-scene mutations; when present it overrides the
+  // snapshot's static costume with the current scene's observed clothing. Backward compatible: callers
+  // that omit runtimeState still validate against the snapshot alone.
+  const effectiveCharacters = snapshot.characters.map((char) => {
+    const runtimeChar = runtimeState?.characters?.find(
+      (c) => phase6Normalize(c.displayName) === phase6Normalize(char.name)
+    );
+    if (!runtimeChar) return char;
+    // Rebuild costume from the runtime observable clothing so S8 validates the mutable state
+    // that S6 actually advanced to, not only the static S5 baseline.
+    const applied = { ...char };
+    if (runtimeChar.clothing && runtimeChar.clothing.length > 0) {
+      applied.costume = extractCostumeStructure(runtimeChar.clothing, char.name, '');
+    }
+    return applied;
+  });
+  const effectiveSnapshot: ContinuitySnapshot = { ...snapshot, characters: effectiveCharacters };
+
   // 1. Validate all scene characters
   const activeCharNames = (scene.character_names || []).map(n => n.toLowerCase());
-  const activeChars = snapshot.characters.filter(c =>
+  const activeChars = effectiveSnapshot.characters.filter(c =>
     activeCharNames.some(name => c.name.toLowerCase().includes(name) || name.includes(c.name.toLowerCase()))
   );
 
@@ -454,7 +476,7 @@ export function validateSceneContinuity(
   }
 
   // 2. Validate location continuity
-  const activeLoc = snapshot.locations.find(l =>
+  const activeLoc = effectiveSnapshot.locations.find(l =>
     scene.location_name &&
     (l.name.toLowerCase().includes(scene.location_name.toLowerCase()) ||
       scene.location_name.toLowerCase().includes(l.name.toLowerCase()))

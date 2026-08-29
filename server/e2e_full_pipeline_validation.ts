@@ -115,6 +115,12 @@ async function runScenario<T>(
   }
 }
 
+// Normalize a continuity entity label the same way production continuity_engine does
+// (phase6Normalize) so injected temporalOrder keys align with the validator's lookup.
+function normalizeContinuityLabel(value: string): string {
+  return (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 // ─── Project seeding ───────────────────────────────────────────────────────────
 function seedRealProject(): string {
   const projectId = `e2e_full_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -535,31 +541,55 @@ async function runE2EValidation(): Promise<void> {
       const foundationReady6 = await waitForFoundationReady(projectId6, BASE);
       assert(foundationReady6, 'Foundation (S1-S5) completed before continuity fault injection');
 
-      // The continuity validator (validateCharacterContinuity) reads the generated scene/shot TEXT
-      // and flags modern-clothing keywords (suit/t-shirt/jeans). We inject a conflict into the
-      // persistence snapshot the validator consumes. This is a real production consumption path.
+      // Deterministic production continuity blocker via the RUNTIME ContinuityState.
+      // After the Phase-3 repair, validateSceneContinuity(w/ runtimeState) prefers the runtime
+      // scene-to-scene state advanced by S6 (advanceContinuity → updateContinuityState). We inject a
+      // temporal-order conflict: the current scene's event maps to an EARLIER accepted year than a
+      // prior scene's event, which updateContinuityState flags as BLOCKING (TEMPORAL_ORDER_CONFLICT)
+      // → advanceContinuity throws CONTINUITY_BLOCKED → persistBlockedScene(code CONTINUITY_BLOCKED).
+      // This does not depend on LLM-generated text, so it is deterministic.
       const existingProject6 = db.getProject(projectId6);
       assert(existingProject6, 'project exists for continuity injection');
+      const scenes6 = db.getScenes(projectId6) || [];
+      const firstScene = scenes6.find(s => s.scene_number === 1);
+      const secondScene = scenes6.find(s => s.scene_number === 2);
+      assert(firstScene && secondScene, 'foundation produced at least 2 scenes for continuity injection');
+
+      const runtimeContinuity6 = {
+        ...(existingProject6.continuityState || {}),
+        version: '1.0',
+        characters: (existingProject6.continuityState?.characters || []),
+        characterIdentities: (existingProject6.continuityState?.characterIdentities || {}),
+        locations: (existingProject6.continuityState?.locations || {}),
+        objects: (existingProject6.continuityState?.objects || {}),
+        scenes: [
+          {
+            sceneId: firstScene.id,
+            sceneNumber: 1,
+            previousSceneId: null,
+            activeCharacters: (firstScene.character_names || []),
+            location: firstScene.location_name,
+            event: firstScene.event,
+            objects: [],
+            visualState: {},
+            transitionType: 'CONTINUOUS',
+            continuityConstraints: [],
+          },
+        ],
+        // Scene 2's event year is forced BEFORE scene 1's => TEMPORAL_ORDER_CONFLICT (BLOCKING)
+        temporalOrder: {
+          [normalizeContinuityLabel(firstScene.event || '')]: 620,
+          [normalizeContinuityLabel(secondScene.event || '')]: 600,
+        },
+        visualState: {},
+        continuityConstraints: [],
+        unresolvedIssues: [],
+      } as any;
       db.saveProject({
         ...existingProject6,
-        continuityState: {
-          ...(existingProject6.continuityState || {}),
-          characters: [{
-            displayName: 'Abdullah',
-            canonicalIdentity: 'character:abdullah',
-            aliases: [],
-            attributes: [],
-            clothing: ['modern suit'],
-            accessories: [],
-            relationships: [],
-            possessions: [],
-            provenance: [],
-            confidence: 'HIGH',
-          }],
-          unresolvedIssues: [],
-        } as any,
+        continuityState: runtimeContinuity6,
       });
-      console.log('  Injected continuity conflict: anachronistic clothing into continuity state');
+      console.log('  Injected continuity conflict: TEMPORAL_ORDER_CONFLICT in runtime continuity state');
 
       const generateRes6 = await fetch(`${BASE}/api/projects/${projectId6}/generate-scenes`, {
         method: 'POST',
@@ -575,13 +605,13 @@ async function runE2EValidation(): Promise<void> {
         if (project.status === 'ready' || project.status === 'blocked' || project.status === 'failed' || project.status === 'completed') break;
       }
 
-      const scenes6 = db.getScenes(projectId6);
-      const blockedScenes6 = scenes6?.filter(s => s.status === 'blocked' || s.pipeline_status === 'BLOCKED') || [];
+      const finalScenes6 = db.getScenes(projectId6);
+      const blockedScenes6 = finalScenes6?.filter(s => s.status === 'blocked' || s.pipeline_status === 'BLOCKED') || [];
       const hasContinuityBlocker = blockedScenes6.some(s =>
         s.blockers?.some(b => b.code?.includes('CONTINUITY') || b.message?.toLowerCase().includes('continuity'))
       );
       console.log(`  Result: ${project.status}, continuity-blocked scenes: ${blockedScenes6.length}`);
-      // Contract: continuity_blocked scenes must be blocked via the continuity engine
+      // Contract: continuity_blocked scenes must be blocked via the continuity engine (CONTINUITY_BLOCKED)
       assert(hasContinuityBlocker, 'expected a CONTINUITY-blocked scene from the continuity validator');
     });
 

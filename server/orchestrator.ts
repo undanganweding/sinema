@@ -1545,7 +1545,9 @@ export async function runPipelineForScene(
   // ----------------------------------------------------
   // Continuity Validation & Auto-Correction (Phase 11-13)
   // ----------------------------------------------------
-  const continuityResult = validateSceneContinuity(currentScene, savedShots, snapshot);
+  // Pass the runtime sceneContinuityState so S8 validates the mutable scene-to-scene state
+  // advanced by S6 (advanceContinuity), not only the static S5 baseline snapshot.
+  const continuityResult = validateSceneContinuity(currentScene, savedShots, snapshot, sceneContinuityState);
   let continuityStatus: 'passed' | 'warning' | 'continuity_failed' = 'passed';
   let continuityViolations = continuityResult.violations;
 
