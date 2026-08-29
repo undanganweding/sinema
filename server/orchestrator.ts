@@ -102,12 +102,12 @@ export interface ProjectInitializationDependencies {
   stage1Runner?: typeof runStage1StoryUnderstanding;
 }
 
-function enforceStageConsistency(projectId: string, stage: string, output: unknown, state: ReturnType<typeof createGroundingState> | null): void {
+async function enforceStageConsistency(projectId: string, stage: string, output: unknown, state: ReturnType<typeof createGroundingState> | null): Promise<void> {
   if (!state) return;
   const report = evaluateStageOutput(stage, output, state);
-  const project = db.getProject(projectId);
+  const project = await db.getProject(projectId);
   if (project) {
-    db.saveProject({
+    await db.saveProject({
       ...project,
       consistencyReports: [...(project.consistencyReports || []), report],
     });
@@ -115,11 +115,11 @@ function enforceStageConsistency(projectId: string, stage: string, output: unkno
   assertStageConsistency(report);
 }
 
-function advanceContinuity(projectId: string, stage: string, scene: { id?: string; scene_number?: number; location_name?: string; character_names?: string[]; event?: string; era?: string; continuity_scope?: ContinuityScope }, output: unknown, state: ReturnType<typeof createContinuityState> | null, scope: ContinuityScope = 'within-scene', persist = true): ReturnType<typeof createContinuityState> | null {
+async function advanceContinuity(projectId: string, stage: string, scene: { id?: string; scene_number?: number; location_name?: string; character_names?: string[]; event?: string; era?: string; continuity_scope?: ContinuityScope }, output: unknown, state: ReturnType<typeof createContinuityState> | null, scope: ContinuityScope = 'within-scene', persist = true): Promise<ReturnType<typeof createContinuityState> | null> {
   if (!state) return null;
   const result = updateContinuityState(state, scene, output, undefined, scope);
-  const project = db.getProject(projectId);
-  if (persist && project) db.saveProject({ ...project, continuityState: result.state });
+  const project = await db.getProject(projectId);
+  if (persist && project) await db.saveProject({ ...project, continuityState: result.state });
   const blocking = result.issues.find((issue) => issue.severity === 'BLOCKING');
   if (blocking) throw new Error(`CONTINUITY_BLOCKED ${stage}: ${blocking.message}`);
   return result.state;
@@ -165,16 +165,16 @@ function isRetryableSceneError(error: unknown, classification: ErrorClassificati
     || message.includes('empty output');
 }
 
-function persistBlockedScene(sceneId: string, blocker: ScenePipelineBlocker): void {
-  db.updateScene(sceneId, { status: 'blocked', pipeline_status: 'BLOCKED', blockers: [blocker] });
+async function persistBlockedScene(sceneId: string, blocker: ScenePipelineBlocker): Promise<void> {
+  await db.updateScene(sceneId, { status: 'blocked', pipeline_status: 'BLOCKED', blockers: [blocker] });
 }
 
-function beginSceneExecution(sceneId: string): void {
-  db.updateScene(sceneId, { status: 'processing', pipeline_status: undefined, blockers: [] });
+async function beginSceneExecution(sceneId: string): Promise<void> {
+  await db.updateScene(sceneId, { status: 'processing', pipeline_status: undefined, blockers: [] });
 }
 
-function persistReadyScene(sceneId: string, continuityStatus: 'passed' | 'warning' | 'continuity_failed', continuityViolations: ContinuityViolation[]): void {
-  db.updateScene(sceneId, {
+async function persistReadyScene(sceneId: string, continuityStatus: 'passed' | 'warning' | 'continuity_failed', continuityViolations: ContinuityViolation[]): Promise<void> {
+  await db.updateScene(sceneId, {
     status: continuityStatus === 'continuity_failed' ? 'blocked' : 'ready',
     pipeline_status: continuityStatus === 'continuity_failed' ? 'BLOCKED' : 'READY',
     blockers: continuityStatus === 'continuity_failed'
@@ -195,12 +195,12 @@ export function resolveCurrentSceneStatus(
 /**
  * Verifies if Project Foundation (S1-S5) is complete and valid.
  */
-export function verifyProjectFoundation(projectId: string): FoundationVerificationResult {
+export async function verifyProjectFoundation(projectId: string): Promise<FoundationVerificationResult> {
   const missing: string[] = [];
-  const foundation = db.getProjectFoundation(projectId);
-  const characters = db.getCharacters(projectId);
-  const locations = db.getLocations(projectId);
-  const scenes = db.getScenes(projectId);
+  const foundation = await db.getProjectFoundation(projectId);
+  const characters = await db.getCharacters(projectId);
+  const locations = await db.getLocations(projectId);
+  const scenes = await db.getScenes(projectId);
 
   if (!foundation || !foundation.genre || !foundation.era) {
     missing.push('Fondasi Cerita (S1)');
@@ -221,11 +221,11 @@ export function verifyProjectFoundation(projectId: string): FoundationVerificati
   const isReady = missing.length === 0;
 
   // Update project foundation_status in db
-  const project = db.getProject(projectId);
+  const project = await db.getProject(projectId);
   if (project) {
     const newStatus = isReady ? 'ready' : missing.length === 5 ? 'not_initialized' : 'incomplete';
     if (project.foundation_status !== newStatus) {
-      db.saveProject({
+      await db.saveProject({
         ...project,
         foundation_status: newStatus,
       });
@@ -242,24 +242,24 @@ export function verifyProjectFoundation(projectId: string): FoundationVerificati
 /**
  * Helper to record telemetry event
  */
-function safeAddLog(projectId: string, payload: Parameters<typeof db.addLog>[1]): void {
+async function safeAddLog(projectId: string, payload: Parameters<typeof db.addLog>[1]): Promise<void> {
   try {
-    db.addLog(projectId, payload);
+    await db.addLog(projectId, payload);
   } catch {
     // Observability failure must never impact pipeline execution.
   }
 }
 
-function safeAddTelemetry(projectId: string, payload: Parameters<typeof db.addTelemetry>[1]): StageExecutionTelemetry | null {
+async function safeAddTelemetry(projectId: string, payload: Parameters<typeof db.addTelemetry>[1]): Promise<StageExecutionTelemetry | null> {
   try {
-    return db.addTelemetry(projectId, payload);
+    return await db.addTelemetry(projectId, payload);
   } catch {
     // Observability failure must never impact pipeline execution.
     return null;
   }
 }
 
-function recordTelemetry(
+async function recordTelemetry(
   projectId: string,
   telemetry: {
     stage?: number;
@@ -279,22 +279,22 @@ function recordTelemetry(
     summary?: Record<string, any>;
   },
   runContext?: GenerationRunContext
-): StageExecutionTelemetry {
+): Promise<StageExecutionTelemetry> {
   const payload = {
     project_id: projectId,
     run_id: runContext?.runId ?? telemetry.run_id,
     ...telemetry,
   };
-  return safeAddTelemetry(projectId, payload) || ({ ...payload, project_id: projectId } as StageExecutionTelemetry);
+  return (await safeAddTelemetry(projectId, payload)) || ({ ...payload, project_id: projectId } as StageExecutionTelemetry);
 }
 
-function safePersistRunSummary(
+async function safePersistRunSummary(
   projectId: string,
   runId: string | undefined,
   summary: Record<string, any>
-): void {
+): Promise<void> {
   try {
-    recordTelemetry(projectId, {
+    await recordTelemetry(projectId, {
       stage: 0,
       stage_code: 'S1',
       scope: 'project',
@@ -309,7 +309,7 @@ function safePersistRunSummary(
   }
 }
 
-function safePersistSceneSummary(
+async function safePersistSceneSummary(
   projectId: string,
   runId: string | undefined,
   sceneId: string,
@@ -317,11 +317,11 @@ function safePersistSceneSummary(
   startedAtMs: number,
   finalStatus: ScenePipelineResult['status'],
   result: Partial<ScenePipelineResult> & { sceneId: string }
-): void {
+): Promise<void> {
   try {
     const completedAt = Date.now();
     const sceneDurationMs = Math.max(0, completedAt - startedAtMs);
-    recordTelemetry(projectId, {
+    await recordTelemetry(projectId, {
       stage: 8,
       stage_code: 'S8',
       scope: 'scene',
@@ -364,7 +364,7 @@ export async function runProjectInitialization(
   ) => void,
   dependencies: ProjectInitializationDependencies = {}
 ): Promise<{ success: boolean; error?: string }> {
-  const project = db.getProject(projectId);
+  const project = await db.getProject(projectId);
   if (!project) {
     throw new Error(`Project dengan ID ${projectId} tidak ditemukan.`);
   }
@@ -418,7 +418,7 @@ export async function runProjectInitialization(
         log(0, 'Research Engine', 'Retrieval completed without ClaimRecords; evidence remains available but automatic claim extraction is not enabled.', 'warn', 'S1');
       }
     }
-    db.saveProject({
+    await db.saveProject({
       ...groundedProject,
       status: 'processing',
       foundation_status: 'initializing',
@@ -430,7 +430,7 @@ export async function runProjectInitialization(
 
     if (groundedProject.contextPackage) {
       const groundingValidation = validateGroundingContext(groundedProject.contextPackage);
-      db.saveProject({
+      await db.saveProject({
         ...groundedProject,
         groundingVersion: GROUNDING_VERSION,
         contextPackage: groundedProject.contextPackage,
@@ -452,7 +452,7 @@ export async function runProjectInitialization(
     let continuityState = groundedProject.contextPackage
       ? createContinuityState(groundedProject.contextPackage)
       : null;
-    if (continuityState) db.saveProject({ ...groundedProject, continuityState });
+    if (continuityState) await db.saveProject({ ...groundedProject, continuityState });
 
     // ==========================================
     // STAGE 1: Story Understanding Agent (S1)
@@ -480,8 +480,8 @@ export async function runProjectInitialization(
         reasoningConfig: project.reasoning_config,
       };
       stage1Result = await stage1Runner(stage1Input);
-      enforceStageConsistency(projectId, 'S1', stage1Result, consistencyState);
-      continuityState = advanceContinuity(projectId, 'S1', { id: `project_${projectId}`, scene_number: 1, event: 'Stage 1', character_names: stage1Result.main_characters }, stage1Result, continuityState);
+      await enforceStageConsistency(projectId, 'S1', stage1Result, consistencyState);
+      continuityState = await advanceContinuity(projectId, 'S1', { id: `project_${projectId}`, scene_number: 1, event: 'Stage 1', character_names: stage1Result.main_characters }, stage1Result, continuityState);
       const s1Duration = Date.now() - s1StartTime;
       recordTelemetry(projectId, {
         stage: 1,
@@ -527,7 +527,7 @@ export async function runProjectInitialization(
       updated_at: new Date().toISOString(),
     };
 
-    db.saveProjectFoundation(foundationData);
+    await db.saveProjectFoundation(foundationData);
     log(
       1,
       'Story Understanding',
@@ -540,7 +540,7 @@ export async function runProjectInitialization(
     // ==========================================
     // STAGE 2: Character Detection Agent (S2)
     // ==========================================
-    db.saveProject({ ...db.getProject(projectId)!, current_stage: 2 });
+    await db.saveProject({ ...(await db.getProject(projectId))!, current_stage: 2 });
     const s2Start = new Date().toISOString();
     const s2StartTime = Date.now();
     log(2, 'Character Detection', `Mendeteksi profil karakter (Character Bible) & membaca database karakter yang ada [Model: ${activeModel}]...`, 'info', 'S2');
@@ -563,9 +563,9 @@ export async function runProjectInitialization(
         model: project.ai_model,
         reasoningConfig: project.reasoning_config,
       });
-      enforceStageConsistency(projectId, 'S2', stage2Result, consistencyState);
-      continuityState = advanceContinuity(projectId, 'S2', { id: `project_${projectId}`, scene_number: 2, event: 'Stage 2', character_names: stage2Result.map((character) => character.name) }, stage2Result, continuityState);
-      savedCharacters = db.saveAndMergeCharacters(projectId, stage2Result);
+      await enforceStageConsistency(projectId, 'S2', stage2Result, consistencyState);
+      continuityState = await advanceContinuity(projectId, 'S2', { id: `project_${projectId}`, scene_number: 2, event: 'Stage 2', character_names: stage2Result.map((character) => character.name) }, stage2Result, continuityState);
+      savedCharacters = await db.saveAndMergeCharacters(projectId, stage2Result);
       const s2Duration = Date.now() - s2StartTime;
       recordTelemetry(projectId, {
         stage: 2,
@@ -607,7 +607,7 @@ export async function runProjectInitialization(
     // ==========================================
     // STAGE 3: Location & Object Detection Agent (S3)
     // ==========================================
-    db.saveProject({ ...db.getProject(projectId)!, current_stage: 3 });
+    await db.saveProject({ ...(await db.getProject(projectId))!, current_stage: 3 });
     const s3Start = new Date().toISOString();
     const s3StartTime = Date.now();
     log(3, 'Location & Object Detection', `Mendeteksi set sinematik (Location Bible) dan properti kunci (Object Bible) [Model: ${activeModel}]...`, 'info', 'S3');
@@ -630,10 +630,10 @@ export async function runProjectInitialization(
         model: project.ai_model,
         reasoningConfig: project.reasoning_config,
       });
-      enforceStageConsistency(projectId, 'S3', stage3Result, consistencyState);
-      continuityState = advanceContinuity(projectId, 'S3', { id: `project_${projectId}`, scene_number: 3, event: 'Stage 3' }, stage3Result, continuityState);
-      savedLocations = db.saveAndMergeLocations(projectId, stage3Result.locations);
-      savedObjects = db.saveAndMergeObjects(projectId, stage3Result.objects);
+      await enforceStageConsistency(projectId, 'S3', stage3Result, consistencyState);
+      continuityState = await advanceContinuity(projectId, 'S3', { id: `project_${projectId}`, scene_number: 3, event: 'Stage 3' }, stage3Result, continuityState);
+      savedLocations = await db.saveAndMergeLocations(projectId, stage3Result.locations);
+      savedObjects = await db.saveAndMergeObjects(projectId, stage3Result.objects);
       const s3Duration = Date.now() - s3StartTime;
       recordTelemetry(projectId, {
         stage: 3,
@@ -675,7 +675,7 @@ export async function runProjectInitialization(
     // ==========================================
     // STAGE 4: Narrative Structure Agent (S4)
     // ==========================================
-    db.saveProject({ ...db.getProject(projectId)!, current_stage: 4 });
+    await db.saveProject({ ...(await db.getProject(projectId))!, current_stage: 4 });
     const s4Start = new Date().toISOString();
     const s4StartTime = Date.now();
     log(
@@ -706,10 +706,10 @@ export async function runProjectInitialization(
         model: project.ai_model,
         reasoningConfig: project.reasoning_config,
       });
-      enforceStageConsistency(projectId, 'S4', narrativeBeats, consistencyState);
-      continuityState = advanceContinuity(projectId, 'S4', { id: `project_${projectId}`, scene_number: 4, event: 'Stage 4' }, narrativeBeats, continuityState);
+      await enforceStageConsistency(projectId, 'S4', narrativeBeats, consistencyState);
+      continuityState = await advanceContinuity(projectId, 'S4', { id: `project_${projectId}`, scene_number: 4, event: 'Stage 4' }, narrativeBeats, continuityState);
 
-      db.saveProjectFoundation({
+      await db.saveProjectFoundation({
         ...foundationData,
         narrative_beats: narrativeBeats,
       });
@@ -720,7 +720,7 @@ export async function runProjectInitialization(
         { ...foundationData, narrative_beats: narrativeBeats },
         []
       );
-      db.saveStoryArchitecture(storyArch);
+      await db.saveStoryArchitecture(storyArch);
 
       const s4Duration = Date.now() - s4StartTime;
       recordTelemetry(projectId, {
@@ -763,7 +763,7 @@ export async function runProjectInitialization(
     // ==========================================
     // STAGE 5: Scene Breakdown & Duration Allocation Agent (S5)
     // ==========================================
-    db.saveProject({ ...db.getProject(projectId)!, current_stage: 5 });
+    await db.saveProject({ ...(await db.getProject(projectId))!, current_stage: 5 });
     
     const targetTotalSec = project.total_duration_target_sec;
     const fixedSceneSec = project.scene_duration_sec ?? project.max_scene_shot_duration_sec;
@@ -817,8 +817,8 @@ export async function runProjectInitialization(
           reasoningConfig: project.reasoning_config,
           feedbackPrompt,
         });
-        enforceStageConsistency(projectId, 'S5', scenesAttempt, consistencyState);
-        continuityState = advanceContinuity(projectId, 'S5', { id: `project_${projectId}`, scene_number: 5, event: 'Stage 5' }, scenesAttempt, continuityState);
+        await enforceStageConsistency(projectId, 'S5', scenesAttempt, consistencyState);
+        continuityState = await advanceContinuity(projectId, 'S5', { id: `project_${projectId}`, scene_number: 5, event: 'Stage 5' }, scenesAttempt, continuityState);
 
         // Backend Validation
         const validation = validateSceneDurations(
@@ -915,8 +915,8 @@ export async function runProjectInitialization(
       
       log(5, 'Scene Breakdown & Duration', finalErrorMsg, 'error', 'S5');
 
-      db.saveProject({
-        ...db.getProject(projectId)!,
+      await db.saveProject({
+        ...(await db.getProject(projectId))!,
         status: 'failed',
         foundation_status: 'failed',
         error_message: finalErrorMsg,
@@ -928,10 +928,10 @@ export async function runProjectInitialization(
     }
 
     // Save scenes to collection 'scenes'
-    const savedScenes = db.saveScenes(projectId, validatedScenes);
+    const savedScenes = await db.saveScenes(projectId, validatedScenes);
 
     // Initialize & Save Continuity Snapshot for each scene
-    const charStates = db.getCharacterContinuityStates(projectId);
+    const charStates = await db.getCharacterContinuityStates(projectId);
     let prevSceneState: any = undefined;
 
     for (const sc of savedScenes) {
@@ -943,8 +943,8 @@ export async function runProjectInitialization(
         sc.scene_number,
         prevSceneState
       );
-      db.saveContinuitySnapshot(projectId, sc.scene_number, snap);
-      db.updateScene(sc.id!, {
+      await db.saveContinuitySnapshot(projectId, sc.scene_number, snap);
+      await db.updateScene(sc.id!, {
         continuity_snapshot: snap,
         continuity_status: 'passed',
       });
@@ -971,11 +971,11 @@ export async function runProjectInitialization(
       { ...foundationData, narrative_beats: narrativeBeats },
       savedScenes
     );
-    db.saveStoryArchitecture(fullStoryArch);
+    await db.saveStoryArchitecture(fullStoryArch);
 
     // Update project foundation status to READY
-    db.saveProject({
-      ...db.getProject(projectId)!,
+    await db.saveProject({
+      ...(await db.getProject(projectId))!,
       foundation_status: 'ready',
       duration_validation_passed: true,
       retry_count: attempt,
@@ -994,14 +994,14 @@ export async function runProjectInitialization(
   } catch (err: any) {
     const errorMsg = err?.message || 'Terjadi kesalahan pada inisialisasi fondasi proyek (S1-S5)';
     log(
-      db.getProject(projectId)?.current_stage || 1,
+      (await db.getProject(projectId))?.current_stage || 1,
       'Project Initialization',
       `Fatal error: ${errorMsg}`,
       'error'
     );
 
-    db.saveProject({
-      ...db.getProject(projectId)!,
+    await db.saveProject({
+      ...(await db.getProject(projectId))!,
       status: 'failed',
       foundation_status: 'failed',
       error_message: errorMsg,
@@ -1026,13 +1026,13 @@ export async function runPipelineForScene(
   continuitySeed?: ReturnType<typeof createContinuityState> | null,
   runContext?: GenerationRunContext
 ): Promise<ScenePipelineResult> {
-  const scene = db.getScene(sceneId);
+  const scene = await db.getScene(sceneId);
   if (!scene) {
     throw new Error(`Scene ${sceneId} tidak ditemukan.`);
   }
 
   const projectId = scene.project_id;
-  const project = db.getProject(projectId);
+  const project = await db.getProject(projectId);
   if (!project) {
     throw new Error(`Project ${projectId} tidak ditemukan.`);
   }
@@ -1046,7 +1046,7 @@ export async function runPipelineForScene(
     : null;
 
   // Verification Guard: Check if Foundation (S1-S5) is ready
-  const foundationCheck = verifyProjectFoundation(projectId);
+  const foundationCheck = await verifyProjectFoundation(projectId);
   if (!foundationCheck.ready) {
     const initResult = await runProjectInitialization(projectId, logFn);
     if (!initResult.success) {
@@ -1054,13 +1054,13 @@ export async function runPipelineForScene(
     }
   }
 
-  const refreshedProject = db.getProject(projectId) || project;
+  const refreshedProject = (await db.getProject(projectId)) || project;
   let sceneContinuityState = continuitySeed || refreshedProject.continuityState || (refreshedProject.contextPackage ? createContinuityState(refreshedProject.contextPackage) : null);
 
-  const foundation = db.getProjectFoundation(projectId);
-  const characters = db.getCharacters(projectId);
-  const locations = db.getLocations(projectId);
-  const objects = db.getObjects(projectId);
+  const foundation = await db.getProjectFoundation(projectId);
+  const characters = await db.getCharacters(projectId);
+  const locations = await db.getLocations(projectId);
+  const objects = await db.getObjects(projectId);
   let assetIntegrityReport = createSceneAssetCoverageReport(
     scene,
     characters,
@@ -1100,15 +1100,15 @@ export async function runPipelineForScene(
       ? { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState }
       : { sceneId, status: 'FAILED', success: false, error: error instanceof Error ? error.message : String(error), assetIntegrityReport, continuityState: sceneContinuityState };
     if (blocker) {
-      persistBlockedScene(sceneId, blocker);
+      await persistBlockedScene(sceneId, blocker);
     } else {
-      db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
+      await db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
     }
-    safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+    await safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
     return result;
   }
 
-  beginSceneExecution(sceneId);
+  await beginSceneExecution(sceneId);
 
   // ----------------------------------------------------
   // STAGE 6: Shot Breakdown Agent (S6, per scene with isolated retry)
@@ -1146,8 +1146,8 @@ export async function runPipelineForScene(
         reasoningConfig: project.reasoning_config,
         feedbackPrompt,
       });
-      enforceStageConsistency(projectId, `S6:${sceneId}`, shotsAttempt, sceneConsistencyState);
-      sceneContinuityState = advanceContinuity(projectId, `S6:${sceneId}`, scene, shotsAttempt, sceneContinuityState, scene.continuity_scope || 'scene-boundary', false);
+      await enforceStageConsistency(projectId, `S6:${sceneId}`, shotsAttempt, sceneConsistencyState);
+      sceneContinuityState = await advanceContinuity(projectId, `S6:${sceneId}`, scene, shotsAttempt, sceneContinuityState, scene.continuity_scope || 'scene-boundary', false);
       assetIntegrityReport = validatePromptCoverage(assetIntegrityReport, JSON.stringify({ scene, shots: shotsAttempt }));
       assertSceneAssetCoverage(assetIntegrityReport);
 
@@ -1240,22 +1240,22 @@ export async function runPipelineForScene(
         'S6'
       );
       if (blocker) {
-        persistBlockedScene(sceneId, blocker);
+        await persistBlockedScene(sceneId, blocker);
         const result: ScenePipelineResult = { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
-        safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+        await safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
         return result;
       }
       if (!retryable) {
-        db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
+        await db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
         const result: ScenePipelineResult = { sceneId, status: 'FAILED', success: false, error: lastShotError, assetIntegrityReport, continuityState: sceneContinuityState };
-        safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+        await safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
         return result;
       }
     }
   }
 
   if (!validatedShots) {
-    db.updateScene(sceneId, { status: 'shot_breakdown_failed' });
+    await db.updateScene(sceneId, { status: 'shot_breakdown_failed' });
     log(
       6,
       'Shot Breakdown Agent',
@@ -1264,13 +1264,13 @@ export async function runPipelineForScene(
       'S6'
     );
     const result: ScenePipelineResult = { sceneId, status: 'FAILED', success: false, error: lastShotError, assetIntegrityReport, continuityState: sceneContinuityState };
-    safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+    await safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
     return result;
   }
 
   // Derive beats & cinematic grammar for the scene
   const sceneBeats = deriveBeatsForScene(scene, validatedShots as any);
-  db.updateScene(sceneId, { beats: sceneBeats });
+  await db.updateScene(sceneId, { beats: sceneBeats });
 
   // Save shots to DB with narrative modes and cinematic grammar
   const enhancedShots = validatedShots.map((s: any, sIdx: number) => {
@@ -1290,7 +1290,7 @@ export async function runPipelineForScene(
     };
   });
 
-  const savedShots = db.saveShots(sceneId, projectId, enhancedShots);
+  const savedShots = await db.saveShots(sceneId, projectId, enhancedShots);
 
   // ----------------------------------------------------
   // STAGE 7: Master Frame & Image Prompt Agent (S7, per scene prompt-only)
@@ -1322,12 +1322,12 @@ export async function runPipelineForScene(
       model: project.ai_model,
       reasoningConfig: project.reasoning_config,
     });
-    enforceStageConsistency(projectId, `S7:${sceneId}`, stage7Result, sceneConsistencyState);
-    sceneContinuityState = advanceContinuity(projectId, `S7:${sceneId}`, scene, stage7Result, sceneContinuityState, 'within-scene', false);
+    await enforceStageConsistency(projectId, `S7:${sceneId}`, stage7Result, sceneConsistencyState);
+    sceneContinuityState = await advanceContinuity(projectId, `S7:${sceneId}`, scene, stage7Result, sceneContinuityState, 'within-scene', false);
     assetIntegrityReport = validateMasterFrameCoverage(assetIntegrityReport, JSON.stringify(stage7Result));
     assertSceneAssetCoverage(assetIntegrityReport);
 
-    db.updateScene(sceneId, {
+    await db.updateScene(sceneId, {
       master_image_prompt_json: stage7Result.promptJson,
       image_gen_status: 'success',
       image_gen_error: null,
@@ -1353,13 +1353,13 @@ export async function runPipelineForScene(
     const errType = classifyError(err);
     const blocker = knownBlocker(err, `S7:${sceneId}`);
     if (blocker) {
-      persistBlockedScene(sceneId, blocker);
+      await persistBlockedScene(sceneId, blocker);
       const result: ScenePipelineResult = { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
-      safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+      await safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
       return result;
     }
     const s7Duration = Date.now() - s7StartTime;
-    db.updateScene(sceneId, {
+    await db.updateScene(sceneId, {
       image_gen_status: 'failed',
       image_gen_error: errMsg,
     });
@@ -1381,7 +1381,7 @@ export async function runPipelineForScene(
   }
 
   // Reload scene to get updated master frame
-  const currentScene = db.getScene(sceneId) || scene;
+  const currentScene = (await db.getScene(sceneId)) || scene;
 
   // ----------------------------------------------------
   // STAGE 8: Video Prompt Agent (S8, per shot in this scene)
@@ -1430,13 +1430,13 @@ export async function runPipelineForScene(
         contextPackage: project.contextPackage || null,
         continuityState: sceneContinuityState,
       });
-      enforceStageConsistency(projectId, `S8:${sceneId}:${shot.id}`, stage8Result, sceneConsistencyState);
-      sceneContinuityState = advanceContinuity(projectId, `S8:${sceneId}:${shot.id}`, currentScene, stage8Result, sceneContinuityState, 'within-scene', false);
+      await enforceStageConsistency(projectId, `S8:${sceneId}:${shot.id}`, stage8Result, sceneConsistencyState);
+      sceneContinuityState = await advanceContinuity(projectId, `S8:${sceneId}:${shot.id}`, currentScene, stage8Result, sceneContinuityState, 'within-scene', false);
       assetIntegrityReport = validateVideoPromptCoverage(assetIntegrityReport, JSON.stringify(stage8Result));
       assertSceneAssetCoverage(assetIntegrityReport);
 
       if (shot.id) {
-        db.saveVideoPrompts(shot.id, sceneId, projectId, stage8Result.prompts);
+        await db.saveVideoPrompts(shot.id, sceneId, projectId, stage8Result.prompts);
       }
 
       const hasFailed = stage8Result.prompts.some((p) => p.status === 'video_prompt_failed');
@@ -1494,9 +1494,9 @@ export async function runPipelineForScene(
       const errType = classifyError(err);
       const blocker = knownBlocker(err, `S8:${sceneId}:${shot.id}`);
       if (blocker) {
-        persistBlockedScene(sceneId, blocker);
+        await persistBlockedScene(sceneId, blocker);
         const result: ScenePipelineResult = { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
-        safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
+        await safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, result.status, result);
         return result;
       }
       recordTelemetry(projectId, {
@@ -1519,27 +1519,27 @@ export async function runPipelineForScene(
   }
 
   try {
-    enforceStageConsistency(
+    await enforceStageConsistency(
       projectId,
       `FINAL:${sceneId}`,
-      { scene: currentScene, shots: savedShots, videoPrompts: db.getVideoPromptsByScene(sceneId) },
+      { scene: currentScene, shots: savedShots, videoPrompts: await db.getVideoPromptsByScene(sceneId) },
       sceneConsistencyState
     );
-    sceneContinuityState = advanceContinuity(projectId, `FINAL:${sceneId}`, currentScene, { scene: currentScene, shots: savedShots }, sceneContinuityState, 'within-scene', false);
+    sceneContinuityState = await advanceContinuity(projectId, `FINAL:${sceneId}`, currentScene, { scene: currentScene, shots: savedShots }, sceneContinuityState, 'within-scene', false);
   } catch (error) {
     const blocker = knownBlocker(error, `FINAL:${sceneId}`);
     if (blocker) {
-      persistBlockedScene(sceneId, blocker);
+      await persistBlockedScene(sceneId, blocker);
       return { sceneId, status: 'BLOCKED', success: false, blockers: [blocker], assetIntegrityReport, continuityState: sceneContinuityState };
     }
-    db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
+    await db.updateScene(sceneId, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
     return { sceneId, status: 'FAILED', success: false, error: error instanceof Error ? error.message : String(error), assetIntegrityReport, continuityState: sceneContinuityState };
   }
 
   // ----------------------------------------------------
   // Full Scene Production Prompt Generation (Phase 17-19)
   // ----------------------------------------------------
-  const snapshot = db.getContinuitySnapshot(projectId, scene.scene_number);
+  const snapshot = await db.getContinuitySnapshot(projectId, scene.scene_number);
   const fullScenePrompt = buildFullScenePrompt(currentScene, savedShots, snapshot);
 
   // ----------------------------------------------------
@@ -1561,7 +1561,7 @@ export async function runPipelineForScene(
     );
 
     // Auto-correction on generated shot prompts
-    const shotPrompts = db.getVideoPromptsByScene(sceneId);
+    const shotPrompts = await db.getVideoPromptsByScene(sceneId);
     let correctedCount = 0;
 
     for (const vp of shotPrompts) {
@@ -1569,7 +1569,7 @@ export async function runPipelineForScene(
       if (!originalPrompt) continue;
       const { correctedText, fixesApplied } = applyContinuityCorrectionToPrompt(originalPrompt, continuityViolations, snapshot);
       if (correctedText !== originalPrompt) {
-        db.saveSingleVideoPrompt({
+        await db.saveSingleVideoPrompt({
           ...vp,
           timeline_json: {
             ...vp.timeline_json,
@@ -1615,14 +1615,14 @@ export async function runPipelineForScene(
     sceneFinalStatus = 'continuity_failed';
   }
 
-  db.updateScene(sceneId, {
+  await db.updateScene(sceneId, {
     status: sceneFinalStatus,
     full_scene_prompt: fullScenePrompt,
     full_scene_prompt_status: 'ready',
     continuity_status: continuityStatus,
     continuity_violations: continuityViolations,
   });
-  persistReadyScene(sceneId, continuityStatus, continuityViolations);
+  await persistReadyScene(sceneId, continuityStatus, continuityViolations);
 
   if (failedShotsCount > 0 || continuityStatus === 'continuity_failed') {
     log(
@@ -1647,7 +1647,7 @@ export async function runPipelineForScene(
     : [];
   const currentStatus = resolveCurrentSceneStatus(currentBlockers, failedShotsCount > 0);
   const result: ScenePipelineResult = { sceneId, status: currentStatus, success: currentStatus === 'READY', blockers: currentBlockers, shots: savedShots, assetIntegrityReport, continuityState: sceneContinuityState, error: currentStatus === 'READY' ? undefined : `Scene final status: ${currentStatus}` };
-  safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, currentStatus, result);
+  await safePersistSceneSummary(projectId, runContext?.runId, sceneId, scene.scene_number, sceneStartedAtMs, currentStatus, result);
   return result;
 }
 
@@ -1682,13 +1682,13 @@ export async function generateAllScenes(
   ) => void,
   runContext?: GenerationRunContext
 ): Promise<{ success: boolean; totalScenes: number; readyScenes: number; failedScenes: number }> {
-  const project = db.getProject(projectId);
+  const project = await db.getProject(projectId);
   if (!project) {
     throw new Error(`Project ${projectId} tidak ditemukan.`);
   }
 
   // Verify foundation first
-  const foundationCheck = verifyProjectFoundation(projectId);
+  const foundationCheck = await verifyProjectFoundation(projectId);
   if (!foundationCheck.ready) {
     const initResult = await runProjectInitialization(projectId, onProgress);
     if (!initResult.success) {
@@ -1696,7 +1696,7 @@ export async function generateAllScenes(
     }
   }
 
-  const scenes = db.getScenes(projectId).slice().sort((left, right) => left.scene_number - right.scene_number || (left.id || '').localeCompare(right.id || ''));
+  const scenes = (await db.getScenes(projectId)).slice().sort((left, right) => left.scene_number - right.scene_number || (left.id || '').localeCompare(right.id || ''));
   if (!scenes || scenes.length === 0) {
     throw new Error('Tidak ada scene yang ditemukan untuk digenerate.');
   }
@@ -1749,7 +1749,7 @@ export async function generateAllScenes(
       } catch (err: any) {
         const failedResult: ScenePipelineResult = { sceneId: currentScene.id, status: 'FAILED', success: false, error: err?.message || String(err) };
         workerResults.push(failedResult);
-        db.updateScene(currentScene.id, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
+        await db.updateScene(currentScene.id, { status: 'failed', pipeline_status: 'FAILED', blockers: [] });
         log(
           6,
           `Worker #${workerId}`,
@@ -1780,21 +1780,21 @@ export async function generateAllScenes(
     return (leftScene?.scene_number ?? Number.MAX_SAFE_INTEGER) - (rightScene?.scene_number ?? Number.MAX_SAFE_INTEGER) || left.sceneId.localeCompare(right.sceneId);
   });
   const reports = orderedResults.map((result) => result.assetIntegrityReport).filter((report): report is SceneAssetCoverageReport => Boolean(report));
-  const updatedProject = db.getProject(projectId);
+  const updatedProject = await db.getProject(projectId);
   if (updatedProject) {
     const assetReports = [...(updatedProject.assetIntegrityReports || []).filter((report) => !reports.some((item) => item.sceneId === report.sceneId)), ...reports];
     const continuityState = mergeContinuityResults(continuitySeed, orderedResults);
       const aggregateProject = { ...updatedProject, continuityState, assetIntegrityReports: assetReports };
-      const finalizationReport = evaluateFinalizationGate(aggregateProject, scenes.map((scene) => {
-        const current = db.getScene(scene.id!);
+      const finalizationReport = evaluateFinalizationGate(aggregateProject, await Promise.all(scenes.map(async (scene) => {
+        const current = await db.getScene(scene.id!);
         return { sceneId: scene.id, status: current?.pipeline_status || (current?.status === 'ready' ? 'READY' : current?.status) };
-      }));
+      })));
     const sceneBlockers: FinalizationBlocker[] = orderedResults.flatMap((result) => (result.blockers || []).map((blocker) => ({ code: blocker.code, layer: blocker.stage, message: blocker.message, sceneId: result.sceneId })));
     finalizationReport.blockerDetails = [...(finalizationReport.blockerDetails || []), ...sceneBlockers];
     finalizationReport.blockers = Array.from(new Set([...finalizationReport.blockers, ...sceneBlockers.map((blocker) => blocker.message)]));
     const hasFailed = orderedResults.some((result) => result.status === 'FAILED');
     const finalStatus = hasFailed ? 'failed' : finalizationReport.status === 'BLOCKED' ? 'blocked' : 'completed';
-    db.saveProject({
+    await db.saveProject({
       ...aggregateProject,
       status: finalStatus,
       current_stage: 8,
@@ -1807,13 +1807,13 @@ export async function generateAllScenes(
   const blockedCount = orderedResults.filter((result) => result.status === 'BLOCKED').length;
   const failedCount = orderedResults.filter((result) => result.status === 'FAILED').length;
 
-  const stageSummaries = ['S6', 'S7', 'S8'].map((stageCode) => {
-    const stageEntries = db.getTelemetry(projectId).filter((entry) => entry.run_id === runContext?.runId && entry.stage_code === stageCode && typeof entry.duration_ms === 'number');
+  const stageSummaries = await Promise.all(['S6', 'S7', 'S8'].map(async (stageCode) => {
+    const stageEntries = (await db.getTelemetry(projectId)).filter((entry) => entry.run_id === runContext?.runId && entry.stage_code === stageCode && typeof entry.duration_ms === 'number');
     const totalMs = stageEntries.reduce((sum, entry) => sum + (entry.duration_ms || 0), 0);
     return { stage_code: stageCode, count: stageEntries.length, total_ms: totalMs, average_ms: stageEntries.length ? totalMs / stageEntries.length : 0 };
-  });
+  }));
 
-  safePersistRunSummary(projectId, runContext?.runId, {
+  await safePersistRunSummary(projectId, runContext?.runId, {
     run_id: runContext?.runId,
     effective_concurrency: effectiveConcurrency,
     total_scenes: scenes.length,
@@ -1842,7 +1842,7 @@ export async function generateAllScenes(
   };
 }
 
-function safePersistRunSummaryAtOrchestrator(
+async function safePersistRunSummaryAtOrchestrator(
   projectId: string,
   runId: string | undefined,
   startedAt: string,
@@ -1852,16 +1852,16 @@ function safePersistRunSummaryAtOrchestrator(
   blockedScenes: number,
   failedScenes: number,
   completionOrder: string[]
-): void {
+): Promise<void> {
   try {
     const durationMs = Date.now() - new Date(startedAt).getTime();
-    const stageSummaries = ['S6', 'S7', 'S8'].map((stageCode) => {
-      const stageEntries = db.getTelemetry(projectId).filter((entry) => entry.run_id === runId && entry.stage_code === stageCode && typeof entry.duration_ms === 'number');
+    const stageSummaries = await Promise.all(['S6', 'S7', 'S8'].map(async (stageCode) => {
+      const stageEntries = (await db.getTelemetry(projectId)).filter((entry) => entry.run_id === runId && entry.stage_code === stageCode && typeof entry.duration_ms === 'number');
       const totalMs = stageEntries.reduce((sum, entry) => sum + (entry.duration_ms || 0), 0);
       return { stage_code: stageCode, count: stageEntries.length, total_ms: totalMs, average_ms: stageEntries.length ? totalMs / stageEntries.length : 0 };
-    });
+    }));
 
-    recordTelemetry(projectId, {
+    await recordTelemetry(projectId, {
       stage: 8,
       stage_code: 'S8',
       scope: 'project',
@@ -1901,7 +1901,7 @@ export async function runOrchestratedPipeline({
   runContext,
   sceneConcurrency,
 }: OrchestratorRunOptions): Promise<{ success: boolean; error?: string; runId?: string }> {
-  const project = db.getProject(projectId);
+  const project = await db.getProject(projectId);
   if (!project) {
     throw new Error(`Project with ID ${projectId} not found.`);
   }
@@ -1922,15 +1922,15 @@ export async function runOrchestratedPipeline({
   try {
     const runStartedAt = new Date().toISOString();
     const completionOrder: string[] = [];
-    db.saveProject({
-      ...db.getProject(projectId)!,
+    await db.saveProject({
+      ...(await db.getProject(projectId))!,
       active_run_id: activeRunContext.runId,
       latest_run_id: activeRunContext.runId,
       status: 'processing',
       current_stage: 1,
     });
     // Step 1: Project Initialization (S1-S5)
-    const foundationCheck = verifyProjectFoundation(projectId);
+    const foundationCheck = await verifyProjectFoundation(projectId);
     if (!foundationCheck.ready) {
       log(1, 'Pipeline Orchestrator', 'Fondasi proyek belum diinisialisasi. Menjalankan Tahap S1–S5...', 'info');
       const initResult = await runProjectInitialization(projectId, onProgress);
@@ -1949,7 +1949,7 @@ export async function runOrchestratedPipeline({
     const resolvedConcurrency = sceneConcurrency ?? activeRunContext.concurrency ?? envConcurrency ?? 2;
     const sceneResult = await generateAllScenes(projectId, resolvedConcurrency, onProgress, activeRunContext);
     const blockedScenes = sceneResult.totalScenes - sceneResult.readyScenes - sceneResult.failedScenes;
-    safePersistRunSummaryAtOrchestrator(
+    await safePersistRunSummaryAtOrchestrator(
       projectId,
       activeRunContext.runId,
       runStartedAt,
@@ -1976,14 +1976,14 @@ export async function runOrchestratedPipeline({
   } catch (err: any) {
     const errorMsg = err?.message || 'Terjadi kesalahan pada pipeline orchestrator.';
     log(
-      db.getProject(projectId)?.current_stage || 1,
+      (await db.getProject(projectId))?.current_stage || 1,
       'Pipeline Failure',
       `Fatal error: ${errorMsg}`,
       'error'
     );
 
-    db.saveProject({
-      ...db.getProject(projectId)!,
+    await db.saveProject({
+      ...(await db.getProject(projectId))!,
       status: 'failed',
       error_message: errorMsg,
       active_run_id: activeRunContext.runId,

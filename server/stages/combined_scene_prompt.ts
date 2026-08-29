@@ -2,11 +2,11 @@ import { db } from '../db';
 import { CombinedScenePrompt } from '../../src/types';
 import { resolveSceneTone } from '../narrative_tone';
 
-export function assembleCombinedScenePrompt(
+export async function assembleCombinedScenePrompt(
   sceneId: string,
   platform: 'veo' | 'gemini_omni' | 'seedance'
-): CombinedScenePrompt {
-  const scene = db.getScene(sceneId);
+): Promise<CombinedScenePrompt> {
+  const scene = await db.getScene(sceneId);
   if (!scene) {
     return {
       status: 'incomplete',
@@ -18,13 +18,13 @@ export function assembleCombinedScenePrompt(
   }
 
   const projectId = scene.project_id;
-  const foundation = db.getProjectFoundation(projectId);
-  const locations = db.getLocations(projectId);
+  const foundation = await db.getProjectFoundation(projectId);
+  const locations = await db.getLocations(projectId);
   const relevantLocation = locations.find((l) =>
     l.name.toLowerCase().includes(scene.location_name.toLowerCase())
   );
 
-  const shots = db.getShotsByScene(sceneId);
+  const shots = await db.getShotsByScene(sceneId);
   const totalShots = shots.length;
 
   if (totalShots === 0) {
@@ -37,7 +37,7 @@ export function assembleCombinedScenePrompt(
     };
   }
 
-  const allVideoPrompts = db.getVideoPromptsByScene(sceneId);
+  const allVideoPrompts = await db.getVideoPromptsByScene(sceneId);
   const readyPromptsByShotId = new Map<string, any>();
   let failedShotsCount = 0;
 

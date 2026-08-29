@@ -16,14 +16,14 @@ function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`ASSERTION FAILED: ${message}`);
 }
 
-function cloneGenuineFixture(fixtureProjectId: string): void {
-  const source = db.getProject(SOURCE_PROJECT_ID);
+async function cloneGenuineFixture(fixtureProjectId: string): Promise<void> {
+  const source = await db.getProject(SOURCE_PROJECT_ID);
   assert(source, `source project ${SOURCE_PROJECT_ID} exists`);
-  const sourceScenes = db.getScenes(SOURCE_PROJECT_ID);
+  const sourceScenes = await db.getScenes(SOURCE_PROJECT_ID);
   assert(sourceScenes.length === 6, `source has six genuine scenes (${sourceScenes.length})`);
 
   const now = new Date().toISOString();
-  db.saveProject({
+  await db.saveProject({
     ...source,
     id: fixtureProjectId,
     title: 'R2 genuine six-scene Asset Integrity fixture',
@@ -37,13 +37,13 @@ function cloneGenuineFixture(fixtureProjectId: string): void {
     updated_at: now,
   } as any);
 
-  const foundation = db.getProjectFoundation(SOURCE_PROJECT_ID);
+  const foundation = await db.getProjectFoundation(SOURCE_PROJECT_ID);
   assert(foundation, 'source foundation exists');
-  db.saveProjectFoundation({ ...foundation, project_id: fixtureProjectId } as any);
+  await db.saveProjectFoundation({ ...foundation, project_id: fixtureProjectId } as any);
 
-  db.saveAndMergeCharacters(fixtureProjectId, db.getCharacters(SOURCE_PROJECT_ID).map(({ id, project_id, version, created_at, updated_at, ...character }) => character as any));
-  db.saveAndMergeLocations(fixtureProjectId, [
-    ...db.getLocations(SOURCE_PROJECT_ID).map(({ id, project_id, version, created_at, updated_at, ...location }) => location as any),
+  await db.saveAndMergeCharacters(fixtureProjectId, (await db.getCharacters(SOURCE_PROJECT_ID)).map(({ id, project_id, version, created_at, updated_at, ...character }) => character as any));
+  await db.saveAndMergeLocations(fixtureProjectId, [
+    ...(await db.getLocations(SOURCE_PROJECT_ID)).map(({ id, project_id, version, created_at, updated_at, ...location }) => location as any),
     {
       name: 'Ambang Pintu Kediaman',
       era: 'Abad ke-6 Masehi (Jahiliyah)',
@@ -70,7 +70,7 @@ function cloneGenuineFixture(fixtureProjectId: string): void {
     },
   ] as any);
 
-  db.saveScenes(fixtureProjectId, sourceScenes.map(({ id, project_id, version, created_at, updated_at, status, pipeline_status, blockers, ...scene }) => ({
+  await db.saveScenes(fixtureProjectId, sourceScenes.map(({ id, project_id, version, created_at, updated_at, status, pipeline_status, blockers, ...scene }) => ({
     ...scene,
     status: 'draft',
     pipeline_status: 'PENDING',
@@ -78,15 +78,18 @@ function cloneGenuineFixture(fixtureProjectId: string): void {
   })) as any);
 }
 
-function verifyAssetIntegrity(fixtureProjectId: string): void {
-  const project = db.getProject(fixtureProjectId);
+async function verifyAssetIntegrity(fixtureProjectId: string): Promise<void> {
+  const project = await db.getProject(fixtureProjectId);
   assert(project, 'fixture project exists');
-  const scenes = db.getScenes(fixtureProjectId);
+  const scenes = await db.getScenes(fixtureProjectId);
+  const characters = await db.getCharacters(fixtureProjectId);
+  const locations = await db.getLocations(fixtureProjectId);
+  const objects = await db.getObjects(fixtureProjectId);
   const reports = scenes.map((scene) => createSceneAssetCoverageReport(
     scene,
-    db.getCharacters(fixtureProjectId),
-    db.getLocations(fixtureProjectId),
-    db.getObjects(fixtureProjectId),
+    characters,
+    locations,
+    objects,
     project.contextPackage || null,
     null,
   ));
@@ -95,7 +98,7 @@ function verifyAssetIntegrity(fixtureProjectId: string): void {
   console.log(`FIXTURE PREFLIGHT: 6/6 PASS; project=${fixtureProjectId}`);
 }
 
-async function diagnoseScene(scene: ReturnType<typeof db.getScenes>[number]): Promise<void> {
+async function diagnoseScene(scene: Awaited<ReturnType<typeof db.getScenes>>[number]): Promise<void> {
   let lastProgress: Record<string, unknown> = { phase: 'before-runPipelineForScene' };
   const progress = (stage: number, stageName: string, message: string, level?: string) => {
     lastProgress = { phase: 'progress', stage, stageName, message, level };
@@ -120,8 +123,8 @@ function normalizeContinuityState(value: unknown): unknown {
     .map(([key, entry]) => [key, normalizeContinuityState(entry)]));
 }
 
-function completionOrder(projectId: string): number[] {
-  return db.getLogs(projectId)
+async function completionOrder(projectId: string): Promise<number[]> {
+  return (await db.getLogs(projectId))
     .filter((log) => log.stage_code === 'S6' && log.level === 'success')
     .map((log) => log.message.match(/Scene #(\d+): Validasi/)?.[1])
     .filter((sceneNumber): sceneNumber is string => Boolean(sceneNumber))
@@ -129,8 +132,8 @@ function completionOrder(projectId: string): number[] {
 }
 
 async function runDeterminismRun(label: string, projectId: string): Promise<{ order: number[]; continuity: unknown; s6: Set<number> }> {
-  cloneGenuineFixture(projectId);
-  verifyAssetIntegrity(projectId);
+  await cloneGenuineFixture(projectId);
+  await verifyAssetIntegrity(projectId);
   const originalSetTimeout = globalThis.setTimeout;
   let pacingTimerCount = 0;
   if (label === 'RUN B') {
@@ -148,9 +151,9 @@ async function runDeterminismRun(label: string, projectId: string): Promise<{ or
   } finally {
     globalThis.setTimeout = originalSetTimeout;
   }
-  const order = completionOrder(projectId);
+  const order = await completionOrder(projectId);
   const s6 = new Set(order);
-  const continuity = normalizeContinuityState(db.getProject(projectId)?.continuityState || null);
+  const continuity = normalizeContinuityState((await db.getProject(projectId))?.continuityState || null);
   const record = { label, projectId, completionOrder: order, s6Completed: s6.size, continuity };
   fs.appendFileSync(DETERMINISM_FILE, `${JSON.stringify(record)}\n`);
   console.log(`${label}: ${JSON.stringify(record)}`);
@@ -174,14 +177,15 @@ async function main(): Promise<void> {
       fs.appendFileSync(DETERMINISM_FILE, `${JSON.stringify({ verdict: 'PASS' })}\n`);
       return;
     }
-    cloneGenuineFixture(fixtureProjectId);
-    verifyAssetIntegrity(fixtureProjectId);
+    await cloneGenuineFixture(fixtureProjectId);
+    await verifyAssetIntegrity(fixtureProjectId);
     if (process.argv.includes('--diagnose')) {
       fs.rmSync(DIAGNOSTIC_FILE, { force: true });
       const requestedScene = Number(process.argv.find((argument) => argument.startsWith('--scene='))?.split('=')[1]);
+      const allFixtureScenes = await db.getScenes(fixtureProjectId);
       const scenesToDiagnose = Number.isInteger(requestedScene)
-        ? db.getScenes(fixtureProjectId).filter((scene) => scene.scene_number === requestedScene)
-        : db.getScenes(fixtureProjectId);
+        ? allFixtureScenes.filter((scene) => scene.scene_number === requestedScene)
+        : allFixtureScenes;
       assert(scenesToDiagnose.length > 0, `requested diagnostic scene exists (${requestedScene})`);
       for (const scene of scenesToDiagnose) {
         await diagnoseScene(scene);
@@ -190,17 +194,17 @@ async function main(): Promise<void> {
     }
     if (process.env.RUN_S6 === '1' || process.argv.includes('--s6')) {
       const result = await generateAllScenes(fixtureProjectId, 2);
-      const sceneStatuses = db.getScenes(fixtureProjectId).map((scene) => ({
+      const sceneStatuses = (await db.getScenes(fixtureProjectId)).map((scene) => ({
         scene: scene.scene_number,
         status: scene.status,
         pipeline: scene.pipeline_status,
         blockers: scene.blockers,
       }));
-      const s6Logs = db.getLogs(fixtureProjectId)
+      const s6Logs = (await db.getLogs(fixtureProjectId))
         .filter((log) => log.stage_code === 'S6')
         .map((log) => ({ level: log.level, message: log.message }));
       const completedS6Scenes = new Set(
-        db.getLogs(fixtureProjectId)
+        (await db.getLogs(fixtureProjectId))
           .filter((log) => log.stage_code === 'S6' && log.level === 'success' && /Scene #(\d+): Validasi/.test(log.message))
           .map((log) => log.message.match(/Scene #(\d+):/)?.[1])
           .filter((sceneNumber): sceneNumber is string => Boolean(sceneNumber)),

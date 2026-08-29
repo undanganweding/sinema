@@ -9,7 +9,7 @@ async function assertMetricsSummaryIsProduced(): Promise<void> {
   const projectId = `r3_2_metrics_${Date.now()}`;
   const now = new Date().toISOString();
 
-  db.saveProject({
+  await db.saveProject({
     id: projectId,
     title: 'R3.2 observability fixture',
     raw_script: 'Six scene production path fixture',
@@ -26,7 +26,7 @@ async function assertMetricsSummaryIsProduced(): Promise<void> {
     current_stage: 0,
   } as any);
 
-  db.saveProjectFoundation({
+  await db.saveProjectFoundation({
     project_id: projectId,
     genre: 'historical',
     era: 'ancient',
@@ -36,9 +36,9 @@ async function assertMetricsSummaryIsProduced(): Promise<void> {
     updated_at: now,
   } as any);
 
-  db.saveAndMergeCharacters(projectId, [{ name: 'Known Character', version: 1 } as any]);
-  db.saveAndMergeLocations(projectId, [{ name: 'Known Location', version: 1 } as any]);
-  db.saveScenes(projectId, Array.from({ length: 6 }, (_, index) => ({
+  await db.saveAndMergeCharacters(projectId, [{ name: 'Known Character', version: 1 } as any]);
+  await db.saveAndMergeLocations(projectId, [{ name: 'Known Location', version: 1 } as any]);
+  await db.saveScenes(projectId, Array.from({ length: 6 }, (_, index) => ({
     scene_number: index + 1,
     title: `Scene ${index + 1}`,
     duration_sec: 10,
@@ -57,7 +57,7 @@ async function assertMetricsSummaryIsProduced(): Promise<void> {
   const result = await runOrchestratedPipeline({ projectId, runContext });
 
   assert(result.runId === runContext.runId, 'run id must be carried through Pipeline result');
-  const telemetry = db.getTelemetry(projectId);
+  const telemetry = await db.getTelemetry(projectId);
   const runSummary = telemetry.find((entry) => entry.run_id === runContext.runId && entry.summary_type === 'run');
   const sceneSummary = telemetry.find((entry) => entry.run_id === runContext.runId && entry.summary_type === 'scene');
 
@@ -78,7 +78,7 @@ async function assertTelemetryFailureIsNonBlocking(): Promise<void> {
   const originalAddLog = db.addLog.bind(db);
 
   try {
-    db.saveProject({
+    await db.saveProject({
       id: projectId,
       title: 'R3.2 telemetry failure fixture',
       raw_script: 'Six scene production path fixture',
@@ -95,7 +95,7 @@ async function assertTelemetryFailureIsNonBlocking(): Promise<void> {
       current_stage: 0,
     } as any);
 
-    db.saveProjectFoundation({
+    await db.saveProjectFoundation({
       project_id: projectId,
       genre: 'historical',
       era: 'ancient',
@@ -105,9 +105,9 @@ async function assertTelemetryFailureIsNonBlocking(): Promise<void> {
       updated_at: now,
     } as any);
 
-    db.saveAndMergeCharacters(projectId, [{ name: 'Known Character', version: 1 } as any]);
-    db.saveAndMergeLocations(projectId, [{ name: 'Known Location', version: 1 } as any]);
-    db.saveScenes(projectId, Array.from({ length: 2 }, (_, index) => ({
+    await db.saveAndMergeCharacters(projectId, [{ name: 'Known Character', version: 1 } as any]);
+    await db.saveAndMergeLocations(projectId, [{ name: 'Known Location', version: 1 } as any]);
+    await db.saveScenes(projectId, Array.from({ length: 2 }, (_, index) => ({
       scene_number: index + 1,
       title: `Scene ${index + 1}`,
       duration_sec: 10,
@@ -129,7 +129,8 @@ async function assertTelemetryFailureIsNonBlocking(): Promise<void> {
     const result = await runOrchestratedPipeline({ projectId, runContext });
 
     assert(result.runId === runContext.runId, 'run still returns the same run id even when telemetry fails');
-    assert(db.getProject(projectId)?.status === 'blocked' || db.getProject(projectId)?.status === 'failed' || db.getProject(projectId)?.status === 'completed', 'pipeline must still finish even if telemetry logging fails');
+    const proj = await db.getProject(projectId);
+    assert(proj?.status === 'blocked' || proj?.status === 'failed' || proj?.status === 'completed', 'pipeline must still finish even if telemetry logging fails');
   } finally {
     (db as any).addTelemetry = originalAddTelemetry;
     (db as any).addLog = originalAddLog;

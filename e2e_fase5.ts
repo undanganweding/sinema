@@ -40,9 +40,9 @@ async function post(url: string, body: unknown) {
   return { status: res.status, json };
 }
 
-function seed() {
+async function seed() {
   const projectId = `proj_e2e_${Date.now()}`;
-  db.saveProject({
+  await db.saveProject({
     id: projectId,
     title: 'E2E Fase 5',
     // raw_script is required by db.getStoryArchitecture -> deriveStoryArchitecture,
@@ -62,7 +62,7 @@ function seed() {
     updated_at: new Date().toISOString(),
   } as any);
 
-  db.saveProjectFoundation({
+  await db.saveProjectFoundation({
     project_id: projectId,
     era: '7th century Arabian Peninsula',
     visual_style: 'Panavision 35mm anamorphic historical realism',
@@ -75,7 +75,7 @@ function seed() {
     updated_at: new Date().toISOString(),
   } as any);
 
-  db.saveAndMergeCharacters(projectId, [
+    await db.saveAndMergeCharacters(projectId, [
     {
       name: 'Zayd',
       role: 'protagonist',
@@ -87,7 +87,7 @@ function seed() {
     } as any,
   ]);
 
-  db.saveAndMergeLocations(projectId, [
+    await db.saveAndMergeLocations(projectId, [
     {
       name: 'Wadi Crossing',
       architectural_style: 'no architecture, natural sandstone ravine with wind-carved terraces',
@@ -97,7 +97,7 @@ function seed() {
     } as any,
   ]);
 
-  const [scene] = db.saveScenes(projectId, [
+  const [scene] = await db.saveScenes(projectId, [
     {
       scene_number: 1,
       title: 'Dawn Crossing',
@@ -114,7 +114,7 @@ function seed() {
   ]);
 
   const sceneId = scene.id!;
-  const shots = db.saveShots(sceneId, projectId, [
+  const shots = await db.saveShots(sceneId, projectId, [
     {
       shot_number: 1,
       start_time_sec: 0,
@@ -158,7 +158,7 @@ async function main() {
   await new Promise<void>((resolve) => server.once('listening', () => resolve()));
 
   try {
-    const { projectId, shotA, shotB } = seed();
+    const { projectId, shotA, shotB } = await seed();
     const shotAId = shotA.id!;
 
     // ---------------------------------------------------------------- DoD 1
@@ -178,7 +178,7 @@ async function main() {
 
       if (target === 'seedance_30') {
         // Row count after Veo -> Omni -> Seedance 30: three coexisting rows.
-        const rows: VideoPrompt[] = db.getVideoPromptsByShot(shotAId);
+        const rows: VideoPrompt[] = await db.getVideoPromptsByShot(shotAId);
         const targets = rows.map((r) => resolveRowTarget(r)).sort();
         check(
           'DOD5-three-rows-coexist',
@@ -189,7 +189,7 @@ async function main() {
     }
 
     // Mixed seedance_10 + seedance_30 must coexist (the target_platform bug).
-    const afterAll: VideoPrompt[] = db.getVideoPromptsByShot(shotAId);
+    const afterAll: VideoPrompt[] = await db.getVideoPromptsByShot(shotAId);
     const afterTargets = afterAll.map((r) => resolveRowTarget(r)).sort();
     check(
       'DOD5-mixed-seedance-coexist',
@@ -205,7 +205,7 @@ async function main() {
 
     // ---------------------------------------------------------------- DoD 4
     // The four video targets hold DISTINCT bodies, read via the frontend path.
-    const freshShotA = db.getShot(shotAId)!;
+    const freshShotA = await db.getShot(shotAId)!;
     for (const target of videoTargets) {
       const cell = getPersistedPrompt(freshShotA, target, afterAll);
       check(
@@ -237,10 +237,10 @@ async function main() {
     );
     check(
       'DOD4-banana_image-no-video-row',
-      db.getVideoPromptsByShot(shotAId).length === 4,
-      `video row count still ${db.getVideoPromptsByShot(shotAId).length}`
+      (await db.getVideoPromptsByShot(shotAId)).length === 4,
+      `video row count still ${(await db.getVideoPromptsByShot(shotAId)).length}`
     );
-    const stillCell = getPersistedPrompt(db.getShot(shotAId)!, 'banana_image', db.getVideoPromptsByShot(shotAId));
+    const stillCell = getPersistedPrompt(await db.getShot(shotAId)!, 'banana_image', await db.getVideoPromptsByShot(shotAId));
     check(
       'DOD4-banana_image-ready',
       stillCell.state === 'ready' && stillCell.hasPrompt && stillCell.text !== bodies.get('veo'),
@@ -272,7 +272,7 @@ async function main() {
     let emptyOk = true;
     const emptyDetails: string[] = [];
     for (const target of [...videoTargets, 'banana_image' as PromptTarget]) {
-      const cell = getPersistedPrompt(db.getShot(shotB.id!)!, target, flat);
+      const cell = getPersistedPrompt((await db.getShot(shotB.id!))!, target, flat);
       const leaked = [...bodies.values()].includes(cell.text);
       if (cell.state !== 'idle' || cell.hasPrompt || cell.text !== PROMPT_EMPTY_MESSAGE || leaked) {
         emptyOk = false;
@@ -289,7 +289,7 @@ async function main() {
     // A pre-existing `seedance` row with NO prompt_target must gain a SIBLING,
     // not be overwritten (the existingMatch legacy predicate in routes.ts).
     const legacyShotId = shotB.id!;
-    const legacyRow = db.saveSingleVideoPrompt({
+    const legacyRow = await db.saveSingleVideoPrompt({
       id: `vprompt_legacy_${legacyShotId}`,
       shot_id: legacyShotId,
       scene_id: shotB.scene_id,
@@ -301,7 +301,7 @@ async function main() {
     } as any);
 
     const legacyGen = await post(`/api/shots/${legacyShotId}/regenerate-prompt`, { target: 'seedance_30' });
-    const legacyAfter = db.getVideoPromptsByShot(legacyShotId);
+    const legacyAfter = await db.getVideoPromptsByShot(legacyShotId);
     const survivor = legacyAfter.find((r) => r.id === legacyRow.id);
     check(
       'LEGACY-row-preserved',
@@ -314,7 +314,7 @@ async function main() {
     );
 
     // A legacy veo row (unambiguous column) IS claimed rather than duplicated.
-    const legacyVeo = db.saveSingleVideoPrompt({
+    const legacyVeo = await db.saveSingleVideoPrompt({
       id: `vprompt_legacyveo_${legacyShotId}`,
       shot_id: legacyShotId,
       scene_id: shotB.scene_id,
@@ -325,14 +325,14 @@ async function main() {
       version: 1,
     } as any);
     const veoGen = await post(`/api/shots/${legacyShotId}/regenerate-prompt`, { target: 'veo' });
-    const claimed = db.getVideoPromptsByShot(legacyShotId).find((r) => r.id === legacyVeo.id);
+    const claimed = (await db.getVideoPromptsByShot(legacyShotId)).find((r) => r.id === legacyVeo.id);
     check(
       'LEGACY-unambiguous-row-claimed',
       veoGen.status === 200 &&
-        db.getVideoPromptsByShot(legacyShotId).length === 3 &&
+        (await db.getVideoPromptsByShot(legacyShotId)).length === 3 &&
         claimed?.prompt_target === 'veo' &&
         claimed?.timeline_json?.prompt !== 'LEGACY-VEO-BODY-SHOULD-BE-REPLACED',
-      `HTTP ${veoGen.status}, rows=${db.getVideoPromptsByShot(legacyShotId).length}, claimed target=${claimed?.prompt_target}`
+      `HTTP ${veoGen.status}, rows=${(await db.getVideoPromptsByShot(legacyShotId)).length}, claimed target=${claimed?.prompt_target}`
     );
 
     // ------------------------------------------------------- error contract

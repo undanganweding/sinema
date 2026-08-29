@@ -164,13 +164,13 @@ async function runInitializationFixture(
   searchProvider?: ControlledSearchProvider,
 ): Promise<{ project: Project; context: Project['contextPackage']; calls: string[]; searchCalls: string[] }> {
   const captured: { context: Project['contextPackage'] | null } = { context: null };
-  db.saveProject(fixtureProject);
+  await db.saveProject(fixtureProject);
   const result = await runProjectInitialization(fixtureProject.id, undefined, {
     researchEngine: new ResearchEngine([], [provider], searchProvider ? [searchProvider] : []),
     stage1Runner: stopStage1Capture(captured),
   });
   assert(result.success === false && result.error?.includes(STOP_AFTER_STAGE_1), 'integration reaches the real Stage 1 boundary');
-  const reloaded = db.getProject(fixtureProject.id);
+  const reloaded = await db.getProject(fixtureProject.id);
   assert(reloaded, 'project reloads from existing persistence');
   return { project: reloaded, context: captured.context, calls: provider.calls, searchCalls: searchProvider?.calls || [] };
 }

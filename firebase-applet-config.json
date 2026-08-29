@@ -1,11 +1,9 @@
 {
-  "projectId": "green-galaxy-ktvkm",
-  "appId": "1:512748011770:web:b57889080131aa9fc5c943",
-  "apiKey": "AIzaSyCRXMTiX5WMVzTd2mOeVjOjLp938TAdZAs",
-  "authDomain": "green-galaxy-ktvkm.firebaseapp.com",
-  "storageBucket": "green-galaxy-ktvkm.firebasestorage.app",
-  "messagingSenderId": "512748011770",
-  "measurementId": "",
-  "oAuthClientId": "512748011770-s2j21erfqcjglv19p421up28idbpmfgo.apps.googleusercontent.com",
-  "recaptchaSiteKey": ""
+  "projectId": "nupress-bc617",
+  "appId": "1:802431364147:web:c13118ba58c1e883bb8746",
+  "apiKey": "AIzaSyB2eKIEJZas6WrZzC8d4YOSaQLcwahVzaE",
+  "authDomain": "nupress-bc617.firebaseapp.com",
+  "storageBucket": "nupress-bc617.firebasestorage.app",
+  "messagingSenderId": "802431364147",
+  "measurementId": "G-0VDL1GWMN2"
 }

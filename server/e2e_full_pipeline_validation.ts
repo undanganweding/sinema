@@ -122,12 +122,12 @@ function normalizeContinuityLabel(value: string): string {
 }
 
 // ─── Project seeding ───────────────────────────────────────────────────────────
-function seedRealProject(): string {
+async function seedRealProject(): Promise<string> {
   const projectId = `e2e_full_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const now = new Date().toISOString();
 
   // Create project with real script
-  db.saveProject({
+  await db.saveProject({
     id: projectId,
     title: `${TEST_CONFIG.projectName} [${projectId}]`,
     raw_script: REAL_SCRIPT,
@@ -236,7 +236,7 @@ async function runE2EValidation(): Promise<void> {
   try {
     // ────── SCENARIO 1: Baseline (concurrency=2) ──────────────────────────────
     console.log('\n[SCENARIO 1] Baseline Run (concurrency=2)');
-    const projectId1 = seedRealProject();
+    const projectId1 = await seedRealProject();
     
     // Initialize foundation S1-S5 first
     console.log('  Initializing foundation (S1-S5)...');
@@ -252,10 +252,10 @@ async function runE2EValidation(): Promise<void> {
     console.log('✓ Foundation ready (characters, locations, scenes created)');
     
     // Verify foundation data exists before scene generation
-    const foundationCheck1 = db.getProjectFoundation(projectId1);
-    const characters1 = db.getCharacters(projectId1);
-    const locations1 = db.getLocations(projectId1);
-    const scenes1 = db.getScenes(projectId1);
+    const foundationCheck1 = await db.getProjectFoundation(projectId1);
+    const characters1 = await db.getCharacters(projectId1);
+    const locations1 = await db.getLocations(projectId1);
+    const scenes1 = await db.getScenes(projectId1);
     assert(foundationCheck1?.genre && foundationCheck1?.era, 'S1-S4 foundation persisted');
     assert(characters1 && characters1.length > 0, 'S2 characters persisted');
     assert(locations1 && locations1.length > 0, 'S3 locations persisted');
@@ -306,13 +306,13 @@ async function runE2EValidation(): Promise<void> {
     console.log('✓ SSE reconnect stream operational post-completion');
 
     // Verify S6-S8 persistence completeness
-    const shots = db.getShotsByProject(projectId1);
+    const shots = await db.getShotsByProject(projectId1);
     
     assert(shots && shots.length > 0, 'S6 shots persisted');
     console.log(`✓ S6-S8 Persistence verified: ${shots.length} shots generated`);
     
     // Verify R3.3 run isolation
-    const telemetry1 = db.getTelemetry(projectId1);
+    const telemetry1 = await db.getTelemetry(projectId1);
     const runSummary1 = telemetry1.find(t => t.summary_type === 'run' && t.run_id === baselineBody.runId);
     
     const baseline = {
@@ -324,7 +324,7 @@ async function runE2EValidation(): Promise<void> {
     
     if (!runSummary1) {
       console.log('  ⚠ Warning: Run telemetry not found - checking scene-level status');
-      const finalScenes1 = db.getScenes(projectId1);
+      const finalScenes1 = await db.getScenes(projectId1);
       const readyCount = finalScenes1?.filter(s => s.status === 'ready' || s.pipeline_status === 'READY').length || 0;
       const blockedCount = finalScenes1?.filter(s => s.status === 'blocked' || s.pipeline_status === 'BLOCKED').length || 0;
       const failedCount = finalScenes1?.filter(s => s.status === 'failed' || s.pipeline_status === 'FAILED').length || 0;
@@ -339,7 +339,7 @@ async function runE2EValidation(): Promise<void> {
 
     // ────── SCENARIO 2: Concurrency Variance (concurrency=4) ────────────────────
     console.log('\n[SCENARIO 2] Concurrency Variance (concurrency=4)');
-    const projectId2 = seedRealProject();
+    const projectId2 = await seedRealProject();
     
     // Initialize foundation for projectId2
     console.log('  Initializing foundation (S1-S5)...');
@@ -368,7 +368,7 @@ async function runE2EValidation(): Promise<void> {
         if (project.status === 'ready' || project.status === 'blocked' || project.status === 'failed' || project.status === 'completed') break;
       }
 
-      const telemetry2 = db.getTelemetry(projectId2);
+      const telemetry2 = await db.getTelemetry(projectId2);
       const runSummary2 = telemetry2.find(t => t.summary_type === 'run' && t.run_id === varianceBody.runId);
       const variance = {
         readyCount: runSummary2?.summary?.ready_scenes ?? 0,
@@ -377,7 +377,7 @@ async function runE2EValidation(): Promise<void> {
       };
       
       if (!runSummary2) {
-        const finalScenes2 = db.getScenes(projectId2);
+        const finalScenes2 = await db.getScenes(projectId2);
         variance.readyCount = finalScenes2?.filter(s => s.status === 'ready' || s.pipeline_status === 'READY').length || 0;
         variance.blockedCount = finalScenes2?.filter(s => s.status === 'blocked' || s.pipeline_status === 'BLOCKED').length || 0;
         variance.failedCount = finalScenes2?.filter(s => s.status === 'failed' || s.pipeline_status === 'FAILED').length || 0;
@@ -395,7 +395,7 @@ async function runE2EValidation(): Promise<void> {
 
     // ────── SCENARIO 3: Deterministic Behavior (re-run baseline) ───────────────
     console.log('\n[SCENARIO 3] Deterministic Behavior (re-run same config)');
-    const projectId3 = seedRealProject();
+    const projectId3 = await seedRealProject();
     
     console.log('  Initializing foundation (S1-S5)...');
     const initRes3 = await fetch(`${BASE}/api/projects/${projectId3}/initialize-foundation`, {
@@ -423,7 +423,7 @@ async function runE2EValidation(): Promise<void> {
         if (project.status === 'ready' || project.status === 'blocked' || project.status === 'failed' || project.status === 'completed') break;
       }
 
-      const telemetry3 = db.getTelemetry(projectId3);
+      const telemetry3 = await db.getTelemetry(projectId3);
       const runSummary3 = telemetry3.find(t => t.summary_type === 'run' && t.run_id === deterministicBody.runId);
       const deterministic = {
         readyCount: runSummary3?.summary?.ready_scenes ?? 0,
@@ -432,7 +432,7 @@ async function runE2EValidation(): Promise<void> {
       };
       
       if (!runSummary3) {
-        const finalScenes3 = db.getScenes(projectId3);
+        const finalScenes3 = await db.getScenes(projectId3);
         deterministic.readyCount = finalScenes3?.filter(s => s.status === 'ready' || s.pipeline_status === 'READY').length || 0;
         deterministic.blockedCount = finalScenes3?.filter(s => s.status === 'blocked' || s.pipeline_status === 'BLOCKED').length || 0;
         deterministic.failedCount = finalScenes3?.filter(s => s.status === 'failed' || s.pipeline_status === 'FAILED').length || 0;
@@ -463,7 +463,7 @@ async function runE2EValidation(): Promise<void> {
 
     // Verify no cross-run telemetry contamination for Scenario 1 project
     if (runId1) {
-      const allTelemetry = db.getTelemetry(projectId1);
+      const allTelemetry = await db.getTelemetry(projectId1);
       const scenario1Runs = allTelemetry.filter(t => t.run_id === runId1);
       const otherRuns = allTelemetry.filter(t => t.run_id && t.run_id !== runId1);
       assert(otherRuns.length === 0, 'no cross-run telemetry contamination in Scenario 1 project');
@@ -475,7 +475,7 @@ async function runE2EValidation(): Promise<void> {
     // ────── SCENARIO 5: Fault Injection - Missing Asset → BLOCKED ─────────────
     console.log('\n[SCENARIO 5] Fault Injection: Missing Required Asset → BLOCKED');
     await runScenario('Scenario 5: Missing Asset → BLOCKED', async () => {
-      const projectId5 = seedRealProject();
+      const projectId5 = await seedRealProject();
       scenarioResults.push({ scenarioName: 'Scenario 5', projectId: projectId5 });
       
       // Foundation must be ready so scenes exist
@@ -488,7 +488,7 @@ async function runE2EValidation(): Promise<void> {
       assert(foundationReady5, 'Foundation (S1-S5) completed before asset fault injection');
 
       // Verify foundation has characters BEFORE fault injection
-      const charsBefore5 = db.getCharacters(projectId5);
+      const charsBefore5 = await db.getCharacters(projectId5);
       assert(charsBefore5 && charsBefore5.length > 0, 'foundation produced characters before fault');
 
       // Clear characters to simulate missing asset failure.
@@ -518,7 +518,7 @@ async function runE2EValidation(): Promise<void> {
         if (project.status === 'ready' || project.status === 'blocked' || project.status === 'failed' || project.status === 'completed') break;
       }
 
-      const scenes5 = db.getScenes(projectId5);
+      const scenes5 = await db.getScenes(projectId5);
       const blockedScenes5 = scenes5?.filter(s => s.status === 'blocked' || s.pipeline_status === 'BLOCKED') || [];
       console.log(`  Result: ${project.status}, blocked scenes: ${blockedScenes5.length}/${scenes5?.length || 0}`);
       assert(blockedScenes5.length > 0, 'expected at least one BLOCKED scene after asset removal');
@@ -529,7 +529,7 @@ async function runE2EValidation(): Promise<void> {
     // ────── SCENARIO 6: Fault Injection - Continuity Violation → BLOCKED ───────
     console.log('\n[SCENARIO 6] Fault Injection: Continuity Violation → BLOCKED');
     await runScenario('Scenario 6: Continuity Violation → BLOCKED', async () => {
-      const projectId6 = seedRealProject();
+      const projectId6 = await seedRealProject();
       scenarioResults.push({ scenarioName: 'Scenario 6', projectId: projectId6 });
       
       // Foundation must be ready first
@@ -548,9 +548,9 @@ async function runE2EValidation(): Promise<void> {
       // prior scene's event, which updateContinuityState flags as BLOCKING (TEMPORAL_ORDER_CONFLICT)
       // → advanceContinuity throws CONTINUITY_BLOCKED → persistBlockedScene(code CONTINUITY_BLOCKED).
       // This does not depend on LLM-generated text, so it is deterministic.
-      const existingProject6 = db.getProject(projectId6);
+      const existingProject6 = await db.getProject(projectId6);
       assert(existingProject6, 'project exists for continuity injection');
-      const scenes6 = db.getScenes(projectId6) || [];
+      const scenes6 = (await db.getScenes(projectId6)) || [];
       const firstScene = scenes6.find(s => s.scene_number === 1);
       const secondScene = scenes6.find(s => s.scene_number === 2);
       assert(firstScene && secondScene, 'foundation produced at least 2 scenes for continuity injection');
@@ -585,7 +585,7 @@ async function runE2EValidation(): Promise<void> {
         continuityConstraints: [],
         unresolvedIssues: [],
       } as any;
-      db.saveProject({
+      await db.saveProject({
         ...existingProject6,
         continuityState: runtimeContinuity6,
       });
@@ -605,7 +605,7 @@ async function runE2EValidation(): Promise<void> {
         if (project.status === 'ready' || project.status === 'blocked' || project.status === 'failed' || project.status === 'completed') break;
       }
 
-      const finalScenes6 = db.getScenes(projectId6);
+      const finalScenes6 = await db.getScenes(projectId6);
       const blockedScenes6 = finalScenes6?.filter(s => s.status === 'blocked' || s.pipeline_status === 'BLOCKED') || [];
       const hasContinuityBlocker = blockedScenes6.some(s =>
         s.blockers?.some(b => b.code?.includes('CONTINUITY') || b.message?.toLowerCase().includes('continuity'))
@@ -618,7 +618,7 @@ async function runE2EValidation(): Promise<void> {
     // ────── SCENARIO 7: Fault Injection - Auth Error → FAILED ──────────────────
     console.log('\n[SCENARIO 7] Fault Injection: Invalid API Key → auth_error → FAILED');
     await runScenario('Scenario 7: Auth Error → FAILED', async () => {
-      const projectId7 = seedRealProject();
+      const projectId7 = await seedRealProject();
       scenarioResults.push({ scenarioName: 'Scenario 7', projectId: projectId7 });
       
       // Foundation must be ready so scenes REACH the LLM call (S6-S8). Without assets, scenes
@@ -633,9 +633,9 @@ async function runE2EValidation(): Promise<void> {
 
       // Inject invalid API key to trigger auth_error classification at the provider layer.
       // This is the real production consumption path (getEffectiveApiKey reads config.api_key).
-      const existingProject7 = db.getProject(projectId7);
+      const existingProject7 = await db.getProject(projectId7);
       assert(existingProject7, 'project exists for auth fault injection');
-      db.saveProject({
+      await db.saveProject({
         ...existingProject7,
         reasoning_config: {
           provider_type: 'google',
@@ -662,12 +662,12 @@ async function runE2EValidation(): Promise<void> {
         if (project.status === 'ready' || project.status === 'blocked' || project.status === 'failed' || project.status === 'completed') break;
       }
 
-      const scenes7 = db.getScenes(projectId7);
+      const scenes7 = await db.getScenes(projectId7);
       const failedScenes7 = scenes7?.filter(s => s.status === 'failed' || s.pipeline_status === 'FAILED') || [];
       // Confirm the provider call was actually reached: log/telemetry should show an auth_error
-      const logs7 = db.getLogs(projectId7) || [];
+      const logs7 = (await db.getLogs(projectId7)) || [];
       const authLogs7 = logs7.filter(l => (l.message || '').toLowerCase().includes('auth') || (l.message || '').toLowerCase().includes('api key') || (l.message || '').toLowerCase().includes('401'));
-      const telemetry7 = db.getTelemetry(projectId7);
+      const telemetry7 = await db.getTelemetry(projectId7);
       const authErrors7 = telemetry7.filter(t => t.error_type === 'auth_error');
 
       console.log(`  Result: ${project.status}, failed scenes: ${failedScenes7.length}/${scenes7?.length || 0}`);
@@ -685,7 +685,7 @@ async function runE2EValidation(): Promise<void> {
     await runScenario('Scenario 8: Retry Loop Prevention', async () => {
       // Retry validation must use a scenario that actually reaches a retryable failure path.
       // We use the baseline run (projectId1) which reached S6-S8 and issue LLM calls.
-      const baselineLogs = db.getLogs(projectId1) || [];
+      const baselineLogs = (await db.getLogs(projectId1)) || [];
       const retryLogs = baselineLogs.filter(log =>
         (log.message || '').toLowerCase().includes('attempt') ||
         (log.message || '').toLowerCase().includes('retry') ||
@@ -693,7 +693,7 @@ async function runE2EValidation(): Promise<void> {
         (log.message || '').toLowerCase().includes('retries')
       );
       // Read attempt numbers from telemetry too (stage attempts)
-      const baselineTelemetry = db.getTelemetry(projectId1) || [];
+      const baselineTelemetry = (await db.getTelemetry(projectId1)) || [];
       const telemetryAttempts = baselineTelemetry
         .filter(t => (t.stage === 6 || t.stage === 7 || t.stage === 8) && typeof t.attempt === 'number')
         .map(t => t.attempt as number);
@@ -720,7 +720,7 @@ async function runE2EValidation(): Promise<void> {
       // Do NOT assume telemetry exists; correctly identify records belonging to this runId.
       const baselineRunId = scenarioResults.find(r => r.scenarioName === 'Scenario 1')?.runId;
       assert(baselineRunId, 'baseline runId available for telemetry lookup');
-      const allRunSummaries = db.getTelemetry(projectId1).filter(t =>
+      const allRunSummaries = (await db.getTelemetry(projectId1)).filter(t =>
         t.summary_type === 'run' && t.run_id === baselineRunId
       );
       // If zero run summaries for this runId, that is a genuine production-contract failure to report,
@@ -729,7 +729,7 @@ async function runE2EValidation(): Promise<void> {
         assert(false, `no run telemetry summary for runId ${baselineRunId} (production telemetry contract not met)`);
       }
 
-      const sceneTotal = db.getScenes(projectId1)?.length || 0;
+      const sceneTotal = (await db.getScenes(projectId1))?.length || 0;
       for (const summary of allRunSummaries) {
         const s = summary.summary;
         assert(typeof s?.ready_scenes === 'number', 'ready_scenes present');
@@ -749,8 +749,8 @@ async function runE2EValidation(): Promise<void> {
         'project reaches terminal state');
 
       if (project.status === 'completed' || project.status === 'ready') {
-        const scenesAll = db.getScenes(projectId1) || [];
-        const shotsAll = db.getShotsByProject(projectId1) || [];
+        const scenesAll = (await db.getScenes(projectId1)) || [];
+        const shotsAll = (await db.getShotsByProject(projectId1)) || [];
         const videoPromptsAll = shotsAll.map(shot => shot.video_prompt).filter(Boolean);
         const readyScenes = scenesAll.filter(s => s.status === 'ready' || s.pipeline_status === 'READY').length;
 

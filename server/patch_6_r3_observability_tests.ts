@@ -5,14 +5,14 @@ function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`ASSERTION FAILED: ${message}`);
 }
 
-function assertRunIdentity(): void {
+async function assertRunIdentity(): Promise<void> {
   const projectId = `r3_run_identity_${Date.now()}`;
   const runContext = createGenerationRunContext(projectId);
 
   assert(typeof runContext.runId === 'string' && runContext.runId.length > 0, 'runId must be a non-empty string');
   assert(runContext.projectId === projectId, 'projectId must match the run context');
 
-  const event = db.addLog(projectId, {
+  const event = await db.addLog(projectId, {
     stage: 6,
     stage_name: 'Scene Generation Pool',
     level: 'info',
@@ -24,7 +24,7 @@ function assertRunIdentity(): void {
 
   assert(event.run_id === runContext.runId, 'log entries must include the run id');
 
-  const telemetry = db.addTelemetry(projectId, {
+  const telemetry = await db.addTelemetry(projectId, {
     project_id: projectId,
     scene_id: 'scene_1',
     stage: 6,
@@ -46,7 +46,7 @@ async function assertRunIsolation(): Promise<void> {
 
   assert(runA.runId !== runB.runId, 'different runs must receive different run ids');
 
-  db.addLog(projectId, {
+  await db.addLog(projectId, {
     stage: 1,
     stage_name: 'Run A',
     level: 'info',
@@ -54,7 +54,7 @@ async function assertRunIsolation(): Promise<void> {
     run_id: runA.runId,
   } as any);
 
-  db.addLog(projectId, {
+  await db.addLog(projectId, {
     stage: 1,
     stage_name: 'Run B',
     level: 'info',
@@ -62,13 +62,13 @@ async function assertRunIsolation(): Promise<void> {
     run_id: runB.runId,
   } as any);
 
-  const logs = db.getLogs(projectId);
+  const logs = await db.getLogs(projectId);
   assert(logs.some((entry) => entry.run_id === runA.runId && entry.message.includes('first run')), 'run A events must be traceable');
   assert(logs.some((entry) => entry.run_id === runB.runId && entry.message.includes('second run')), 'run B events must be traceable');
 }
 
 async function main(): Promise<void> {
-  assertRunIdentity();
+  await assertRunIdentity();
   await assertRunIsolation();
   console.log('PATCH 6.0-R3 observability assertions: PASS');
 }

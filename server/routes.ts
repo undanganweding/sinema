@@ -128,9 +128,9 @@ apiRouter.get('/tone-presets', (_req: Request, res: Response) => {
 });
 
 // List all projects
-apiRouter.get('/projects', (req: Request, res: Response) => {
+apiRouter.get('/projects', async (req: Request, res: Response) => {
   try {
-    const list = db.listProjects();
+    const list = await db.listProjects();
     res.json(list);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -138,7 +138,7 @@ apiRouter.get('/projects', (req: Request, res: Response) => {
 });
 
 // Create new project
-apiRouter.post('/projects', (req: Request, res: Response) => {
+apiRouter.post('/projects', async (req: Request, res: Response) => {
   try {
     const {
       title,
@@ -241,7 +241,7 @@ apiRouter.post('/projects', (req: Request, res: Response) => {
       groundingStatus: groundingContext.groundingStatus,
     };
 
-    const saved = db.saveProject(newProject);
+    const saved = await db.saveProject(newProject);
     res.status(201).json(saved);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -249,10 +249,10 @@ apiRouter.post('/projects', (req: Request, res: Response) => {
 });
 
 // Update project settings
-apiRouter.patch('/projects/:id', (req: Request, res: Response) => {
+apiRouter.patch('/projects/:id', async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const project = db.getProject(id);
+    const project = await db.getProject(id);
     if (!project) {
       return res.status(404).json({ error: 'Project tidak ditemukan.' });
     }
@@ -290,7 +290,7 @@ apiRouter.patch('/projects/:id', (req: Request, res: Response) => {
       updated_at: new Date().toISOString(),
     };
 
-    const saved = db.saveProject(updated);
+    const saved = await db.saveProject(updated);
     res.json(saved);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -309,14 +309,14 @@ apiRouter.get('/projects/:id/fallback-logs', (req: Request, res: Response) => {
 });
 
 // Get single project full data
-apiRouter.get('/projects/:id', (req: Request, res: Response) => {
+apiRouter.get('/projects/:id', async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const fullData = db.getFullProjectData(id);
+    const fullData = await db.getFullProjectData(id);
     if (!fullData) {
       return res.status(404).json({ error: 'Project tidak ditemukan.' });
     }
-    const logs = db.getLogs(id);
+    const logs = await db.getLogs(id);
     res.json({ ...fullData, logs });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -324,10 +324,10 @@ apiRouter.get('/projects/:id', (req: Request, res: Response) => {
 });
 
 // Delete project
-apiRouter.delete('/projects/:id', (req: Request, res: Response) => {
+apiRouter.delete('/projects/:id', async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const success = db.deleteProject(id);
+    const success = await db.deleteProject(id);
     if (!success) {
       return res.status(404).json({ error: 'Project tidak ditemukan.' });
     }
@@ -338,10 +338,10 @@ apiRouter.delete('/projects/:id', (req: Request, res: Response) => {
 });
 
 // Check Project Foundation Status (S1-S5)
-apiRouter.get('/projects/:id/foundation-status', (req: Request, res: Response) => {
+apiRouter.get('/projects/:id/foundation-status', async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const status = verifyProjectFoundation(id);
+    const status = await verifyProjectFoundation(id);
     res.json(status);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -352,7 +352,7 @@ apiRouter.get('/projects/:id/foundation-status', (req: Request, res: Response) =
 apiRouter.post('/projects/:id/initialize-foundation', async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const project = db.getProject(id);
+    const project = await db.getProject(id);
     if (!project) {
       return res.status(404).json({ error: 'Project tidak ditemukan.' });
     }
@@ -389,7 +389,7 @@ apiRouter.post('/projects/:id/initialize-foundation', async (req: Request, res: 
 apiRouter.post('/projects/:id/generate-scenes', async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const project = db.getProject(id);
+    const project = await db.getProject(id);
     if (!project) {
       return res.status(404).json({ error: 'Project tidak ditemukan.' });
     }
@@ -435,10 +435,10 @@ apiRouter.post('/projects/:id/generate-scenes', async (req: Request, res: Respon
 });
 
 // Get Project Telemetry
-apiRouter.get('/projects/:id/telemetry', (req: Request, res: Response) => {
+apiRouter.get('/projects/:id/telemetry', async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const telemetry = db.getTelemetry(id);
+    const telemetry = await db.getTelemetry(id);
     res.json({ telemetry });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -449,7 +449,7 @@ apiRouter.get('/projects/:id/telemetry', (req: Request, res: Response) => {
 apiRouter.post('/projects/:id/generate', async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const project = db.getProject(id);
+    const project = await db.getProject(id);
     if (!project) {
       return res.status(404).json({ error: 'Project tidak ditemukan.' });
     }
@@ -502,13 +502,13 @@ apiRouter.post('/projects/:id/generate', async (req: Request, res: Response) => 
 apiRouter.post('/scenes/:id/run-pipeline', async (req: Request, res: Response) => {
   try {
     const sceneId = req.params.id;
-    const scene = db.getScene(sceneId);
+    const scene = await db.getScene(sceneId);
     if (!scene) {
       return res.status(404).json({ error: 'Scene tidak ditemukan.' });
     }
 
     const result = await runPipelineForScene(sceneId);
-    const updatedFullData = db.getFullProjectData(scene.project_id);
+    const updatedFullData = await db.getFullProjectData(scene.project_id);
     res.json({ success: result.success, error: result.error, project: updatedFullData });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -542,17 +542,17 @@ apiRouter.post('/scenes/:id/regenerate-prompt', async (req: Request, res: Respon
 
   try {
     const sceneId = req.params.id;
-    const scene = db.getScene(sceneId);
+    const scene = await db.getScene(sceneId);
     if (!scene) {
       return res.status(404).json({ success: false, error: 'Scene tidak ditemukan.', code: 'SCENE_NOT_FOUND' });
     }
 
     const projectId = scene.project_id;
-    const project = db.getProject(projectId);
-    const foundation = db.getProjectFoundation(projectId);
-    const characters = db.getCharacters(projectId);
-    const locations = db.getLocations(projectId);
-    const objects = db.getObjects(projectId);
+    const project = await db.getProject(projectId);
+    const foundation = await db.getProjectFoundation(projectId);
+    const characters = await db.getCharacters(projectId);
+    const locations = await db.getLocations(projectId);
+    const objects = await db.getObjects(projectId);
 
     // Duration + contract gates live inside Stage 7 and throw before returning,
     // so nothing below this call runs for an invalid prompt.
@@ -568,7 +568,7 @@ apiRouter.post('/scenes/:id/regenerate-prompt', async (req: Request, res: Respon
     });
 
     // --- PERSIST only after both banana contracts validated ---
-    const updatedScene = db.updateScene(sceneId, {
+    const updatedScene = await db.updateScene(sceneId, {
       master_image_prompt: stage7Result.compiledPromptText,
       master_image_prompt_json: stage7Result.promptJson,
       image_gen_status: 'success',
@@ -615,11 +615,11 @@ apiRouter.get('/test-prompt-engine', (req: Request, res: Response) => {
 });
 
 // Update Scene (e.g. manual master_frame_image_url attach/remove)
-apiRouter.put('/scenes/:id', (req: Request, res: Response) => {
+apiRouter.put('/scenes/:id', async (req: Request, res: Response) => {
   try {
     const sceneId = req.params.id;
     const { master_frame_image_url } = req.body;
-    const updated = db.updateScene(sceneId, { master_frame_image_url });
+    const updated = await db.updateScene(sceneId, { master_frame_image_url });
     res.json({ success: true, scene: updated });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -627,11 +627,11 @@ apiRouter.put('/scenes/:id', (req: Request, res: Response) => {
 });
 
 // Update Shot (e.g. manual shot_image_url attach/remove)
-apiRouter.put('/shots/:id', (req: Request, res: Response) => {
+apiRouter.put('/shots/:id', async (req: Request, res: Response) => {
   try {
     const shotId = req.params.id;
     const { shot_image_url } = req.body;
-    const updated = db.updateShot(shotId, { shot_image_url });
+    const updated = await db.updateShot(shotId, { shot_image_url });
     res.json({ success: true, shot: updated });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -639,11 +639,11 @@ apiRouter.put('/shots/:id', (req: Request, res: Response) => {
 });
 
 // Combined Prompt per Scene (derived assembly, not new Gemini call)
-apiRouter.get('/scenes/:id/combined-prompt', (req: Request, res: Response) => {
+apiRouter.get('/scenes/:id/combined-prompt', async (req: Request, res: Response) => {
   try {
     const sceneId = req.params.id;
     const platform = (req.query.platform as 'veo' | 'gemini_omni' | 'seedance') || 'veo';
-    const result = assembleCombinedScenePrompt(sceneId, platform);
+    const result = await assembleCombinedScenePrompt(sceneId, platform);
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -651,10 +651,10 @@ apiRouter.get('/scenes/:id/combined-prompt', (req: Request, res: Response) => {
 });
 
 // Update Scene
-apiRouter.put('/scenes/:id', (req: Request, res: Response) => {
+apiRouter.put('/scenes/:id', async (req: Request, res: Response) => {
   try {
     const sceneId = req.params.id;
-    const updated = db.updateScene(sceneId, req.body);
+    const updated = await db.updateScene(sceneId, req.body);
     if (!updated) return res.status(404).json({ error: 'Scene tidak ditemukan.' });
     res.json(updated);
   } catch (err: any) {
@@ -663,10 +663,10 @@ apiRouter.put('/scenes/:id', (req: Request, res: Response) => {
 });
 
 // Update Shot
-apiRouter.put('/shots/:id', (req: Request, res: Response) => {
+apiRouter.put('/shots/:id', async (req: Request, res: Response) => {
   try {
     const shotId = req.params.id;
-    const updated = db.updateShot(shotId, req.body);
+    const updated = await db.updateShot(shotId, req.body);
     if (!updated) return res.status(404).json({ error: 'Shot tidak ditemukan.' });
     res.json(updated);
   } catch (err: any) {
@@ -675,10 +675,10 @@ apiRouter.put('/shots/:id', (req: Request, res: Response) => {
 });
 
 // Update Video Prompt
-apiRouter.put('/video-prompts/:id', (req: Request, res: Response) => {
+apiRouter.put('/video-prompts/:id', async (req: Request, res: Response) => {
   try {
     const vpId = req.params.id;
-    const updated = db.saveSingleVideoPrompt({ ...req.body, id: vpId });
+    const updated = await db.saveSingleVideoPrompt({ ...req.body, id: vpId });
     res.json(updated);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -712,22 +712,22 @@ apiRouter.post('/shots/:id/regenerate-prompt', async (req: Request, res: Respons
   try {
     const shotId = req.params.id;
 
-    const shot = db.getShot(shotId);
+    const shot = await db.getShot(shotId);
     if (!shot) {
       return res.status(404).json({ success: false, error: 'Shot tidak ditemukan.', code: 'SHOT_NOT_FOUND' });
     }
 
-    const scene = db.getScene(shot.scene_id);
+    const scene = await db.getScene(shot.scene_id);
     if (!scene) {
       return res.status(404).json({ success: false, error: 'Scene tidak ditemukan.', code: 'SCENE_NOT_FOUND' });
     }
 
     const projectId = shot.project_id;
-    const project = db.getProject(projectId);
-    const foundation = db.getProjectFoundation(projectId);
-    const characters = db.getCharacters(projectId);
-    const locations = db.getLocations(projectId);
-    const allSceneShots = db.getShotsByScene(shot.scene_id);
+    const project = await db.getProject(projectId);
+    const foundation = await db.getProjectFoundation(projectId);
+    const characters = await db.getCharacters(projectId);
+    const locations = await db.getLocations(projectId);
+    const allSceneShots = await db.getShotsByScene(shot.scene_id);
 
     const shotIndex = allSceneShots.findIndex((s) => s.id === shotId);
 
@@ -765,7 +765,7 @@ apiRouter.post('/shots/:id/regenerate-prompt', async (req: Request, res: Respons
         });
       }
 
-      const updatedShot = db.updateShot(shotId, { master_image_prompt: still.prompt_text });
+      const updatedShot = await db.updateShot(shotId, { master_image_prompt: still.prompt_text });
       return res.json({
         success: true,
         target: promptTarget,
@@ -773,7 +773,7 @@ apiRouter.post('/shots/:id/regenerate-prompt', async (req: Request, res: Respons
         shot: updatedShot,
         master_image_prompt: still.prompt_text,
         stills: stage8Result.stills,
-        prompts: db.getVideoPromptsByShot(shotId),
+        prompts: await db.getVideoPromptsByShot(shotId),
       });
     }
 
@@ -785,7 +785,7 @@ apiRouter.post('/shots/:id/regenerate-prompt', async (req: Request, res: Respons
     // the column alone made the 30s prompt overwrite the 10s row (and vice
     // versa) — one shot could never hold both. `target_platform` remains the
     // legacy compatibility column; it is just no longer the identity key.
-    const existingPrompts = db.getVideoPromptsByShot(shotId);
+    const existingPrompts = await db.getVideoPromptsByShot(shotId);
     const savedPrompts: any[] = [];
     const shotUpdates: Partial<Shot> = {};
 
@@ -799,14 +799,14 @@ apiRouter.post('/shots/:id/regenerate-prompt', async (req: Request, res: Respons
             p.target_platform === newPrompt.target_platform && p.target_platform !== 'seedance'
       );
       if (existingMatch) {
-        const updated = db.saveSingleVideoPrompt({
+        const updated = await db.saveSingleVideoPrompt({
           ...existingMatch,
           ...newPrompt,
           id: existingMatch.id,
         });
         savedPrompts.push(updated);
       } else {
-        const created = db.saveSingleVideoPrompt({
+        const created = await db.saveSingleVideoPrompt({
           ...newPrompt,
           shot_id: shotId,
           scene_id: shot.scene_id,
@@ -824,10 +824,10 @@ apiRouter.post('/shots/:id/regenerate-prompt', async (req: Request, res: Respons
     }
 
     if (Object.keys(shotUpdates).length > 0) {
-      db.updateShot(shotId, shotUpdates);
+      await db.updateShot(shotId, shotUpdates);
     }
 
-    const finalShot = db.getShot(shotId);
+    const finalShot = await db.getShot(shotId);
 
     res.json({
       success: true,
@@ -844,9 +844,9 @@ apiRouter.post('/shots/:id/regenerate-prompt', async (req: Request, res: Respons
 });
 
 // --- Story Architecture Endpoints ---
-apiRouter.get('/projects/:id/story-architecture', (req: Request, res: Response) => {
+apiRouter.get('/projects/:id/story-architecture', async (req: Request, res: Response) => {
   try {
-    const arch = db.getStoryArchitecture(req.params.id);
+    const arch = await db.getStoryArchitecture(req.params.id);
     if (!arch) {
       return res.status(404).json({ error: 'Story architecture tidak ditemukan.' });
     }
@@ -856,9 +856,9 @@ apiRouter.get('/projects/:id/story-architecture', (req: Request, res: Response) 
   }
 });
 
-apiRouter.post('/projects/:id/story-architecture', (req: Request, res: Response) => {
+apiRouter.post('/projects/:id/story-architecture', async (req: Request, res: Response) => {
   try {
-    const saved = db.saveStoryArchitecture({
+    const saved = await db.saveStoryArchitecture({
       ...req.body,
       project_id: req.params.id,
     });
@@ -869,41 +869,41 @@ apiRouter.post('/projects/:id/story-architecture', (req: Request, res: Response)
 });
 
 // --- Continuity Engine Endpoints ---
-apiRouter.get('/projects/:id/continuity-states', (req: Request, res: Response) => {
+apiRouter.get('/projects/:id/continuity-states', async (req: Request, res: Response) => {
   try {
-    const states = db.getCharacterContinuityStates(req.params.id);
+    const states = await db.getCharacterContinuityStates(req.params.id);
     res.json(states);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-apiRouter.post('/projects/:id/continuity-states', (req: Request, res: Response) => {
+apiRouter.post('/projects/:id/continuity-states', async (req: Request, res: Response) => {
   try {
-    const saved = db.saveCharacterContinuityStates(req.params.id, req.body.states || []);
+    const saved = await db.saveCharacterContinuityStates(req.params.id, req.body.states || []);
     res.json({ success: true, states: saved });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-apiRouter.get('/projects/:id/continuity-snapshot/:sceneNumber', (req: Request, res: Response) => {
+apiRouter.get('/projects/:id/continuity-snapshot/:sceneNumber', async (req: Request, res: Response) => {
   try {
     const sceneNum = parseInt(req.params.sceneNumber, 10);
-    const snap = db.getContinuitySnapshot(req.params.id, sceneNum);
+    const snap = await db.getContinuitySnapshot(req.params.id, sceneNum);
     res.json(snap || null);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-apiRouter.post('/projects/:id/costume-transition', (req: Request, res: Response) => {
+apiRouter.post('/projects/:id/costume-transition', async (req: Request, res: Response) => {
   try {
     const { character_name, transition } = req.body;
     if (!character_name || !transition) {
       return res.status(400).json({ error: 'character_name dan transition data wajib diisi.' });
     }
-    const updatedStates = db.recordApprovedCostumeTransition(req.params.id, character_name, transition);
+    const updatedStates = await db.recordApprovedCostumeTransition(req.params.id, character_name, transition);
     res.json({ success: true, states: updatedStates });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -926,17 +926,17 @@ apiRouter.post('/projects/:id/validate-duration', (req: Request, res: Response) 
   }
 });
 
-apiRouter.post('/projects/:id/convert-timeline', (req: Request, res: Response) => {
+apiRouter.post('/projects/:id/convert-timeline', async (req: Request, res: Response) => {
   try {
     const { targetDuration } = req.body;
-    const project = db.getProject(req.params.id);
+    const project = await db.getProject(req.params.id);
     if (!project) {
       return res.status(404).json({ error: 'Proyek tidak ditemukan.' });
     }
-    const scenes = db.getScenes(req.params.id);
+    const scenes = await db.getScenes(req.params.id);
     const convertedScenes = convertTimelineForExtendedMode(scenes, targetDuration || 30);
     
-    db.saveScenes(req.params.id, convertedScenes);
+    await db.saveScenes(req.params.id, convertedScenes);
     
     const updatedProj = {
       ...project,
@@ -945,7 +945,7 @@ apiRouter.post('/projects/:id/convert-timeline', (req: Request, res: Response) =
       timelineSceneDuration: targetDuration || 30,
       scene_duration_sec: targetDuration || 30,
     };
-    db.saveProject(updatedProj);
+    await db.saveProject(updatedProj);
 
     res.json({ success: true, scenes: convertedScenes });
   } catch (err: any) {
@@ -972,7 +972,7 @@ apiRouter.get('/regression-tests/prompt', (req: Request, res: Response) => {
 });
 
 // SSE Live Stream for pipeline updates
-apiRouter.get('/projects/:id/stream', (req: Request, res: Response) => {
+apiRouter.get('/projects/:id/stream', async (req: Request, res: Response) => {
   const id = req.params.id;
 
   res.setHeader('Content-Type', 'text/event-stream');
@@ -986,8 +986,8 @@ apiRouter.get('/projects/:id/stream', (req: Request, res: Response) => {
   sseClients[id].push(res);
 
   // Send current state
-  const logs = db.getLogs(id);
-  const project = db.getProject(id);
+  const logs = await db.getLogs(id);
+  const project = await db.getProject(id);
   res.write(`data: ${JSON.stringify({ type: 'init', project, logs })}\n\n`);
 
   req.on('close', () => {
