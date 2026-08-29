@@ -76,6 +76,7 @@ export default function App() {
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [processingSceneId, setProcessingSceneId] = useState<string | null>(null);
   const [processingShotId, setProcessingShotId] = useState<string | null>(null);
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
   // PATCH 5.5-R1 FASE 5: per-shot generation error, drives the `error` UI state.
   // A failed contract means NOTHING was persisted, so the cell must not pretend
   // a prompt exists.
@@ -155,8 +156,14 @@ export default function App() {
         const data = JSON.parse(event.data);
         if (data.type === 'init') {
           if (data.logs) setLogs(data.logs);
-          if (data.project) setCurrentProject(data.project);
+          if (data.project) {
+            setCurrentProject(data.project);
+            setActiveRunId(data.project.latest_run_id);
+          }
         } else if (data.type === 'progress') {
+          if (data.runId) {
+            setActiveRunId(data.runId);
+          }
           setLogs((prev) => [
             ...prev,
             {
@@ -169,8 +176,10 @@ export default function App() {
           ]);
           setCurrentProject((prev) => (prev ? { ...prev, current_stage: data.stage } : null));
         } else if (data.type === 'finished') {
-          loadProjectDetails(currentProject.id);
-          fetchProjects();
+          if (data.runId === activeRunId) {
+            loadProjectDetails(currentProject.id);
+            fetchProjects();
+          }
         }
       } catch (err) {
         console.error('Error parsing SSE event:', err);
@@ -184,7 +193,7 @@ export default function App() {
     return () => {
       sse.close();
     };
-  }, [currentProject?.id, loadProjectDetails, fetchProjects]);
+  }, [currentProject?.id, loadProjectDetails, fetchProjects, activeRunId]);
 
   // Initial load
   useEffect(() => {

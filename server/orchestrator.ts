@@ -1946,7 +1946,7 @@ export async function runOrchestratedPipeline({
       : undefined;
     const resolvedConcurrency = sceneConcurrency ?? activeRunContext.concurrency ?? envConcurrency ?? 2;
     const sceneResult = await generateAllScenes(projectId, resolvedConcurrency, onProgress, activeRunContext);
-    const blockedScenes = sceneResult.failedScenes - (sceneResult.totalScenes - sceneResult.readyScenes - sceneResult.failedScenes);
+    const blockedScenes = sceneResult.totalScenes - sceneResult.readyScenes - sceneResult.failedScenes;
     safePersistRunSummaryAtOrchestrator(
       projectId,
       activeRunContext.runId,
