@@ -6,6 +6,7 @@ import { runStage4NarrativeStructure } from './stages/stage4_narrative_structure
 import {
   runStage5SceneBreakdownAttempt,
   validateSceneDurations,
+  validateSceneAssetNames,
   DetectedScene,
 } from './stages/stage5_scene_breakdown';
 import {
@@ -908,6 +909,12 @@ async function runProjectInitializationImpl(
     let feedbackPrompt: string | undefined = undefined;
     let lastValidationError: string | undefined = undefined;
 
+    // Canonical asset roster from S2/S3. S6's asset integrity gate resolves
+    // scene.character_names / scene.location_name against these Bibles by name,
+    // so S5 must emit the exact names or every scene gets BLOCKED at S6.
+    const characterRoster = savedCharacters.map((character) => character.name).filter(Boolean);
+    const locationRoster = savedLocations.map((location) => location.name).filter(Boolean);
+
     while (attempt < MAX_RETRIES) {
       attempt++;
       const s5AttemptStart = new Date().toISOString();
@@ -941,6 +948,8 @@ async function runProjectInitializationImpl(
           model: project.ai_model,
           reasoningConfig: project.reasoning_config,
           feedbackPrompt,
+          characterRoster,
+          locationRoster,
         });
         await enforceStageConsistency(projectId, 'S5', scenesAttempt, consistencyState);
         continuityState = await advanceContinuity(projectId, 'S5', { id: `project_${projectId}`, scene_number: 5, event: 'Stage 5' }, scenesAttempt, continuityState);
@@ -955,7 +964,18 @@ async function runProjectInitializationImpl(
           project.allow_final_scene_override
         );
 
-        if (validation.valid) {
+        // S5 -> S6 asset contract. Any scene referencing a character/location
+        // outside the Bible would be BLOCKED by the S6 asset integrity gate
+        // after the full run, so it is caught here where the retry loop can
+        // still regenerate against the exact roster.
+        const assetNameValidation = validateSceneAssetNames(
+          scenesAttempt,
+          characterRoster,
+          locationRoster,
+          project.prompt_language
+        );
+
+        if (validation.valid && assetNameValidation.valid) {
           validatedScenes = scenesAttempt;
           const s5Duration = Date.now() - s5AttemptStartTime;
           recordTelemetry(projectId, {
@@ -979,7 +999,9 @@ async function runProjectInitializationImpl(
           );
           break;
         } else {
-          lastValidationError = validation.errorMessage;
+          const combinedError = [validation.errorMessage, assetNameValidation.errorMessage].filter(Boolean).join(' ');
+          const combinedCorrective = [validation.correctivePrompt, assetNameValidation.correctivePrompt].filter(Boolean).join(' ');
+          lastValidationError = combinedError;
           const s5Duration = Date.now() - s5AttemptStartTime;
           recordTelemetry(projectId, {
             stage: 5,
@@ -990,20 +1012,20 @@ async function runProjectInitializationImpl(
             completed_at: new Date().toISOString(),
             duration_ms: s5Duration,
             status: attempt < MAX_RETRIES ? 'retrying' : 'failed',
-            error_type: 'duration_mismatch',
-            error_message: validation.errorMessage,
+            error_type: validation.valid ? 'schema_validation' : 'duration_mismatch',
+            error_message: combinedError,
           });
 
           log(
             5,
             'Scene Breakdown & Duration',
-            `Percobaan ${attempt} gagal validasi: ${validation.errorMessage}`,
+            `Percobaan ${attempt} gagal validasi: ${combinedError}`,
             'warn',
             'S5'
           );
 
           if (attempt < MAX_RETRIES) {
-            feedbackPrompt = validation.correctivePrompt;
+            feedbackPrompt = combinedCorrective;
           }
         }
       } catch (err: any) {

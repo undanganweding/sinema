@@ -14,6 +14,12 @@ export interface Stage5SceneBreakdownInput {
   model?: string;
   reasoningConfig?: ReasoningConfig;
   feedbackPrompt?: string; // Corrective prompt on retry
+  // Canonical asset rosters produced by S2 (Character Bible) and S3 (Location
+  // Bible). S6 asset-integrity gate matches scene.character_names /
+  // scene.location_name against these exact names, so S5 must not invent new
+  // ones. When supplied, generated names are canonicalized against them.
+  characterRoster?: string[];
+  locationRoster?: string[];
 }
 
 export type DetectedScene = Omit<
@@ -29,6 +35,164 @@ export interface Stage5ValidationResult {
   fixedViolations?: { scene_number: number; title: string; duration_sec: number; expected: number }[];
   errorMessage?: string;
   correctivePrompt?: string;
+}
+
+export interface SceneAssetNameViolation {
+  scene_number: number;
+  assetType: 'CHARACTER' | 'LOCATION';
+  value: string;
+}
+
+export interface Stage5AssetNameValidationResult {
+  valid: boolean;
+  violations: SceneAssetNameViolation[];
+  errorMessage?: string;
+  correctivePrompt?: string;
+}
+
+// Generic honorifics / articles carry no identifying signal, so they are
+// excluded from similarity scoring ("Sang Putri" must resolve to
+// "Putri Nelayan", not tie with "Sang Nelayan").
+const ASSET_NAME_STOPWORDS = new Set([
+  'sang', 'si', 'the', 'a', 'an', 'of', 'dan', 'and', 'de', 'da', 'di', 'ke', 'pada',
+]);
+
+function normalizeAssetName(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+/** Drops parenthetical qualifiers, e.g. "Danau Berkabut (Fajar)" -> "danau berkabut". */
+function baseAssetName(value: string): string {
+  return normalizeAssetName(value.replace(/\([^)]*\)/g, ' '));
+}
+
+function assetNameTokens(value: string): string[] {
+  return baseAssetName(value)
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length > 0 && !ASSET_NAME_STOPWORDS.has(token));
+}
+
+function assetNameSimilarity(candidate: string, target: string): number {
+  const candidateTokens = new Set(assetNameTokens(candidate));
+  const targetTokens = new Set(assetNameTokens(target));
+  if (candidateTokens.size === 0 || targetTokens.size === 0) return 0;
+  let intersection = 0;
+  candidateTokens.forEach((token) => {
+    if (targetTokens.has(token)) intersection++;
+  });
+  const union = new Set([...candidateTokens, ...targetTokens]).size;
+  return intersection / union;
+}
+
+/**
+ * Snap an LLM-generated asset name onto the canonical roster entry it refers to.
+ * Returns null when the reference is ambiguous or genuinely absent, so the
+ * caller can force an S5 regeneration instead of silently mapping a scene onto
+ * the wrong asset.
+ */
+export function resolveCanonicalAssetName(candidate: string, roster: string[]): string | null {
+  if (!candidate || !candidate.trim() || roster.length === 0) return null;
+  const normalizedCandidate = baseAssetName(candidate);
+  if (!normalizedCandidate) return null;
+
+  const exact = roster.find((entry) => baseAssetName(entry) === normalizedCandidate);
+  if (exact) return exact;
+
+  // Qualifier-tolerant containment: "Danau Berkabut" -> "Danau Berkabut (Fajar)".
+  const contained = roster.filter((entry) => {
+    const normalizedEntry = baseAssetName(entry);
+    return normalizedEntry.startsWith(`${normalizedCandidate} `) || normalizedCandidate.startsWith(`${normalizedEntry} `);
+  });
+  if (contained.length === 1) return contained[0];
+
+  const scored = roster
+    .map((entry) => ({ name: entry, score: assetNameSimilarity(candidate, entry) }))
+    .sort((left, right) => right.score - left.score);
+  const best = scored[0];
+  const runnerUp = scored[1];
+  if (best && best.score >= 0.5 && (!runnerUp || best.score > runnerUp.score)) {
+    return best.name;
+  }
+  return null;
+}
+
+/**
+ * Rewrites scene asset references to canonical Bible names in place of LLM
+ * paraphrases. Names that cannot be resolved unambiguously are left untouched
+ * and surfaced by validateSceneAssetNames().
+ */
+export function canonicalizeSceneAssetNames(
+  scenes: DetectedScene[],
+  characterRoster: string[],
+  locationRoster: string[]
+): DetectedScene[] {
+  if (characterRoster.length === 0 && locationRoster.length === 0) return scenes;
+  return scenes.map((scene) => {
+    const canonicalLocation = scene.location_name
+      ? resolveCanonicalAssetName(scene.location_name, locationRoster)
+      : null;
+    const canonicalCharacters = (scene.character_names || []).map(
+      (name) => resolveCanonicalAssetName(name, characterRoster) || name
+    );
+    const dedupedCharacters = Array.from(new Set(canonicalCharacters));
+    return {
+      ...scene,
+      location_name: canonicalLocation || scene.location_name,
+      character_names: dedupedCharacters,
+      ...(scene.characters_present
+        ? { characters_present: Array.from(new Set(scene.characters_present.map((name) => resolveCanonicalAssetName(name, characterRoster) || name))) }
+        : {}),
+    };
+  });
+}
+
+/**
+ * Guards the S5 -> S6 contract: every scene asset reference must exist in the
+ * Character/Location Bible. Unresolvable references are reported with a
+ * corrective prompt so the existing S5 retry loop can regenerate against the
+ * exact roster, instead of letting the S6 asset-integrity gate block every
+ * scene at the end of the run.
+ */
+export function validateSceneAssetNames(
+  scenes: DetectedScene[],
+  characterRoster: string[],
+  locationRoster: string[],
+  language: 'id' | 'en'
+): Stage5AssetNameValidationResult {
+  if (characterRoster.length === 0 && locationRoster.length === 0) {
+    return { valid: true, violations: [] };
+  }
+  const isIndo = language === 'id';
+  const violations: SceneAssetNameViolation[] = [];
+
+  for (const scene of scenes) {
+    if (locationRoster.length > 0 && scene.location_name && !locationRoster.some((entry) => baseAssetName(entry) === baseAssetName(scene.location_name))) {
+      violations.push({ scene_number: scene.scene_number, assetType: 'LOCATION', value: scene.location_name });
+    }
+    if (characterRoster.length > 0) {
+      for (const name of scene.character_names || []) {
+        if (!characterRoster.some((entry) => baseAssetName(entry) === baseAssetName(name))) {
+          violations.push({ scene_number: scene.scene_number, assetType: 'CHARACTER', value: name });
+        }
+      }
+    }
+  }
+
+  if (violations.length === 0) {
+    return { valid: true, violations: [] };
+  }
+
+  const summary = violations
+    .map((violation) => `Scene #${violation.scene_number} ${violation.assetType} "${violation.value}"`)
+    .join(', ');
+  const errorMessage = isIndo
+    ? `Referensi asset di luar Character/Location Bible: ${summary}.`
+    : `Scene asset references outside the Character/Location Bible: ${summary}.`;
+  const correctivePrompt = isIndo
+    ? `WAJIB gunakan HANYA nama asset kanonik berikut, ditulis PERSIS sama. KARAKTER: ${characterRoster.join(' | ') || '(tidak ada)'}. LOKASI: ${locationRoster.join(' | ') || '(tidak ada)'}. Jangan membuat nama karakter atau lokasi baru, jangan menyingkat, jangan menambah gelar. Referensi bermasalah: ${summary}.`
+    : `Use ONLY these canonical asset names, spelled EXACTLY. CHARACTERS: ${characterRoster.join(' | ') || '(none)'}. LOCATIONS: ${locationRoster.join(' | ') || '(none)'}. Do not invent, abbreviate, or re-title any character or location. Offending references: ${summary}.`;
+
+  return { valid: false, violations, errorMessage, correctivePrompt };
 }
 
 export function validateSceneDurations(
@@ -223,6 +387,29 @@ STRICT DURATION RULES:
 
   const systemInstruction = `${baseInstruction}\n\n${narrativeDoctrine}\n\nGROUNDING CONTEXT:\n${groundingContext}`;
 
+  // Canonical asset roster contract (S2/S3 -> S5 -> S6). The S6 asset integrity
+  // gate resolves scene.character_names / scene.location_name against the
+  // Character & Location Bible by name, so a paraphrased name blocks the scene.
+  const characterRoster = input.characterRoster?.filter((name) => Boolean(name && name.trim())) || [];
+  const locationRoster = input.locationRoster?.filter((name) => Boolean(name && name.trim())) || [];
+  const rosterInstruction = (characterRoster.length > 0 || locationRoster.length > 0)
+    ? (isIndo
+      ? `\n\n=== ASSET KANONIK (WAJIB DIPAKAI PERSIS) ===
+KARAKTER: ${characterRoster.join(' | ') || '(tidak ada)'}
+LOKASI: ${locationRoster.join(' | ') || '(tidak ada)'}
+ATURAN MUTLAK:
+1. Field character_names WAJIB berisi HANYA nama dari daftar KARAKTER di atas, ditulis PERSIS sama (huruf per huruf).
+2. Field location_name WAJIB berisi PERSIS satu nama dari daftar LOKASI di atas.
+3. JANGAN membuat karakter/lokasi baru, jangan menyingkat, jangan menambah/menghapus gelar, jangan menerjemahkan.`
+      : `\n\n=== CANONICAL ASSETS (MUST BE USED VERBATIM) ===
+CHARACTERS: ${characterRoster.join(' | ') || '(none)'}
+LOCATIONS: ${locationRoster.join(' | ') || '(none)'}
+NON-NEGOTIABLE RULES:
+1. character_names MUST contain ONLY names from the CHARACTERS list above, spelled EXACTLY.
+2. location_name MUST be EXACTLY one entry from the LOCATIONS list above.
+3. Do NOT invent new characters/locations, abbreviate, add or drop titles, or translate them.`)
+    : '';
+
   let prompt = isFixed
     ? `Pecah narasi berikut menjadi tepat ${expectedSceneCount} Scene dengan durasi tetap ${input.fixedSceneDurationSec} detik per scene (Total: ${input.totalDurationTargetSec} detik):
 
@@ -249,6 +436,8 @@ Ending: ${input.narrativeBeats.ending}
 Target Total Duration: ${input.totalDurationTargetSec} detik (EXACT)
 Max Scene Duration Ceiling: ${input.maxSceneDurationSec} detik per scene`;
 
+  prompt += rosterInstruction;
+
   if (input.feedbackPrompt) {
     prompt += `\n\n=== REVISI PENTING DARI VALIDASI SEBELUMNYA ===\n${input.feedbackPrompt}\nPerbaiki dan pastikan hasil baru memenuhi seluruh aturan eksak ini!`;
   }
@@ -266,12 +455,19 @@ Max Scene Duration Ceiling: ${input.maxSceneDurationSec} detik per scene`;
           description: `Exact allocated scene duration in seconds (must be integer, <= ${input.maxSceneDurationSec}, and sum to ${input.totalDurationTargetSec})`,
         },
         story_purpose: { type: Type.STRING, description: 'Core narrative purpose of this specific scene' },
-        location_name: { type: Type.STRING, description: 'Associated set or location name' },
+        location_name: {
+          type: Type.STRING,
+          description: locationRoster.length > 0
+            ? `Associated set or location name. MUST be exactly one of: ${locationRoster.join(' | ')}`
+            : 'Associated set or location name',
+        },
         time_of_day: { type: Type.STRING, description: 'DAWN, DAY, DUSK, NIGHT, MIDNIGHT' },
         character_names: {
           type: Type.ARRAY,
           items: { type: Type.STRING },
-          description: 'Characters present in this scene',
+          description: characterRoster.length > 0
+            ? `Characters present in this scene. Each entry MUST be exactly one of: ${characterRoster.join(' | ')}`
+            : 'Characters present in this scene',
         },
         emotional_objective: { type: Type.STRING, description: 'The emotional target beat felt by character and audience' },
         event: { type: Type.STRING, description: 'Key dramatic action or event taking place' },
@@ -325,23 +521,28 @@ Max Scene Duration Ceiling: ${input.maxSceneDurationSec} detik per scene`;
     };
   });
 
+  // Snap paraphrased asset references back to canonical Bible names so the S6
+  // asset integrity gate can resolve them. Unresolvable references are left
+  // as-is and reported by validateSceneAssetNames() for the S5 retry loop.
+  const canonicalizedScenes = canonicalizeSceneAssetNames(sanitizedScenes, characterRoster, locationRoster);
+
   // Handle final scene override / duration rounding for fixed mode if total doesn't match perfectly
-  if (isFixed && input.fixedSceneDurationSec && sanitizedScenes.length > 0) {
-    let currentTotal = sanitizedScenes.reduce((sum, s) => sum + s.duration_sec, 0);
+  if (isFixed && input.fixedSceneDurationSec && canonicalizedScenes.length > 0) {
+    let currentTotal = canonicalizedScenes.reduce((sum, s) => sum + s.duration_sec, 0);
     const target = input.totalDurationTargetSec;
     const diff = target - currentTotal;
     if (diff !== 0) {
       if (input.allowFinalSceneOverride) {
-        sanitizedScenes[sanitizedScenes.length - 1].duration_sec += diff;
+        canonicalizedScenes[canonicalizedScenes.length - 1].duration_sec += diff;
       } else {
         // Adjust scene count to fit target exactly
         const expectedCount = Math.max(1, Math.round(target / input.fixedSceneDurationSec));
-        if (sanitizedScenes.length > expectedCount) {
-          sanitizedScenes.splice(expectedCount);
+        if (canonicalizedScenes.length > expectedCount) {
+          canonicalizedScenes.splice(expectedCount);
         }
       }
     }
   }
 
-  return sanitizedScenes;
+  return canonicalizedScenes;
 }

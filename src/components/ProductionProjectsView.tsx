@@ -50,8 +50,12 @@ export const ProductionProjectsView: React.FC<ProductionProjectsViewProps> = ({
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const filteredProjects = projects.filter((p) => {
-    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.raw_script.toLowerCase().includes(searchQuery.toLowerCase());
+    // Legacy/partial records can lack title or raw_script (e.g. a project row
+    // persisted before validation). Guard the search fields so one bad record
+    // cannot crash the whole Production view.
+    const needle = searchQuery.toLowerCase();
+    const matchesSearch = (p.title || '').toLowerCase().includes(needle) ||
+      (p.raw_script || '').toLowerCase().includes(needle);
 
     if (!matchesSearch) return false;
 
