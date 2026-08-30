@@ -41,7 +41,12 @@ interface ShotRowProps {
   onPromptsUpdated?: (shotId: string, prompts: VideoPrompt[]) => void;
 }
 
-export const ShotRow: React.FC<ShotRowProps> = ({
+/**
+ * ⚡ Performance Optimization (Bolt):
+ * Wrapped ShotRow with React.memo to prevent unnecessary re-renders when parent
+ * components update or sibling shots change in large scene lists.
+ */
+export const ShotRow: React.FC<ShotRowProps> = React.memo(({
   shot,
   videoPrompts,
   includeSeedance,
@@ -669,4 +674,4 @@ export const ShotRow: React.FC<ShotRowProps> = ({
       )}
     </div>
   );
-};
+});
