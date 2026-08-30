@@ -52,7 +52,13 @@ interface CommandItem {
   action: () => void;
 }
 
-export const CommandPalette: React.FC<CommandPaletteProps> = ({
+/**
+ * ⚡ Performance Optimization (Bolt):
+ * Wrapped CommandPalette with React.memo to prevent unnecessary re-renders of the palette
+ * when parent state changes (such as SSE logs or timeline updates) while the palette is closed
+ * or its input props haven't changed.
+ */
+export const CommandPalette: React.FC<CommandPaletteProps> = React.memo(({
   isOpen,
   onClose,
   project,
@@ -408,4 +414,4 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       </div>
     </div>
   );
-};
+});
