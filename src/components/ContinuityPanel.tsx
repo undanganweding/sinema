@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -52,17 +52,43 @@ export const ContinuityPanel: React.FC<ContinuityPanelProps> = ({
   const [transitionReason, setTransitionReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const activeChar = characters.find((c) => c.name.toLowerCase() === selectedCharName.toLowerCase()) || characters[0];
-  const activeCharState = continuityStates.find((cs) => cs.name.toLowerCase() === selectedCharName.toLowerCase());
+  // O(1) character continuity state lookup map to avoid O(K) linear array scans per character render
+  const continuityStatesMap = useMemo(() => {
+    const map = new Map<string, CharacterContinuityState>();
+    for (const cs of continuityStates) {
+      if (cs.name) {
+        map.set(cs.name.toLowerCase(), cs);
+      }
+    }
+    return map;
+  }, [continuityStates]);
 
-  // Aggregate continuity violations across all scenes
-  const allViolations = scenes.flatMap((s) => (s.continuity_violations || []).map((v) => ({ ...v, scene_number: s.scene_number })));
-  const failedScenesCount = scenes.filter((s) => s.continuity_status === 'continuity_failed').length;
-  const passedScenesCount = scenes.filter((s) => s.continuity_status === 'passed').length;
+  const activeChar = useMemo(
+    () => characters.find((c) => c.name.toLowerCase() === selectedCharName.toLowerCase()) || characters[0],
+    [characters, selectedCharName]
+  );
+  const activeCharState = activeChar ? continuityStatesMap.get(activeChar.name.toLowerCase()) : undefined;
+
+  // Single-pass memoized aggregation of scene statistics and continuity violations to eliminate flatMap/filter on every re-render
+  const { allViolations, failedScenesCount, passedScenesCount } = useMemo(() => {
+    let failed = 0;
+    let passed = 0;
+    const violations = [];
+    for (const s of scenes) {
+      if (s.continuity_status === 'continuity_failed') failed++;
+      if (s.continuity_status === 'passed') passed++;
+      if (s.continuity_violations) {
+        for (const v of s.continuity_violations) {
+          violations.push({ ...v, scene_number: s.scene_number });
+        }
+      }
+    }
+    return { allViolations: violations, failedScenesCount: failed, passedScenesCount: passed };
+  }, [scenes]);
 
   const handleOpenTransitionModal = (charName: string) => {
     setSelectedCharName(charName);
-    const charSt = continuityStates.find((c) => c.name.toLowerCase() === charName.toLowerCase());
+    const charSt = continuityStatesMap.get(charName.toLowerCase());
     setFromCostumeVersion(charSt?.current_state.costume_version || 'v1_canonical');
     setToCostumeVersion(`${charSt?.current_state.costume_version || 'v1'}_variasi_adegan`);
     setAtSceneNumber(2);
@@ -160,7 +186,7 @@ export const ContinuityPanel: React.FC<ContinuityPanelProps> = ({
 
           <div className="space-y-2">
             {characters.map((c) => {
-              const state = continuityStates.find((cs) => cs.name.toLowerCase() === c.name.toLowerCase());
+              const state = continuityStatesMap.get(c.name.toLowerCase());
               const isSelected = activeChar?.name.toLowerCase() === c.name.toLowerCase();
               return (
                 <button
