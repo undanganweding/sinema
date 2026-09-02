@@ -1159,10 +1159,20 @@ export const db = {
     const storyArchitecture: StoryArchitecture | null = await dbgRun<StoryArchitecture | null>('getStoryArchitecture', () => this.getStoryArchitecture(projectId));
     const continuityStates: CharacterContinuityState[] = await dbgRun<CharacterContinuityState[]>('getCharacterContinuityStates', () => this.getCharacterContinuityStates(projectId));
 
+    // Performance optimization (Bolt ⚡): Use O(1) hash map lookups instead of
+    // nested O(N*S) and O(S*P) filter calls. Single-pass indexing reduces complexity to O(N + S + P).
     const shotsMap: Record<string, Shot[]> = {};
     for (const scene of rawScenes) {
       if (scene.id) {
-        shotsMap[scene.id] = allShots.filter((s) => s.scene_id === scene.id);
+        shotsMap[scene.id] = [];
+      }
+    }
+    for (const shot of allShots) {
+      if (shot.scene_id) {
+        if (!shotsMap[shot.scene_id]) {
+          shotsMap[shot.scene_id] = [];
+        }
+        shotsMap[shot.scene_id].push(shot);
       }
     }
 
@@ -1177,7 +1187,15 @@ export const db = {
     const promptsMap: Record<string, VideoPrompt[]> = {};
     for (const shot of allShots) {
       if (shot.id) {
-        promptsMap[shot.id] = allVideoPrompts.filter((v) => v.shot_id === shot.id);
+        promptsMap[shot.id] = [];
+      }
+    }
+    for (const vprompt of allVideoPrompts) {
+      if (vprompt.shot_id) {
+        if (!promptsMap[vprompt.shot_id]) {
+          promptsMap[vprompt.shot_id] = [];
+        }
+        promptsMap[vprompt.shot_id].push(vprompt);
       }
     }
 
