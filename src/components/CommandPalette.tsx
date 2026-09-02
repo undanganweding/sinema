@@ -52,6 +52,92 @@ interface CommandItem {
   action: () => void;
 }
 
+/**
+ * ⚡ Bolt Optimization:
+ * Hoisted static workspace command definitions outside the component scope to avoid
+ * re-instantiating 10 static object templates on every component render or dependency change.
+ */
+interface CoreWorkspaceTemplate {
+  id: string;
+  tab: StudioWorkspaceTab;
+  title: string;
+  subtitle: string;
+  icon: React.ElementType;
+}
+
+const CORE_WORKSPACE_ITEMS: CoreWorkspaceTemplate[] = [
+  {
+    id: 'nav-overview',
+    tab: 'overview',
+    title: 'Project Overview & Dashboard',
+    subtitle: 'Production statistics, pipeline summary, and hero visual',
+    icon: Film,
+  },
+  {
+    id: 'nav-story',
+    tab: 'story',
+    title: 'Story Architecture & Cold Open',
+    subtitle: 'Act breakdown, narrative goals, and cold open hooks',
+    icon: Layers,
+  },
+  {
+    id: 'nav-scenes',
+    tab: 'scenes',
+    title: 'Scene Studio Workspace',
+    subtitle: 'Edit master frames, fixed scene timelines, and sub-beats',
+    icon: Film,
+  },
+  {
+    id: 'nav-shots',
+    tab: 'shots',
+    title: 'Shot Workspace & Prompt Inspector',
+    subtitle: 'Detailed camera angles, Seedance video prompts, and audio',
+    icon: Play,
+  },
+  {
+    id: 'nav-characters',
+    tab: 'characters',
+    title: 'Character Bible & Wardrobe',
+    subtitle: 'Manage character identity locks, costumes, and transitions',
+    icon: Users,
+  },
+  {
+    id: 'nav-continuity',
+    tab: 'continuity',
+    title: 'Continuity Intelligence Center',
+    subtitle: 'Audit identity, costume, and historical period rules',
+    icon: ShieldCheck,
+  },
+  {
+    id: 'nav-prompts',
+    tab: 'prompts',
+    title: 'Prompt Studio & Full Scene Prompts',
+    subtitle: 'Multi-platform prompt generation, copy, and validation',
+    icon: Sparkles,
+  },
+  {
+    id: 'nav-queue',
+    tab: 'queue',
+    title: 'Generation Queue & Pipeline Logs',
+    subtitle: 'Track active generation tasks and production logs',
+    icon: Clock,
+  },
+  {
+    id: 'nav-export',
+    tab: 'export',
+    title: 'Export & Google Drive Deliverables',
+    subtitle: 'Package shots, prompts, and cinematic reports',
+    icon: Download,
+  },
+  {
+    id: 'nav-settings',
+    tab: 'settings',
+    title: 'Studio Settings & AI Models',
+    subtitle: 'Configure LLM providers, aspect ratios, and languages',
+    icon: Sliders,
+  },
+];
+
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
   isOpen,
   onClose,
@@ -80,91 +166,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   // Build command list based on project entities and available actions
   const items: CommandItem[] = useMemo(() => {
-    const list: CommandItem[] = [];
-
-    // Core Workspaces
-    list.push(
-      {
-        id: 'nav-overview',
-        category: 'Workspace',
-        title: 'Project Overview & Dashboard',
-        subtitle: 'Production statistics, pipeline summary, and hero visual',
-        icon: Film,
-        action: () => onNavigate('overview'),
-      },
-      {
-        id: 'nav-story',
-        category: 'Workspace',
-        title: 'Story Architecture & Cold Open',
-        subtitle: 'Act breakdown, narrative goals, and cold open hooks',
-        icon: Layers,
-        action: () => onNavigate('story'),
-      },
-      {
-        id: 'nav-scenes',
-        category: 'Workspace',
-        title: 'Scene Studio Workspace',
-        subtitle: 'Edit master frames, fixed scene timelines, and sub-beats',
-        icon: Film,
-        action: () => onNavigate('scenes'),
-      },
-      {
-        id: 'nav-shots',
-        category: 'Workspace',
-        title: 'Shot Workspace & Prompt Inspector',
-        subtitle: 'Detailed camera angles, Seedance video prompts, and audio',
-        icon: Play,
-        action: () => onNavigate('shots'),
-      },
-      {
-        id: 'nav-characters',
-        category: 'Workspace',
-        title: 'Character Bible & Wardrobe',
-        subtitle: 'Manage character identity locks, costumes, and transitions',
-        icon: Users,
-        action: () => onNavigate('characters'),
-      },
-      {
-        id: 'nav-continuity',
-        category: 'Workspace',
-        title: 'Continuity Intelligence Center',
-        subtitle: 'Audit identity, costume, and historical period rules',
-        icon: ShieldCheck,
-        action: () => onNavigate('continuity'),
-      },
-      {
-        id: 'nav-prompts',
-        category: 'Workspace',
-        title: 'Prompt Studio & Full Scene Prompts',
-        subtitle: 'Multi-platform prompt generation, copy, and validation',
-        icon: Sparkles,
-        action: () => onNavigate('prompts'),
-      },
-      {
-        id: 'nav-queue',
-        category: 'Workspace',
-        title: 'Generation Queue & Pipeline Logs',
-        subtitle: 'Track active generation tasks and production logs',
-        icon: Clock,
-        action: () => onNavigate('queue'),
-      },
-      {
-        id: 'nav-export',
-        category: 'Workspace',
-        title: 'Export & Google Drive Deliverables',
-        subtitle: 'Package shots, prompts, and cinematic reports',
-        icon: Download,
-        action: () => onNavigate('export'),
-      },
-      {
-        id: 'nav-settings',
-        category: 'Workspace',
-        title: 'Studio Settings & AI Models',
-        subtitle: 'Configure LLM providers, aspect ratios, and languages',
-        icon: Sliders,
-        action: () => onNavigate('settings'),
-      }
-    );
+    const list: CommandItem[] = CORE_WORKSPACE_ITEMS.map((item) => ({
+      id: item.id,
+      category: 'Workspace',
+      title: item.title,
+      subtitle: item.subtitle,
+      icon: item.icon,
+      action: () => onNavigate(item.tab),
+    }));
 
     // Dynamic Scenes
     scenes.forEach((s) => {
