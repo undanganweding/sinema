@@ -548,11 +548,14 @@ apiRouter.post('/scenes/:id/regenerate-prompt', async (req: Request, res: Respon
     }
 
     const projectId = scene.project_id;
-    const project = await db.getProject(projectId);
-    const foundation = await db.getProjectFoundation(projectId);
-    const characters = await db.getCharacters(projectId);
-    const locations = await db.getLocations(projectId);
-    const objects = await db.getObjects(projectId);
+    // Bolt Optimization: Fetch independent project entities concurrently using Promise.all
+    const [project, foundation, characters, locations, objects] = await Promise.all([
+      db.getProject(projectId),
+      db.getProjectFoundation(projectId),
+      db.getCharacters(projectId),
+      db.getLocations(projectId),
+      db.getObjects(projectId),
+    ]);
 
     // Duration + contract gates live inside Stage 7 and throw before returning,
     // so nothing below this call runs for an invalid prompt.
@@ -723,11 +726,14 @@ apiRouter.post('/shots/:id/regenerate-prompt', async (req: Request, res: Respons
     }
 
     const projectId = shot.project_id;
-    const project = await db.getProject(projectId);
-    const foundation = await db.getProjectFoundation(projectId);
-    const characters = await db.getCharacters(projectId);
-    const locations = await db.getLocations(projectId);
-    const allSceneShots = await db.getShotsByScene(shot.scene_id);
+    // Bolt Optimization: Fetch independent project entities concurrently using Promise.all
+    const [project, foundation, characters, locations, allSceneShots] = await Promise.all([
+      db.getProject(projectId),
+      db.getProjectFoundation(projectId),
+      db.getCharacters(projectId),
+      db.getLocations(projectId),
+      db.getShotsByScene(shot.scene_id),
+    ]);
 
     const shotIndex = allSceneShots.findIndex((s) => s.id === shotId);
 
