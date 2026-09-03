@@ -358,8 +358,11 @@ export const db = {
       'video_prompts', 'story_architectures', 'continuity_states', 'continuity_snapshots',
     ];
     const deleteRefs: any[] = [];
-    for (const collName of ownedCollections) {
-      const snap = await colRef(fsdb, collName).where('project_id', '==', id).get();
+    // Bolt Optimization: Batch fetch owned collection snapshots concurrently
+    const ownedSnaps = await Promise.all(
+      ownedCollections.map((collName) => colRef(fsdb, collName).where('project_id', '==', id).get())
+    );
+    for (const snap of ownedSnaps) {
       for (const d of snap.docs) deleteRefs.push(d.ref);
     }
     const subSnaps = await Promise.all([
@@ -1005,9 +1008,12 @@ export const db = {
     if (!USE_FIRESTORE) {
       let arch = jsonState.story_architectures?.[projectId] || null;
       if (!arch) {
-        const project = await this.getProject(projectId);
-        const foundation = await this.getProjectFoundation(projectId);
-        const scenes = await this.getScenes(projectId);
+        // Bolt Optimization: Fetch independent project entities concurrently
+        const [project, foundation, scenes] = await Promise.all([
+          this.getProject(projectId),
+          this.getProjectFoundation(projectId),
+          this.getScenes(projectId),
+        ]);
         if (project) {
           arch = synthesizeStoryArchitectureForLegacyProject(project, foundation, scenes);
           jsonState.story_architectures[projectId] = arch;
@@ -1019,9 +1025,12 @@ export const db = {
     const fsdb = getFirestore();
     let arch = await getDocData<StoryArchitecture>(fsdb, 'story_architectures', projectId);
     if (!arch) {
-      const project = await this.getProject(projectId);
-      const foundation = await this.getProjectFoundation(projectId);
-      const scenes = await this.getScenes(projectId);
+      // Bolt Optimization: Fetch independent project entities concurrently
+      const [project, foundation, scenes] = await Promise.all([
+        this.getProject(projectId),
+        this.getProjectFoundation(projectId),
+        this.getScenes(projectId),
+      ]);
       if (project) {
         arch = synthesizeStoryArchitectureForLegacyProject(project, foundation, scenes);
         await docRef(fsdb, 'story_architectures', projectId).set(sanitizeForFirestore(arch));
@@ -1149,15 +1158,29 @@ export const db = {
       }
     };
 
-    const foundation: ProjectFoundation | null = await dbgRun<ProjectFoundation | null>('getProjectFoundation', () => this.getProjectFoundation(projectId));
-    const characters: CharacterBible[] = await dbgRun<CharacterBible[]>('getCharacters', () => this.getCharacters(projectId));
-    const locations: LocationBible[] = await dbgRun<LocationBible[]>('getLocations', () => this.getLocations(projectId));
-    const objects: ObjectBible[] = await dbgRun<ObjectBible[]>('getObjects', () => this.getObjects(projectId));
-    const rawScenes: Scene[] = await dbgRun<Scene[]>('getScenes', () => this.getScenes(projectId));
-    const allShots: Shot[] = await dbgRun<Shot[]>('getShotsByProject', () => this.getShotsByProject(projectId));
-    const allVideoPrompts: VideoPrompt[] = await dbgRun<VideoPrompt[]>('getVideoPromptsByProject', () => this.getVideoPromptsByProject(projectId));
-    const storyArchitecture: StoryArchitecture | null = await dbgRun<StoryArchitecture | null>('getStoryArchitecture', () => this.getStoryArchitecture(projectId));
-    const continuityStates: CharacterContinuityState[] = await dbgRun<CharacterContinuityState[]>('getCharacterContinuityStates', () => this.getCharacterContinuityStates(projectId));
+    // Bolt Optimization: Fetch all independent project entities concurrently using Promise.all.
+    // Reduces 9 sequential network roundtrips to 1 concurrent batch (~9x latency improvement).
+    const [
+      foundation,
+      characters,
+      locations,
+      objects,
+      rawScenes,
+      allShots,
+      allVideoPrompts,
+      storyArchitecture,
+      continuityStates,
+    ] = await Promise.all([
+      dbgRun<ProjectFoundation | null>('getProjectFoundation', () => this.getProjectFoundation(projectId)),
+      dbgRun<CharacterBible[]>('getCharacters', () => this.getCharacters(projectId)),
+      dbgRun<LocationBible[]>('getLocations', () => this.getLocations(projectId)),
+      dbgRun<ObjectBible[]>('getObjects', () => this.getObjects(projectId)),
+      dbgRun<Scene[]>('getScenes', () => this.getScenes(projectId)),
+      dbgRun<Shot[]>('getShotsByProject', () => this.getShotsByProject(projectId)),
+      dbgRun<VideoPrompt[]>('getVideoPromptsByProject', () => this.getVideoPromptsByProject(projectId)),
+      dbgRun<StoryArchitecture | null>('getStoryArchitecture', () => this.getStoryArchitecture(projectId)),
+      dbgRun<CharacterContinuityState[]>('getCharacterContinuityStates', () => this.getCharacterContinuityStates(projectId)),
+    ]);
 
     const shotsMap: Record<string, Shot[]> = {};
     for (const scene of rawScenes) {
