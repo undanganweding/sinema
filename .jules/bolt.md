@@ -1,0 +1,3 @@
+## 2025-05-10 - Pre-filtering nested loop candidates in consistency evaluation
+**Learning:** In `server/consistency_engine.ts`, evaluating stage output consistency involves checking $O(N^2)$ event pairs in `state.events`. Performing string inclusion checks (`includesName(text, event.label)`) within the inner $O(N^2)$ loop caused significant redundant overhead as $N$ grew. Pre-filtering matching events into `presentEvents` first reduced string inclusion checks from $O(N^2)$ to $O(N)$ and inner pair comparisons to $O(K^2)$ ($K \le N$).
+**Action:** When evaluating candidate relationships or pairwise constraints in state validation engines, always pre-filter matching items present in the text payload before nested pair comparisons.

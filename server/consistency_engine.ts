@@ -153,9 +153,11 @@ export function evaluateStageOutput(stage: string, output: unknown, state: Groun
     }
   }
 
-  for (const first of state.events) {
-    for (const second of state.events) {
-      if (first === second || !includesName(text, first.label) || !includesName(text, second.label)) continue;
+  // Performance optimization: Pre-filter events present in text to avoid O(N^2) string inclusion checks across all state events.
+  const presentEvents = state.events.filter((event) => includesName(text, event.label));
+  for (const first of presentEvents) {
+    for (const second of presentEvents) {
+      if (first === second) continue;
       const firstYear = first.startYear ?? first.endYear;
       const secondYear = second.startYear ?? second.endYear;
       if (firstYear === undefined || secondYear === undefined || firstYear === secondYear) continue;
