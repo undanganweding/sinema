@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Film,
   Play,
@@ -121,23 +121,32 @@ export const SceneWorkspace: React.FC<SceneWorkspaceProps> = ({
     }
   }, [selectedSceneId]);
 
-  const currentScene = scenes.find((s) => s.id === activeSceneId) || scenes[0];
-  const currentShots = currentScene ? shots[currentScene.id] || [] : [];
-  // PERMANENT TYPE-SAFETY GATE (Fase 0): the explicit VideoPrompt[] annotation
-  // must stay. Without it the index access widens and `.find()` callbacks stop
-  // being checked against the VideoPrompt shape, which is how the old accessors
-  // silently referenced non-existent fields such as `p.shot_number`.
-  //
-  // FASE 5 FIX: `videoPrompts` is keyed by SHOT id, not scene id. The previous
-  // `videoPrompts[currentScene.id]` lookup always missed, which is why the old
-  // accessors appeared to work only via their legacy per-shot column fallbacks.
-  const currentPrompts: VideoPrompt[] = currentShots.flatMap(
-    (sh) => (sh.id && videoPrompts[sh.id]) || []
+  // Bolt Optimization: Memoize current scene lookup
+  const currentScene = useMemo(
+    () => scenes.find((s) => s.id === activeSceneId) || scenes[0],
+    [scenes, activeSceneId]
   );
+
+  // Bolt Optimization: Memoize current shots array for active scene
+  const currentShots = useMemo(
+    () => (currentScene ? shots[currentScene.id] || [] : []),
+    [currentScene, shots]
+  );
+
+  // Bolt Optimization: Memoize prompts flatMap to avoid re-allocating on input changes
+  const currentPrompts = useMemo<VideoPrompt[]>(
+    () => currentShots.flatMap((sh) => (sh.id && videoPrompts[sh.id]) || []),
+    [currentShots, videoPrompts]
+  );
+
   const isProcessing = processingSceneId === currentScene?.id;
 
-  // Calculate shot durations sum
-  const shotsTotalDuration = currentShots.reduce((acc, sh) => acc + (sh.duration_sec || 0), 0);
+  // Bolt Optimization: Memoize shot durations sum calculation
+  const shotsTotalDuration = useMemo(
+    () => currentShots.reduce((acc, sh) => acc + (sh.duration_sec || 0), 0),
+    [currentShots]
+  );
+
   const sceneAuthoritativeDuration = currentScene?.duration_sec || 10;
   const isDurationBalanced = Math.abs(shotsTotalDuration - sceneAuthoritativeDuration) < 0.1;
 
@@ -211,12 +220,25 @@ export const SceneWorkspace: React.FC<SceneWorkspaceProps> = ({
     return `Cinematic wide master shot of ${l.name}, ${arch}, ${env}, 8k ultra-detailed, photorealistic, 35mm anamorphic lens --no modern buildings`;
   };
 
-  // Characters & Locations related to active scene
-  const sceneCharacters = characters.filter((c) =>
-    currentScene?.character_names?.some((name) => name.toLowerCase().includes(c.name.toLowerCase()))
+  // Bolt Optimization: Memoize character and location filtering logic for the active scene
+  const sceneCharacters = useMemo(
+    () =>
+      characters.filter((c) =>
+        currentScene?.character_names?.some((name) =>
+          name.toLowerCase().includes(c.name.toLowerCase())
+        )
+      ),
+    [characters, currentScene?.character_names]
   );
-  const sceneLocations = locations.filter((l) =>
-    currentScene?.location_name?.toLowerCase().includes(l.name.toLowerCase())
+
+  const sceneLocations = useMemo(
+    () =>
+      locations.filter((l) =>
+        currentScene?.location_name
+          ?.toLowerCase()
+          .includes(l.name.toLowerCase())
+      ),
+    [locations, currentScene?.location_name]
   );
 
   if (scenes.length === 0) {
