@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Film,
   Plus,
@@ -49,25 +49,39 @@ export const ProductionProjectsView: React.FC<ProductionProjectsViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const filteredProjects = projects.filter((p) => {
-    // Legacy/partial records can lack title or raw_script (e.g. a project row
-    // persisted before validation). Guard the search fields so one bad record
-    // cannot crash the whole Production view.
+  // Bolt Optimization: Memoize filtered projects list to prevent redundant searches on re-renders
+  const filteredProjects = useMemo(() => {
     const needle = searchQuery.toLowerCase();
-    const matchesSearch = (p.title || '').toLowerCase().includes(needle) ||
-      (p.raw_script || '').toLowerCase().includes(needle);
+    return projects.filter((p) => {
+      // Legacy/partial records can lack title or raw_script (e.g. a project row
+      // persisted before validation). Guard the search fields so one bad record
+      // cannot crash the whole Production view.
+      const matchesSearch =
+        (p.title || '').toLowerCase().includes(needle) ||
+        (p.raw_script || '').toLowerCase().includes(needle);
 
-    if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-    if (filter === 'processing') return p.status === 'processing';
-    if (filter === 'completed') return p.status === 'completed';
-    if (filter === 'draft') return p.status === 'idle' || p.status === 'failed';
-    return true;
-  });
+      if (filter === 'processing') return p.status === 'processing';
+      if (filter === 'completed') return p.status === 'completed';
+      if (filter === 'draft') return p.status === 'idle' || p.status === 'failed';
+      return true;
+    });
+  }, [projects, searchQuery, filter]);
 
-  const ongoingCount = projects.filter((p) => p.status === 'processing').length;
-  const completedCount = projects.filter((p) => p.status === 'completed').length;
-  const draftCount = projects.filter((p) => p.status === 'idle' || p.status === 'failed').length;
+  // Bolt Optimization: Single-pass status counter memoized on projects array
+  const { ongoingCount, completedCount, draftCount } = useMemo(() => {
+    let ongoing = 0;
+    let completed = 0;
+    let draft = 0;
+    for (let i = 0; i < projects.length; i++) {
+      const status = projects[i].status;
+      if (status === 'processing') ongoing++;
+      else if (status === 'completed') completed++;
+      else if (status === 'idle' || status === 'failed') draft++;
+    }
+    return { ongoingCount: ongoing, completedCount: completed, draftCount: draft };
+  }, [projects]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
