@@ -4,11 +4,13 @@ import {
   ClaimRecord,
   ConflictRecord,
   ContextPackage,
+  EvidenceRecord,
   FactConfidence,
   GroundingEntity,
   GroundingEvent,
   GroundingRelationship,
   ResearchPackage,
+  SourceRegistryEntry,
   TemporalRelation,
 } from '../src/types';
 
@@ -32,6 +34,8 @@ export interface ResolutionResult {
 function validateResearchPackageForResolution(researchPackage: ResearchPackage): string[] {
   const sourceIds = new Set(researchPackage.sources.map((source) => source.sourceId));
   const evidenceIds = new Set(researchPackage.evidence.map((evidence) => evidence.evidenceId));
+  // Bolt Optimization: Precompute Map for O(1) evidence lookup instead of linear .find()
+  const evidenceById = new Map(researchPackage.evidence.map((item) => [item.evidenceId, item]));
   const errors: string[] = [];
   for (const claim of researchPackage.claims) {
     if (claim.provenance === 'SOURCE_BACKED' || claim.provenance === 'MULTI_SOURCE_BACKED') {
@@ -39,7 +43,7 @@ function validateResearchPackageForResolution(researchPackage: ResearchPackage):
       if (claim.sourceIds.some((sourceId) => !sourceIds.has(sourceId))) errors.push(`Claim ${claim.claimId} references an unknown source.`);
       if (claim.evidenceIds.some((evidenceId) => !evidenceIds.has(evidenceId))) errors.push(`Claim ${claim.claimId} references unknown evidence.`);
       if (claim.evidenceIds.some((evidenceId) => {
-        const item = researchPackage.evidence.find((evidence) => evidence.evidenceId === evidenceId);
+        const item = evidenceById.get(evidenceId);
         return item && !claim.sourceIds.includes(item.sourceId);
       })) errors.push(`Claim ${claim.claimId} references evidence outside its source provenance.`);
     }
@@ -91,9 +95,17 @@ export function normalizeClaim(claim: ClaimRecord): NormalizedClaim {
   return { claim: { ...claim, claimIdentity: identity }, subject, predicate, object, qualifiers, identity };
 }
 
-function claimEvidenceQuality(claim: ClaimRecord, researchPackage: ResearchPackage): number {
-  const evidence = claim.evidenceIds.map((id) => researchPackage.evidence.find((item) => item.evidenceId === id)).filter(Boolean);
-  const authorities = claim.sourceIds.map((id) => researchPackage.sources.find((source) => source.sourceId === id)?.authority || 'UNKNOWN');
+// Bolt Optimization: Accept optional precomputed Map lookups to avoid O(N) array scans per call
+function claimEvidenceQuality(
+  claim: ClaimRecord,
+  researchPackage: ResearchPackage,
+  evidenceMap?: Map<string, EvidenceRecord>,
+  sourceMap?: Map<string, SourceRegistryEntry>
+): number {
+  const evidenceById = evidenceMap || new Map(researchPackage.evidence.map((item) => [item.evidenceId, item]));
+  const sourceById = sourceMap || new Map(researchPackage.sources.map((source) => [source.sourceId, source]));
+  const evidence = claim.evidenceIds.map((id) => evidenceById.get(id)).filter(Boolean);
+  const authorities = claim.sourceIds.map((id) => sourceById.get(id)?.authority || 'UNKNOWN');
   return evidence.length * 2 + authorities.filter((authority) => authority === 'HIGH').length * 2 + authorities.filter((authority) => authority === 'MEDIUM').length;
 }
 
@@ -112,32 +124,52 @@ function claimConflictType(a: NormalizedClaim, b: NormalizedClaim): ConflictReco
 export function detectClaimConflicts(researchPackage: ResearchPackage): ConflictRecord[] {
   const normalized = researchPackage.claims.map(normalizeClaim);
   const conflicts: ConflictRecord[] = [];
-  for (let index = 0; index < normalized.length; index += 1) {
-    for (let otherIndex = index + 1; otherIndex < normalized.length; otherIndex += 1) {
-      const first = normalized[index];
-      const second = normalized[otherIndex];
-      const conflictType = claimConflictType(first, second);
-      if (!conflictType) continue;
-      conflicts.push({
-        conflictId: `conflict_${first.identity}_${second.identity}`,
-        claimIds: [first.claim.claimId, second.claim.claimId],
-        evidenceIds: Array.from(new Set([...first.claim.evidenceIds, ...second.claim.evidenceIds])),
-        conflictType,
-        severity: 'WARNING',
-        status: 'UNRESOLVED',
-      });
+
+  // Bolt Optimization: Group claims by subject to avoid quadratic O(N^2) pairwise comparisons.
+  // Claims with distinct subjects can never conflict per claimConflictType.
+  const claimsBySubject = new Map<string, NormalizedClaim[]>();
+  for (const item of normalized) {
+    let group = claimsBySubject.get(item.subject);
+    if (!group) {
+      group = [];
+      claimsBySubject.set(item.subject, group);
+    }
+    group.push(item);
+  }
+
+  for (const group of claimsBySubject.values()) {
+    for (let index = 0; index < group.length; index += 1) {
+      for (let otherIndex = index + 1; otherIndex < group.length; otherIndex += 1) {
+        const first = group[index];
+        const second = group[otherIndex];
+        const conflictType = claimConflictType(first, second);
+        if (!conflictType) continue;
+        conflicts.push({
+          conflictId: `conflict_${first.identity}_${second.identity}`,
+          claimIds: [first.claim.claimId, second.claim.claimId],
+          evidenceIds: Array.from(new Set([...first.claim.evidenceIds, ...second.claim.evidenceIds])),
+          conflictType,
+          severity: 'WARNING',
+          status: 'UNRESOLVED',
+        });
+      }
     }
   }
   return conflicts;
 }
 
 export function resolveClaimConflicts(researchPackage: ResearchPackage, conflicts: ConflictRecord[]): ConflictRecord[] {
+  // Bolt Optimization: Precompute Map lookups for claims, evidence, and sources
+  const claimsById = new Map(researchPackage.claims.map((claim) => [claim.claimId, claim]));
+  const evidenceById = new Map(researchPackage.evidence.map((item) => [item.evidenceId, item]));
+  const sourceById = new Map(researchPackage.sources.map((source) => [source.sourceId, source]));
+
   return conflicts.map((conflict) => {
     const candidates = conflict.claimIds
-      .map((claimId) => researchPackage.claims.find((claim) => claim.claimId === claimId))
+      .map((claimId) => claimsById.get(claimId))
       .filter((claim): claim is ClaimRecord => Boolean(claim));
     if (candidates.length !== 2) return conflict;
-    const scores = candidates.map((claim) => claimEvidenceQuality(claim, researchPackage));
+    const scores = candidates.map((claim) => claimEvidenceQuality(claim, researchPackage, evidenceById, sourceById));
     if (scores[0] === scores[1]) {
       return { ...conflict, status: 'UNRESOLVED', resolution: 'UNRESOLVED', resolutionRationale: 'Competing claims have no defensible evidence-quality advantage.' };
     }
@@ -151,10 +183,16 @@ export function resolveClaimConflicts(researchPackage: ResearchPackage, conflict
   });
 }
 
-function confidenceForClaim(claim: ClaimRecord, researchPackage: ResearchPackage, conflicted: boolean): FactConfidence {
+function confidenceForClaim(
+  claim: ClaimRecord,
+  researchPackage: ResearchPackage,
+  conflicted: boolean,
+  evidenceById?: Map<string, EvidenceRecord>,
+  sourceById?: Map<string, SourceRegistryEntry>
+): FactConfidence {
   if (conflicted) return 'UNKNOWN';
   if (claim.evidenceIds.length === 0) return claim.provenance === 'AI_KNOWLEDGE' ? 'UNVERIFIED' : 'UNKNOWN';
-  const quality = claimEvidenceQuality(claim, researchPackage);
+  const quality = claimEvidenceQuality(claim, researchPackage, evidenceById, sourceById);
   if (quality >= 6) return 'HIGH';
   if (quality >= 3) return 'MEDIUM';
   return 'LOW';
@@ -175,7 +213,9 @@ function buildAcceptedKnowledge(researchPackage: ResearchPackage, conflicts: Con
     .filter((conflict) => conflict.status === 'PREFERRED_CLAIM')
     .flatMap((conflict) => conflict.claimIds.filter((claimId) => conflict.resolution !== `PREFER_CLAIM_${claimId}`)));
   const sourceIds = new Set(researchPackage.sources.map((source) => source.sourceId));
+  // Bolt Optimization: Precompute Map lookups for evidence and sources once
   const evidenceById = new Map(researchPackage.evidence.map((evidence) => [evidence.evidenceId, evidence]));
+  const sourceById = new Map(researchPackage.sources.map((source) => [source.sourceId, source]));
   const usableClaims = researchPackage.claims.filter((claim) =>
     claim.status !== 'UNSUPPORTED' && claim.status !== 'NOT_ESTABLISHED' && claim.provenance !== 'UNKNOWN' &&
     !((claim.provenance === 'SOURCE_BACKED' || claim.provenance === 'MULTI_SOURCE_BACKED') &&
@@ -185,7 +225,7 @@ function buildAcceptedKnowledge(researchPackage: ResearchPackage, conflicts: Con
   );
   const acceptedClaims = usableClaims.filter((claim) => !unresolved.has(claim.claimId) && !preferredLosers.has(claim.claimId)).map((claim) => ({
     ...claim,
-    confidence: confidenceForClaim(claim, researchPackage, unresolved.has(claim.claimId)),
+    confidence: confidenceForClaim(claim, researchPackage, unresolved.has(claim.claimId), evidenceById, sourceById),
     confidenceRationale: unresolved.has(claim.claimId) ? 'Conflicting claims remain unresolved.' : claim.evidenceIds.length > 0 ? 'Derived from linked evidence and source metadata.' : 'No evidence-backed certainty established.',
   }));
   const entities = new Map<string, GroundingEntity>();
@@ -238,6 +278,8 @@ function buildAcceptedKnowledge(researchPackage: ResearchPackage, conflicts: Con
 }
 
 export function contextPackageFromAcceptedKnowledge(researchPackage: ResearchPackage, knowledge: AcceptedKnowledge): ContextPackage {
+  // Bolt Optimization: Precompute Map of accepted claims by claimId to eliminate O(T * C) nested filtering
+  const acceptedClaimsById = new Map(knowledge.acceptedClaims.map((claim) => [claim.claimId, claim]));
   const facts = knowledge.acceptedClaims.map((claim) => ({
     factId: claim.claimId,
     description: claim.normalizedStatement,
@@ -247,7 +289,7 @@ export function contextPackageFromAcceptedKnowledge(researchPackage: ResearchPac
     claimId: claim.claimId,
     evidenceIds: claim.evidenceIds,
   }));
-  const timeline = knowledge.timelineFacts.map((fact, index) => ({ eventId: `timeline_${index}`, label: `${fact.subject} ${fact.relation} ${fact.object}`, sourceIds: fact.sourceIds, claimIds: fact.claimIds, evidenceIds: knowledge.acceptedClaims.filter((claim) => fact.claimIds.includes(claim.claimId)).flatMap((claim) => claim.evidenceIds), notes: 'Derived from accepted claim.' }));
+  const timeline = knowledge.timelineFacts.map((fact, index) => ({ eventId: `timeline_${index}`, label: `${fact.subject} ${fact.relation} ${fact.object}`, sourceIds: fact.sourceIds, claimIds: fact.claimIds, evidenceIds: fact.claimIds.flatMap((claimId) => acceptedClaimsById.get(claimId)?.evidenceIds || []), notes: 'Derived from accepted claim.' }));
   const context: ContextPackage = {
     version: GROUNDING_VERSION,
     contentType: researchPackage.classification.categories,
