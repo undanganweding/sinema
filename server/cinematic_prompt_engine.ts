@@ -329,27 +329,29 @@ export function compileNegativePrompt(data: MasterSceneData): string {
 /**
  * Prompt Validator & Zero Placeholder Policy Enforcement
  */
-export function validateAndRepairPrompt(promptText: string): string {
-  const forbiddenPhrases = [
-    'performing frame adegan sinematik',
-    'pergerakan visual',
-    'Aksi sinematik kunci',
-    'deskripsi karakter',
-    'deskripsi lokasi',
-    'cinematic action',
-    'visual movement',
-    'scene action',
-    'Stabilized tracking camera',
-    'Visual sinematik detail',
-  ];
+const FORBIDDEN_PHRASES = [
+  'performing frame adegan sinematik',
+  'pergerakan visual',
+  'Aksi sinematik kunci',
+  'deskripsi karakter',
+  'deskripsi lokasi',
+  'cinematic action',
+  'visual movement',
+  'scene action',
+  'Stabilized tracking camera',
+  'Visual sinematik detail',
+];
 
-  let cleaned = promptText;
-  for (const phrase of forbiddenPhrases) {
-    if (cleaned.toLowerCase().includes(phrase.toLowerCase())) {
-      cleaned = cleaned.replace(new RegExp(phrase, 'gi'), 'executed historical narrative action');
-    }
-  }
-  return cleaned;
+// Bolt optimization: Pre-compile single regex pattern once to eliminate redundant
+// string lowercasing and dynamic RegExp allocations per repair invocation.
+const FORBIDDEN_PHRASES_REGEX = new RegExp(
+  FORBIDDEN_PHRASES.map((phrase) => phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'),
+  'gi'
+);
+
+export function validateAndRepairPrompt(promptText: string): string {
+  if (!promptText) return promptText;
+  return promptText.replace(FORBIDDEN_PHRASES_REGEX, 'executed historical narrative action');
 }
 
 /**
