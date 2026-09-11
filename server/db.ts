@@ -1159,10 +1159,19 @@ export const db = {
     const storyArchitecture: StoryArchitecture | null = await dbgRun<StoryArchitecture | null>('getStoryArchitecture', () => this.getStoryArchitecture(projectId));
     const continuityStates: CharacterContinuityState[] = await dbgRun<CharacterContinuityState[]>('getCharacterContinuityStates', () => this.getCharacterContinuityStates(projectId));
 
+    // Single-pass hash map accumulation O(N + M) instead of quadratic O(N * M)
     const shotsMap: Record<string, Shot[]> = {};
     for (const scene of rawScenes) {
       if (scene.id) {
-        shotsMap[scene.id] = allShots.filter((s) => s.scene_id === scene.id);
+        shotsMap[scene.id] = [];
+      }
+    }
+    for (const shot of allShots) {
+      if (shot.scene_id) {
+        if (!shotsMap[shot.scene_id]) {
+          shotsMap[shot.scene_id] = [];
+        }
+        shotsMap[shot.scene_id].push(shot);
       }
     }
 
@@ -1174,10 +1183,19 @@ export const db = {
       return scene;
     });
 
+    // Single-pass hash map accumulation O(M + P) instead of quadratic O(M * P)
     const promptsMap: Record<string, VideoPrompt[]> = {};
     for (const shot of allShots) {
       if (shot.id) {
-        promptsMap[shot.id] = allVideoPrompts.filter((v) => v.shot_id === shot.id);
+        promptsMap[shot.id] = [];
+      }
+    }
+    for (const prompt of allVideoPrompts) {
+      if (prompt.shot_id) {
+        if (!promptsMap[prompt.shot_id]) {
+          promptsMap[prompt.shot_id] = [];
+        }
+        promptsMap[prompt.shot_id].push(prompt);
       }
     }
 
