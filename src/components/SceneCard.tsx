@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   Film,
   Camera,
@@ -58,8 +58,15 @@ export const SceneCard: React.FC<SceneCardProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const totalShotsDuration = shots.reduce((sum, sh) => sum + sh.duration_sec, 0);
-  const isShotsDurationExact = shots.length > 0 && totalShotsDuration === scene.duration_sec;
+  // Bolt ⚡ Optimization: Memoize total shots duration calculation per SceneCard
+  const totalShotsDuration = useMemo(
+    () => shots.reduce((sum, sh) => sum + sh.duration_sec, 0),
+    [shots]
+  );
+  const isShotsDurationExact = useMemo(
+    () => shots.length > 0 && totalShotsDuration === scene.duration_sec,
+    [shots.length, totalShotsDuration, scene.duration_sec]
+  );
 
   // Compile prompt text for clipboard copy
   const getCompiledMasterPrompt = () => {

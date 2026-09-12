@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { TopBar } from './components/TopBar';
 import { Sidebar } from './components/Sidebar';
 import { NewProjectForm } from './components/NewProjectForm';
@@ -416,8 +416,15 @@ export default function App() {
     }
   };
 
-  const totalShotsCount = Object.values(shots).reduce((acc: number, curr: Shot[]) => acc + (curr?.length || 0), 0);
-  const unreadLogsCount = logs.filter((l) => l.level === 'error' || l.level === 'warn').length;
+  // Bolt ⚡ Optimization: Memoize aggregate counts recomputed on every SSE progress render tick
+  const totalShotsCount = useMemo(
+    () => Object.values(shots).reduce((acc: number, curr: Shot[]) => acc + (curr?.length || 0), 0),
+    [shots]
+  );
+  const unreadLogsCount = useMemo(
+    () => logs.filter((l) => l.level === 'error' || l.level === 'warn').length,
+    [logs]
+  );
 
   return (
     <div className="min-h-screen bg-[#090B10] text-zinc-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-200 overflow-hidden">
