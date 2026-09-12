@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Film,
   Play,
@@ -72,9 +72,16 @@ export const ProjectDashboardWorkspace: React.FC<ProjectDashboardWorkspaceProps>
   onRetryPipeline,
   onOpenExport,
 }) => {
-  const totalShots = Object.values(shots).reduce((acc: number, curr: Shot[]) => acc + (curr?.length || 0), 0);
+  // Bolt ⚡ Optimization: Memoize aggregate shots count and recent logs slice
+  const totalShots = useMemo(
+    () => Object.values(shots).reduce((acc: number, curr: Shot[]) => acc + (curr?.length || 0), 0),
+    [shots]
+  );
   const currentStage = project.current_stage || 1;
-  const recentLogs = [...logs].reverse().slice(0, 6);
+  const recentLogs = useMemo(
+    () => [...logs].reverse().slice(0, 6),
+    [logs]
+  );
 
   // Derive master hero visual
   const heroImage =
