@@ -1149,20 +1149,39 @@ export const db = {
       }
     };
 
-    const foundation: ProjectFoundation | null = await dbgRun<ProjectFoundation | null>('getProjectFoundation', () => this.getProjectFoundation(projectId));
-    const characters: CharacterBible[] = await dbgRun<CharacterBible[]>('getCharacters', () => this.getCharacters(projectId));
-    const locations: LocationBible[] = await dbgRun<LocationBible[]>('getLocations', () => this.getLocations(projectId));
-    const objects: ObjectBible[] = await dbgRun<ObjectBible[]>('getObjects', () => this.getObjects(projectId));
-    const rawScenes: Scene[] = await dbgRun<Scene[]>('getScenes', () => this.getScenes(projectId));
-    const allShots: Shot[] = await dbgRun<Shot[]>('getShotsByProject', () => this.getShotsByProject(projectId));
-    const allVideoPrompts: VideoPrompt[] = await dbgRun<VideoPrompt[]>('getVideoPromptsByProject', () => this.getVideoPromptsByProject(projectId));
-    const storyArchitecture: StoryArchitecture | null = await dbgRun<StoryArchitecture | null>('getStoryArchitecture', () => this.getStoryArchitecture(projectId));
-    const continuityStates: CharacterContinuityState[] = await dbgRun<CharacterContinuityState[]>('getCharacterContinuityStates', () => this.getCharacterContinuityStates(projectId));
+    // Bolt Performance Optimization: Execute independent sub-queries concurrently via Promise.all
+    // instead of sequentially awaiting each query (reduces network/IO latency overhead significantly).
+    const [
+      foundation,
+      characters,
+      locations,
+      objects,
+      rawScenes,
+      allShots,
+      allVideoPrompts,
+      storyArchitecture,
+      continuityStates,
+    ] = await Promise.all([
+      dbgRun<ProjectFoundation | null>('getProjectFoundation', () => this.getProjectFoundation(projectId)),
+      dbgRun<CharacterBible[]>('getCharacters', () => this.getCharacters(projectId)),
+      dbgRun<LocationBible[]>('getLocations', () => this.getLocations(projectId)),
+      dbgRun<ObjectBible[]>('getObjects', () => this.getObjects(projectId)),
+      dbgRun<Scene[]>('getScenes', () => this.getScenes(projectId)),
+      dbgRun<Shot[]>('getShotsByProject', () => this.getShotsByProject(projectId)),
+      dbgRun<VideoPrompt[]>('getVideoPromptsByProject', () => this.getVideoPromptsByProject(projectId)),
+      dbgRun<StoryArchitecture | null>('getStoryArchitecture', () => this.getStoryArchitecture(projectId)),
+      dbgRun<CharacterContinuityState[]>('getCharacterContinuityStates', () => this.getCharacterContinuityStates(projectId)),
+    ]);
 
+    // Bolt Performance Optimization: Single-pass O(N) grouping for shots map instead of O(S * N_shots) filter loops
     const shotsMap: Record<string, Shot[]> = {};
     for (const scene of rawScenes) {
-      if (scene.id) {
-        shotsMap[scene.id] = allShots.filter((s) => s.scene_id === scene.id);
+      if (scene.id) shotsMap[scene.id] = [];
+    }
+    for (const shot of allShots) {
+      if (shot.scene_id) {
+        if (!shotsMap[shot.scene_id]) shotsMap[shot.scene_id] = [];
+        shotsMap[shot.scene_id].push(shot);
       }
     }
 
@@ -1174,10 +1193,15 @@ export const db = {
       return scene;
     });
 
+    // Bolt Performance Optimization: Single-pass O(N) grouping for prompts map instead of O(N_shots * N_prompts) filter loops
     const promptsMap: Record<string, VideoPrompt[]> = {};
     for (const shot of allShots) {
-      if (shot.id) {
-        promptsMap[shot.id] = allVideoPrompts.filter((v) => v.shot_id === shot.id);
+      if (shot.id) promptsMap[shot.id] = [];
+    }
+    for (const prompt of allVideoPrompts) {
+      if (prompt.shot_id) {
+        if (!promptsMap[prompt.shot_id]) promptsMap[prompt.shot_id] = [];
+        promptsMap[prompt.shot_id].push(prompt);
       }
     }
 
