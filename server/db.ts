@@ -1149,15 +1149,28 @@ export const db = {
       }
     };
 
-    const foundation: ProjectFoundation | null = await dbgRun<ProjectFoundation | null>('getProjectFoundation', () => this.getProjectFoundation(projectId));
-    const characters: CharacterBible[] = await dbgRun<CharacterBible[]>('getCharacters', () => this.getCharacters(projectId));
-    const locations: LocationBible[] = await dbgRun<LocationBible[]>('getLocations', () => this.getLocations(projectId));
-    const objects: ObjectBible[] = await dbgRun<ObjectBible[]>('getObjects', () => this.getObjects(projectId));
-    const rawScenes: Scene[] = await dbgRun<Scene[]>('getScenes', () => this.getScenes(projectId));
-    const allShots: Shot[] = await dbgRun<Shot[]>('getShotsByProject', () => this.getShotsByProject(projectId));
-    const allVideoPrompts: VideoPrompt[] = await dbgRun<VideoPrompt[]>('getVideoPromptsByProject', () => this.getVideoPromptsByProject(projectId));
-    const storyArchitecture: StoryArchitecture | null = await dbgRun<StoryArchitecture | null>('getStoryArchitecture', () => this.getStoryArchitecture(projectId));
-    const continuityStates: CharacterContinuityState[] = await dbgRun<CharacterContinuityState[]>('getCharacterContinuityStates', () => this.getCharacterContinuityStates(projectId));
+    // Execute data queries concurrently to minimize total latency when fetching full project state.
+    const [
+      foundation,
+      characters,
+      locations,
+      objects,
+      rawScenes,
+      allShots,
+      allVideoPrompts,
+      storyArchitecture,
+      continuityStates,
+    ] = await Promise.all([
+      dbgRun<ProjectFoundation | null>('getProjectFoundation', () => this.getProjectFoundation(projectId)),
+      dbgRun<CharacterBible[]>('getCharacters', () => this.getCharacters(projectId)),
+      dbgRun<LocationBible[]>('getLocations', () => this.getLocations(projectId)),
+      dbgRun<ObjectBible[]>('getObjects', () => this.getObjects(projectId)),
+      dbgRun<Scene[]>('getScenes', () => this.getScenes(projectId)),
+      dbgRun<Shot[]>('getShotsByProject', () => this.getShotsByProject(projectId)),
+      dbgRun<VideoPrompt[]>('getVideoPromptsByProject', () => this.getVideoPromptsByProject(projectId)),
+      dbgRun<StoryArchitecture | null>('getStoryArchitecture', () => this.getStoryArchitecture(projectId)),
+      dbgRun<CharacterContinuityState[]>('getCharacterContinuityStates', () => this.getCharacterContinuityStates(projectId)),
+    ]);
 
     const shotsMap: Record<string, Shot[]> = {};
     for (const scene of rawScenes) {
