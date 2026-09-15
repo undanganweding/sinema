@@ -1,0 +1,3 @@
+## 2025-05-18 - SSE Streaming Re-render Bottlenecks
+**Learning:** Real-time SSE event streaming pushes progress log events to top-level state in `App.tsx` at high frequency. Unmemoized derived calculations (like shot count reduction and log level filtering in `App.tsx` and full log array cloning/reversing `[...logs].reverse().slice(0, 6)` in dashboard views) execute on every single log event.
+**Action:** Always memoize derived statistics dependent on `logs` or `shots`, and slice log arrays backwards via loop instead of `[...logs].reverse().slice(...)` to avoid O(N) array cloning during active pipeline runs.

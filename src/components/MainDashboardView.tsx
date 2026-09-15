@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Film,
   Play,
@@ -50,11 +50,19 @@ export const MainDashboardView: React.FC<MainDashboardViewProps> = ({
   onOpenCreateModal,
   onOpenProductionPage,
 }) => {
-  const ongoingProjects = projects.filter((p) => p.status === 'processing');
-  const completedProjects = projects.filter((p) => p.status === 'completed');
-  const draftProjects = projects.filter((p) => p.status === 'idle' || p.status === 'failed');
+  // ⚡ Bolt Optimization: Memoize filtered project arrays and slice recent logs backwards
+  // to avoid O(n) array copies and re-filtering on every state/log update render.
+  const ongoingProjects = useMemo(() => projects.filter((p) => p.status === 'processing'), [projects]);
+  const completedProjects = useMemo(() => projects.filter((p) => p.status === 'completed'), [projects]);
+  const draftProjects = useMemo(() => projects.filter((p) => p.status === 'idle' || p.status === 'failed'), [projects]);
 
-  const recentLogs = [...logs].reverse().slice(0, 6);
+  const recentLogs = useMemo(() => {
+    const result: PipelineLogEvent[] = [];
+    for (let i = logs.length - 1; i >= 0 && result.length < 6; i--) {
+      result.push(logs[i]);
+    }
+    return result;
+  }, [logs]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
